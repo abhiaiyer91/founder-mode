@@ -88,6 +88,29 @@ The development server boots the HelixStack console prototype where we iterate o
 
 ---
 
+## Control Plane Dev Server
+
+A Fastify-based control-plane skeleton lives in `packages/control-plane`.
+
+```bash
+# Start the API server
+pnpm --filter @helixstack/control-plane dev
+
+# Build for production
+pnpm --filter @helixstack/control-plane build
+```
+
+Available routes (all in-memory data for now):
+
+- `GET /healthz` – health probe.
+- `GET /projects` – list seeded projects with repo + command metadata.
+- `GET /projects/:projectId/deployments` – preview & production history.
+- `POST /projects/:projectId/deployments/:deploymentId/rollback` – simulates rollback.
+- `POST /projects/:projectId/deployments/:deploymentId/restart` – simulates restart.
+- `POST /webhooks/github` – placeholder for webhook ingestion.
+
+---
+
 ## License
 
 Apache 2.0 (to be finalized). Contributions are welcome once the governance doc is published.
