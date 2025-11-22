@@ -31,11 +31,52 @@ const architecture = [
   { title: 'Delivery Plane', stack: 'Cloudflare/Fastly adapters', summary: 'TLS, CDN, programmable routing, cache invalidation, and streaming optimizations.' },
 ]
 
+const flowSteps = [
+  {
+    title: 'Connect repo',
+    detail: 'OAuth with GitHub/GitLab, choose a project, and declare the build/start commands HelixStack should execute.',
+    note: 'Supports custom scripts like `pnpm build` or `npm run start`.',
+  },
+  {
+    title: 'Build & attest',
+    detail: 'Workers clone the commit, run dependency install, execute your build/start command, and store signed artifacts in an OCI registry.',
+    note: 'Cache-aware, framework autodetection, provenance via Sigstore.',
+  },
+  {
+    title: 'PR preview deploy',
+    detail: 'Every pull request spins up an isolated namespace with its own URL, secrets, and runtime limits.',
+    note: 'Tear down automatically when the PR closes.',
+  },
+  {
+    title: 'Ship to main',
+    detail: 'Merges promote artifacts to production with zero-downtime rollouts across every region and CDN POP.',
+    note: 'Health checks gate traffic; failures auto-roll back.',
+  },
+]
+
 const pluginTypes = [
   { title: 'Provider SDK', hooks: 'register → provision → deploy → destroy' },
   { title: 'Buildpack SDK', hooks: 'detect → compile → release' },
   { title: 'Runtime Adapter', hooks: 'prepareVm → deployFunctions → collectLogs' },
   { title: 'Observability Sink', hooks: 'ingestLogs → ingestMetrics → ingestTraces' },
+]
+
+const operationalControls = [
+  {
+    title: 'Rollbacks',
+    description: 'Select any previous artifact (preview or production) and promote it instantly without re-running the build pipeline.',
+    meta: 'Region-scoped or global.',
+  },
+  {
+    title: 'Restarts',
+    description: 'Rehydrate runtimes using the current artifact to pick up secret rotations, env changes, or runtime patches.',
+    meta: 'No rebuild required.',
+  },
+  {
+    title: 'Redeploy',
+    description: 'Kick off a fresh build from the same commit if dependencies or plug-ins changed after the initial run.',
+    meta: 'CLI, API, or UI.',
+  },
 ]
 
 const milestones = [
@@ -112,6 +153,42 @@ function App() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="deployment-flow">
+        <div className="section-heading">
+          <p className="eyebrow">Flow</p>
+          <h2>Connect repo → run your build/start command → deploy.</h2>
+          <p className="flow-subtitle">
+            HelixStack mirrors your existing scripts. Previews spin up for every PR; merges to main go straight to production with automatic rollbacks and restarts.
+          </p>
+        </div>
+        <div className="flow-grid">
+          {flowSteps.map(step => (
+            <article key={step.title}>
+              <h3>{step.title}</h3>
+              <p>{step.detail}</p>
+              <span>{step.note}</span>
+            </article>
+          ))}
+        </div>
+        <div className="ops-grid">
+          {operationalControls.map(control => (
+            <article key={control.title}>
+              <h3>{control.title}</h3>
+              <p>{control.description}</p>
+              <span>{control.meta}</span>
+            </article>
+          ))}
+        </div>
+        <a
+          className="cta inline"
+          href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/deployment-flow.md"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Explore the full deployment flow →
+        </a>
       </section>
 
       <section className="plugins">

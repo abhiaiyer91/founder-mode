@@ -39,6 +39,14 @@ Each plane communicates via a message bus (NATS JetStream) and shares metadata t
 
 ---
 
+## Deployment Flow
+
+Connecting a repo gives HelixStack enough information to run your build or custom start command. Every PR automatically creates an isolated preview deployment, and merges to `main` promote artifacts to production with zero downtime. Operators can trigger manual restarts (reuse the last artifact but refresh the runtime) or rollbacks (promote a previously successful artifact) without touching the build plane.
+
+See `docs/deployment-flow.md` for the full event sequence covering repo connection, build, preview deploys, production releases, rollbacks, and restarts.
+
+---
+
 ## Repository Layout (planned)
 
 ```
