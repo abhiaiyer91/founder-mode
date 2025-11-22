@@ -1,24 +1,156 @@
-import { useState, useEffect } from 'react'
-import SnakeGame from './components/SnakeGame'
-import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
+const pillars = [
+  {
+    title: 'Run anywhere',
+    description: 'Install the HelixStack control plane on any Kubernetes, Nomad, or bare-metal cluster. Swap planes without re‑architecting the whole system.',
+  },
+  {
+    title: 'Node-first DX',
+    description: 'Ship SSR, edge functions, cron jobs, and background workers with a single pipeline optimised for Node, Bun, and TypeScript projects.',
+  },
+  {
+    title: 'Pluggable everything',
+    description: 'Providers, runtimes, buildpacks, and observability sinks are all replaceable modules with a stable TypeScript SDK.',
+  },
+]
+
+const features = [
+  { name: 'Git-native deploys', detail: 'Atomic deploys for every commit, branch previews, instant rollbacks.', badge: 'Build plane' },
+  { name: 'Edge + VM runtime', detail: 'Run latency-sensitive code on isolates or Firecracker micro-VMs.', badge: 'Runtime plane' },
+  { name: 'Programmable routing', detail: 'Flow traffic by headers, cookies, geography, or scheduled rules.', badge: 'Delivery plane' },
+  { name: 'Observability fan-out', detail: 'Live tail logs, OTLP traces, and metrics streaming to any sink.', badge: 'Observability' },
+  { name: 'Policy guardrails', detail: 'OPA/Rego hooks enforce budgets, residency, and review requirements.', badge: 'Control plane' },
+  { name: 'Provider marketplace', detail: 'Publish plug-ins for AWS, Fly, Cloudflare, or your own infra.', badge: 'Plug-ins' },
+]
+
+const architecture = [
+  { title: 'Control Plane', stack: 'Fastify, Postgres, Redis', summary: 'Projects, secrets, deployments, policy evaluation, and event fan-out via NATS JetStream.' },
+  { title: 'Build Plane', stack: 'BuildKit, Turborepo, OCI registry', summary: 'Source cloning, caching, artifact signing, and provenance attestations.' },
+  { title: 'Runtime Plane', stack: 'Firecracker, Bun/Node 22', summary: 'Cold-start aware scheduler, edge isolates, cron orchestrator, and log drains.' },
+  { title: 'Delivery Plane', stack: 'Cloudflare/Fastly adapters', summary: 'TLS, CDN, programmable routing, cache invalidation, and streaming optimizations.' },
+]
+
+const pluginTypes = [
+  { title: 'Provider SDK', hooks: 'register → provision → deploy → destroy' },
+  { title: 'Buildpack SDK', hooks: 'detect → compile → release' },
+  { title: 'Runtime Adapter', hooks: 'prepareVm → deployFunctions → collectLogs' },
+  { title: 'Observability Sink', hooks: 'ingestLogs → ingestMetrics → ingestTraces' },
+]
+
+const milestones = [
+  { label: 'Milestone 0', detail: 'Repo + UX prototype + plug-in contracts (Weeks 1-2).' },
+  { label: 'Milestone 1', detail: 'Control plane, build workers, CLI, local provider (Weeks 3-6).' },
+  { label: 'Milestone 2', detail: 'Edge runtime, CDN integration, secrets, logs (Weeks 7-10).' },
+  { label: 'Milestone 3', detail: 'Multi-cloud providers, observability stack, policy engine (Weeks 11-15).' },
+]
+
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true)
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
-  }, [isDarkMode])
-
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>Snake Game</h1>
-        <ThemeToggle isDarkMode={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} />
+      <header className="hero">
+        <div className="badge">Open-source deployment platform</div>
+        <h1>HelixStack</h1>
+        <p className="subtitle">
+          Ship Node apps with the ergonomics of Vercel and the freedom to run on any cloud. HelixStack splits build,
+          runtime, delivery, and observability planes so operators can compose their own stack without sacrificing
+          developer experience.
+        </p>
+        <div className="cta-group">
+          <a className="cta primary" href="https://github.com/abhiaiyer91/vite-project" target="_blank" rel="noreferrer">
+            View on GitHub
+          </a>
+          <a
+            className="cta ghost"
+            href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/architecture.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read the architecture
+          </a>
+        </div>
       </header>
-      <main className="app-main">
-        <SnakeGame />
-      </main>
+
+      <section className="pillars">
+        {pillars.map(pillar => (
+          <article key={pillar.title}>
+            <h3>{pillar.title}</h3>
+            <p>{pillar.description}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="feature-grid">
+        <div className="section-heading">
+          <p className="eyebrow">Capabilities</p>
+          <h2>Everything you expect from Netlify/Vercel, but portable.</h2>
+        </div>
+        <div className="grid">
+          {features.map(feature => (
+            <article key={feature.name}>
+              <span className="badge subtle">{feature.badge}</span>
+              <h3>{feature.name}</h3>
+              <p>{feature.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="architecture">
+        <div className="section-heading">
+          <p className="eyebrow">Planes</p>
+          <h2>Composable control, build, runtime, delivery.</h2>
+        </div>
+        <div className="grid">
+          {architecture.map(layer => (
+            <article key={layer.title}>
+              <div className="layer-header">
+                <h3>{layer.title}</h3>
+                <span>{layer.stack}</span>
+              </div>
+              <p>{layer.summary}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="plugins">
+        <div className="section-heading">
+          <p className="eyebrow">SDK</p>
+          <h2>Plug-ins keep HelixStack cloud-agnostic.</h2>
+        </div>
+        <div className="plugin-cards">
+          {pluginTypes.map(type => (
+            <article key={type.title}>
+              <h3>{type.title}</h3>
+              <p>{type.hooks}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="roadmap">
+        <div className="section-heading">
+          <p className="eyebrow">Roadmap</p>
+          <h2>Open milestones for contributors.</h2>
+        </div>
+        <div className="timeline">
+          {milestones.map(milestone => (
+            <article key={milestone.label}>
+              <h3>{milestone.label}</h3>
+              <p>{milestone.detail}</p>
+            </article>
+          ))}
+        </div>
+        <a
+          className="cta inline"
+          href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/roadmap.md"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Read the detailed roadmap →
+        </a>
+      </section>
     </div>
   )
 }
