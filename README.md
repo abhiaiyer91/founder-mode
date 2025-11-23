@@ -114,6 +114,20 @@ Available routes (all in-memory data for now):
 
 ---
 
+## Testing
+
+```bash
+# Run all workspace tests (currently backend coverage)
+pnpm test
+
+# Or target the control plane package
+pnpm --filter @helixstack/control-plane test
+```
+
+The backend suite covers the in-memory deployment store (deploy/restart/rollback event emission) and smoke-tests the Fastify routes.
+
+---
+
 ## License
 
 Apache 2.0 (to be finalized). Contributions are welcome once the governance doc is published.
