@@ -43,7 +43,7 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
     }
 
     const body = (request.body || {}) as RollbackPayload
-    const updated = recordRollback(deploymentId)
+    const updated = recordRollback(deploymentId, body.reason)
     return {
       deployment: updated,
       message: `Rollback triggered${body.reason ? `: ${body.reason}` : ''}`,
@@ -59,7 +59,7 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
     }
 
     const body = (request.body || {}) as RestartPayload
-    const updated = recordRestart(deploymentId)
+    const updated = recordRestart(deploymentId, body.scope)
     return {
       deployment: updated,
       message: `Restart scheduled (${body.scope ?? 'global'})`,

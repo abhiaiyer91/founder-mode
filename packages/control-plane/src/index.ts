@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { registerProjectRoutes } from './routes/projects.js'
 import { registerWebhookRoutes } from './routes/webhooks.js'
+import { registerEventRoutes } from './routes/events.js'
 
 const buildServer = () => {
   const server = Fastify({
@@ -23,6 +24,7 @@ const buildServer = () => {
 
   server.register(registerProjectRoutes)
   server.register(registerWebhookRoutes)
+  server.register(registerEventRoutes)
 
   server.setErrorHandler((error, request, reply) => {
     request.log.error(error, 'Unhandled exception')

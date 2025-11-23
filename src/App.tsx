@@ -99,8 +99,16 @@ const formatDate = (value: string) =>
   }).format(new Date(value))
 
 function App() {
-  const { projects, deployments, selectedProjectId, selectProject, loading, error, refreshDeployments } =
-    useControlPlane()
+  const {
+    projects,
+    deployments,
+    selectedProjectId,
+    selectProject,
+    loading,
+    error,
+    refreshDeployments,
+    lastEventMessage,
+  } = useControlPlane()
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
 
@@ -275,6 +283,7 @@ function App() {
           </div>
         </div>
         {actionMessage && <p className="action-message">{actionMessage}</p>}
+        {lastEventMessage && <p className="action-message">{lastEventMessage}</p>}
       </section>
 
       <section className="feature-grid">

@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import type { Build, Deployment, Project } from '@helixstack/types'
+import { publishDeploymentEvent } from '../events/bus.js'
 
 const projects: Project[] = [
   {
@@ -140,24 +141,61 @@ export const appendDeployment = (deployment: Omit<Deployment, 'id' | 'createdAt'
     updatedAt: new Date().toISOString(),
   }
   store.deployments.unshift(newDeployment)
+  publishDeploymentEvent({
+    type: 'deploy',
+    deploymentId: newDeployment.id,
+    projectId: newDeployment.projectId,
+    status: newDeployment.status,
+    message: `Deployment recorded for ${newDeployment.environment}`,
+    timestamp: newDeployment.updatedAt,
+  })
   return newDeployment
 }
 
 export const findDeployment = (projectId: string, deploymentId: string) =>
   store.deployments.find(deployment => deployment.projectId === projectId && deployment.id === deploymentId)
 
-export const recordRollback = (deploymentId: string) => {
+export const recordRollback = (deploymentId: string, reason?: string) => {
   const deployment = store.deployments.find(item => item.id === deploymentId)
   if (!deployment) return null
   deployment.updatedAt = new Date().toISOString()
   deployment.status = 'ready'
+  publishDeploymentEvent({
+    type: 'rollback',
+    deploymentId,
+    projectId: deployment.projectId,
+    status: deployment.status,
+    message: `Rollback completed${reason ? `: ${reason}` : ''}`,
+    timestamp: deployment.updatedAt,
+  })
   return deployment
 }
 
-export const recordRestart = (deploymentId: string) => {
+export const recordRestart = (deploymentId: string, scope: string = 'global') => {
   const deployment = store.deployments.find(item => item.id === deploymentId)
   if (!deployment) return null
   deployment.updatedAt = new Date().toISOString()
-  deployment.status = 'ready'
+  deployment.status = 'building'
+  publishDeploymentEvent({
+    type: 'restart',
+    deploymentId,
+    projectId: deployment.projectId,
+    status: deployment.status,
+    message: `Restart initiated (${scope})`,
+    timestamp: deployment.updatedAt,
+  })
+
+  setTimeout(() => {
+    deployment.status = 'ready'
+    deployment.updatedAt = new Date().toISOString()
+    publishDeploymentEvent({
+      type: 'restart',
+      deploymentId,
+      projectId: deployment.projectId,
+      status: deployment.status,
+      message: 'Restart completed',
+      timestamp: deployment.updatedAt,
+    })
+  }, 2000)
   return deployment
 }

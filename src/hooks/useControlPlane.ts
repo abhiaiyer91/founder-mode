@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Deployment, Project } from '@helixstack/types'
-import { controlPlaneApi } from '../lib/api'
+import type { Deployment, DeploymentEvent, Project } from '@helixstack/types'
+import { API_BASE, controlPlaneApi } from '../lib/api'
 
 interface ControlPlaneState {
   projects: Project[]
@@ -10,6 +10,7 @@ interface ControlPlaneState {
   error: string | null
   selectProject: (projectId: string) => void
   refreshDeployments: () => Promise<void>
+  lastEventMessage: string | null
 }
 
 export const useControlPlane = (): ControlPlaneState => {
@@ -18,6 +19,7 @@ export const useControlPlane = (): ControlPlaneState => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastEventMessage, setLastEventMessage] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -61,6 +63,47 @@ export const useControlPlane = (): ControlPlaneState => {
     refreshDeployments()
   }, [refreshDeployments])
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !selectedProjectId) return
+    const source = new EventSource(`${API_BASE}/events/deployments`)
+
+    const handleDeploymentEvent = (event: MessageEvent<string>) => {
+      try {
+        const payload = JSON.parse(event.data) as DeploymentEvent
+        if (payload.projectId !== selectedProjectId) return
+        let matched = false
+        setDeployments(prev => {
+          const next = prev.map(deployment => {
+            if (deployment.id !== payload.deploymentId) return deployment
+            matched = true
+            return {
+              ...deployment,
+              status: payload.status,
+              updatedAt: payload.timestamp,
+            }
+          })
+          return next
+        })
+        if (!matched) {
+          void refreshDeployments()
+        }
+        setLastEventMessage(payload.message)
+      } catch (err) {
+        console.error('Invalid deployment event payload', err)
+      }
+    }
+
+    source.addEventListener('deployment', handleDeploymentEvent as EventListener)
+    source.onerror = () => {
+      setLastEventMessage('Live updates reconnecting…')
+    }
+
+    return () => {
+      source.removeEventListener('deployment', handleDeploymentEvent as EventListener)
+      source.close()
+    }
+  }, [selectedProjectId, refreshDeployments])
+
   const selectProject = (projectId: string) => {
     setSelectedProjectId(projectId)
   }
@@ -73,5 +116,6 @@ export const useControlPlane = (): ControlPlaneState => {
     error,
     selectProject,
     refreshDeployments,
+    lastEventMessage,
   }
 }

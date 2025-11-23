@@ -52,3 +52,12 @@ export interface RestartPayload {
   scope?: 'global' | 'region'
   region?: string
 }
+
+export interface DeploymentEvent {
+  type: 'restart' | 'rollback' | 'deploy'
+  deploymentId: string
+  projectId: string
+  status: DeploymentStatus
+  message: string
+  timestamp: string
+}
