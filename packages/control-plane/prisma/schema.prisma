@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id               String       @id @default(cuid())
+  name             String
+  repoUrl          String
+  defaultBranch    String
+  buildCommand     String
+  startCommand     String
+  provider         String
+  lastDeployAt     DateTime
+  previewDomain    String
+  productionDomain String
+  builds           Build[]
+  deployments      Deployment[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Build {
+  id          String      @id @default(cuid())
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  commitSha   String
+  branch      String
+  command     String
+  startedAt   DateTime
+  completedAt DateTime
+  status      String
+  artifactUrl String
+  deployments Deployment[]
+}
+
+model Deployment {
+  id            String   @id @default(cuid())
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  build         Build    @relation(fields: [buildId], references: [id], onDelete: Cascade)
+  buildId       String
+  kind          String
+  status        String
+  url           String
+  commitMessage String
+  author        String
+  environment   String
+  regionRollout Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

@@ -114,6 +114,25 @@ Available routes (all in-memory data for now):
 
 ---
 
+### Database & Seeding
+
+Prisma + SQLite back the control plane data. All Prisma commands are scoped to the control-plane package:
+
+```bash
+# Generate Prisma client
+pnpm --filter @helixstack/control-plane db:generate
+
+# Apply schema changes + create migrations
+pnpm --filter @helixstack/control-plane db:migrate
+
+# Re-seed the dev database with demo data
+pnpm --filter @helixstack/control-plane db:seed
+```
+
+The SQLite file lives in `packages/control-plane/prisma/dev.db` (ignored by git). Seeds are also reused in the Vitest suites to guarantee deterministic fixtures.
+
+---
+
 ## Testing
 
 ```bash

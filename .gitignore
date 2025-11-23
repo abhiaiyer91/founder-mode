@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.local
+packages/control-plane/prisma/*.db
+packages/control-plane/prisma/*.db-journal
 
 # Editor directories and files
 .vscode/*

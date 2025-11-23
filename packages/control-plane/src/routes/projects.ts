@@ -16,7 +16,7 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
 
   app.get('/projects/:projectId', async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
-    const project = findProject(projectId)
+    const project = await findProject(projectId)
     if (!project) {
       reply.code(404)
       return { message: `Project ${projectId} not found` }
@@ -26,7 +26,7 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
 
   app.get('/projects/:projectId/deployments', async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
-    const project = findProject(projectId)
+    const project = await findProject(projectId)
     if (!project) {
       reply.code(404)
       return { message: `Project ${projectId} not found` }
@@ -36,14 +36,14 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
 
   app.post('/projects/:projectId/deployments/:deploymentId/rollback', async (request, reply) => {
     const { projectId, deploymentId } = request.params as { projectId: string; deploymentId: string }
-    const deployment = findDeployment(projectId, deploymentId)
+    const deployment = await findDeployment(projectId, deploymentId)
     if (!deployment) {
       reply.code(404)
       return { message: 'Deployment not found' }
     }
 
     const body = (request.body || {}) as RollbackPayload
-    const updated = recordRollback(deploymentId, body.reason)
+    const updated = await recordRollback(deploymentId, body.reason)
     return {
       deployment: updated,
       message: `Rollback triggered${body.reason ? `: ${body.reason}` : ''}`,
@@ -52,14 +52,14 @@ export const registerProjectRoutes = async (app: FastifyInstance) => {
 
   app.post('/projects/:projectId/deployments/:deploymentId/restart', async (request, reply) => {
     const { projectId, deploymentId } = request.params as { projectId: string; deploymentId: string }
-    const deployment = findDeployment(projectId, deploymentId)
+    const deployment = await findDeployment(projectId, deploymentId)
     if (!deployment) {
       reply.code(404)
       return { message: 'Deployment not found' }
     }
 
     const body = (request.body || {}) as RestartPayload
-    const updated = recordRestart(deploymentId, body.scope)
+    const updated = await recordRestart(deploymentId, body.scope)
     return {
       deployment: updated,
       message: `Restart scheduled (${body.scope ?? 'global'})`,
