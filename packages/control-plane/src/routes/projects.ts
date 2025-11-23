@@ -7,7 +7,7 @@ import {
   recordRestart,
   recordRollback,
 } from '../data/store.js'
-import type { RestartPayload, RollbackPayload } from '../types.js'
+import type { RestartPayload, RollbackPayload } from '@helixstack/types'
 
 export const registerProjectRoutes = async (app: FastifyInstance) => {
   app.get('/healthz', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))

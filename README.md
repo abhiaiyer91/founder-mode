@@ -109,6 +109,8 @@ Available routes (all in-memory data for now):
 - `POST /projects/:projectId/deployments/:deploymentId/restart` – simulates restart.
 - `POST /webhooks/github` – placeholder for webhook ingestion.
 
+> The React console reads live data from these endpoints. Set `VITE_API_BASE_URL` (defaults to `http://localhost:4000`) when running `pnpm dev` so the UI can reach your control plane instance.
+
 ---
 
 ## License

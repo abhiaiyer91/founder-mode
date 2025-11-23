@@ -1,3 +1,7 @@
+import { useMemo, useState } from 'react'
+import type { Deployment } from '@helixstack/types'
+import { useControlPlane } from './hooks/useControlPlane'
+import { controlPlaneApi } from './lib/api'
 import './App.css'
 
 const pillars = [
@@ -86,7 +90,77 @@ const milestones = [
   { label: 'Milestone 3', detail: 'Multi-cloud providers, observability stack, policy engine (Weeks 11-15).' },
 ]
 
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  }).format(new Date(value))
+
 function App() {
+  const { projects, deployments, selectedProjectId, selectProject, loading, error, refreshDeployments } =
+    useControlPlane()
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
+
+  const selectedProject = useMemo(
+    () => projects.find(project => project.id === selectedProjectId) ?? null,
+    [projects, selectedProjectId],
+  )
+
+  const previewDeployments = deployments.filter(deployment => deployment.environment === 'preview')
+  const productionDeployments = deployments.filter(deployment => deployment.environment === 'production')
+
+  const handleAction = async (deployment: Deployment, intent: 'restart' | 'rollback') => {
+    if (!selectedProjectId) return
+    setActionLoading(true)
+    try {
+      const response =
+        intent === 'restart'
+          ? await controlPlaneApi.restartDeployment(selectedProjectId, deployment.id)
+          : await controlPlaneApi.rollbackDeployment(selectedProjectId, deployment.id)
+      setActionMessage(response.message)
+      await refreshDeployments()
+    } catch (err) {
+      setActionMessage((err as Error).message)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const renderDeploymentCard = (deployment: Deployment) => (
+    <article key={deployment.id} className="deployment-card">
+      <div className="deployment-card__header">
+        <span className={`status-pill ${deployment.status}`}>{deployment.status}</span>
+        <span className="deployment-env">{deployment.environment === 'production' ? 'Production' : 'Preview'}</span>
+      </div>
+      <h4>{deployment.commitMessage}</h4>
+      <p className="deployment-meta">
+        {deployment.author} • {formatDate(deployment.updatedAt)}
+      </p>
+      <p className="deployment-url">{deployment.url}</p>
+      <div className="deployment-actions">
+        <button
+          className="cta inline"
+          disabled={actionLoading}
+          onClick={() => handleAction(deployment, 'restart')}
+        >
+          Restart runtime
+        </button>
+        {deployment.environment === 'production' && (
+          <button
+            className="cta ghost small"
+            disabled={actionLoading}
+            onClick={() => handleAction(deployment, 'rollback')}
+          >
+            Rollback to this build
+          </button>
+        )}
+      </div>
+    </article>
+  )
+
   return (
     <div className="app">
       <header className="hero">
@@ -119,6 +193,88 @@ function App() {
             <p>{pillar.description}</p>
           </article>
         ))}
+      </section>
+
+      <section className="live-console">
+        <div className="section-heading">
+          <p className="eyebrow">Live console</p>
+          <h2>Projects from the control plane API.</h2>
+          <p className="flow-subtitle">
+            Select a repo to inspect preview and production deployments backed by the Fastify server you just started.
+          </p>
+        </div>
+        {error && <div className="error-banner">Control plane unavailable: {error}</div>}
+        <div className="project-selector">
+          <label htmlFor="project-select">Project</label>
+          <select
+            id="project-select"
+            value={selectedProjectId ?? ''}
+            onChange={event => selectProject(event.target.value)}
+            disabled={loading || projects.length === 0}
+          >
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {selectedProject ? (
+          <div className="project-detail">
+            <div>
+              <p className="eyebrow">Repository</p>
+              <a href={selectedProject.repoUrl} target="_blank" rel="noreferrer">
+                {selectedProject.repoUrl}
+              </a>
+            </div>
+            <div>
+              <p className="eyebrow">Build command</p>
+              <p>{selectedProject.buildCommand}</p>
+            </div>
+            <div>
+              <p className="eyebrow">Start command</p>
+              <p>{selectedProject.startCommand}</p>
+            </div>
+            <div>
+              <p className="eyebrow">Provider</p>
+              <p>{selectedProject.provider}</p>
+            </div>
+            <div>
+              <p className="eyebrow">Preview</p>
+              <p>{selectedProject.previewDomain}</p>
+            </div>
+            <div>
+              <p className="eyebrow">Production</p>
+              <p>{selectedProject.productionDomain}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="muted">Start the control plane server to load project data.</p>
+        )}
+
+        <div className="deployments-columns">
+          <div>
+            <div className="deployments-header">
+              <h3>Production deployments</h3>
+              <span>{productionDeployments.length} records</span>
+            </div>
+            <div className="deployment-list">
+              {productionDeployments.length === 0 && <p className="muted">No production deploys yet.</p>}
+              {productionDeployments.map(renderDeploymentCard)}
+            </div>
+          </div>
+          <div>
+            <div className="deployments-header">
+              <h3>Preview deploys</h3>
+              <span>{previewDeployments.length} branches</span>
+            </div>
+            <div className="deployment-list">
+              {previewDeployments.length === 0 && <p className="muted">Ship a PR to see data.</p>}
+              {previewDeployments.map(renderDeploymentCard)}
+            </div>
+          </div>
+        </div>
+        {actionMessage && <p className="action-message">{actionMessage}</p>}
       </section>
 
       <section className="feature-grid">

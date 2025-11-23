@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import type { Build, Deployment, Project } from '../types.js'
+import type { Build, Deployment, Project } from '@helixstack/types'
 
 const projects: Project[] = [
   {

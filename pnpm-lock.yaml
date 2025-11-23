@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@helixstack/types':
+        specifier: workspace:*
+        version: link:packages/types
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -60,6 +63,9 @@ importers:
       '@fastify/cors':
         specifier: ^9.0.1
         version: 9.0.1
+      '@helixstack/types':
+        specifier: workspace:*
+        version: link:../types
       fastify:
         specifier: ^5.1.0
         version: 5.6.2
@@ -69,6 +75,8 @@ importers:
       pino-pretty:
         specifier: ^11.3.0
         version: 11.3.0
+
+  packages/types: {}
 
 packages:
 
