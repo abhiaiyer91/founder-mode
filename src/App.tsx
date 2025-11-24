@@ -161,6 +161,10 @@ function App() {
                     <p className="eyebrow">Production domain</p>
                     <p>{selectedProject.productionDomain}</p>
                   </article>
+                  <article>
+                    <p className="eyebrow">Organization</p>
+                    <p>{selectedProject.organizationName ?? 'Unassigned'}</p>
+                  </article>
                 </div>
               </section>
 

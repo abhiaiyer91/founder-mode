@@ -13,6 +13,8 @@ const mapProject = (project: { id: string } & Record<string, any>): ProjectDto =
   lastDeployAt: project.lastDeployAt.toISOString(),
   previewDomain: project.previewDomain,
   productionDomain: project.productionDomain,
+  organizationId: project.organizationId ?? null,
+  organizationName: project.organization?.name ?? null,
 })
 
 const mapDeployment = (deployment: { updatedAt: Date; createdAt: Date; regionRollout: unknown } & Record<string, any>): DeploymentDto => ({
@@ -30,13 +32,20 @@ const mapDeployment = (deployment: { updatedAt: Date; createdAt: Date; regionRol
   regionRollout: (deployment.regionRollout as DeploymentDto['regionRollout']) ?? [],
 })
 
-export const listProjects = async (): Promise<ProjectDto[]> => {
-  const projects = await prisma.project.findMany({ orderBy: { name: 'asc' } })
+export const listProjects = async (organizationId?: string): Promise<ProjectDto[]> => {
+  const projects = await prisma.project.findMany({
+    where: organizationId ? { organizationId } : undefined,
+    include: { organization: true },
+    orderBy: { name: 'asc' },
+  })
   return projects.map(mapProject)
 }
 
 export const findProject = async (projectId: string): Promise<ProjectDto | null> => {
-  const project = await prisma.project.findUnique({ where: { id: projectId } })
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: { organization: true },
+  })
   return project ? mapProject(project) : null
 }
 

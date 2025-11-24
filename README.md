@@ -100,7 +100,7 @@ pnpm --filter @helixstack/control-plane dev
 pnpm --filter @helixstack/control-plane build
 ```
 
-Available routes (all in-memory data for now):
+Available routes (SQLite/Prisma data seeded via `db:seed`):
 
 - `GET /healthz` – health probe.
 - `GET /projects` – list seeded projects with repo + command metadata.
@@ -108,6 +108,7 @@ Available routes (all in-memory data for now):
 - `POST /projects/:projectId/deployments/:deploymentId/rollback` – simulates rollback.
 - `POST /projects/:projectId/deployments/:deploymentId/restart` – simulates restart.
 - `GET /events/deployments` – Server-Sent Events stream pushing deployment/restart/rollback events.
+- `ALL /auth/*` – Better Auth handlers (username/password, org-aware sessions, email verification stubs).
 - `POST /webhooks/github` – placeholder for webhook ingestion.
 
 > The React console reads live data from these endpoints. Set `VITE_API_BASE_URL` (defaults to `http://localhost:4000`) when running `pnpm dev` so the UI can reach your control plane instance.
@@ -130,6 +131,14 @@ pnpm --filter @helixstack/control-plane db:seed
 ```
 
 The SQLite file lives in `packages/control-plane/prisma/dev.db` (ignored by git). Seeds are also reused in the Vitest suites to guarantee deterministic fixtures.
+
+---
+
+### Authentication
+
+- Better Auth is mounted at `/auth/*` with username/password and organization plugins enabled.
+- The seed script provisions an owner account: `abi@helix.run / helixstack`. Use `POST /auth/sign-in/username` with `{ "username": "abi", "password": "helixstack" }` to grab a session token.
+- New orgs and users will be created via Better Auth once we hook the console sign-in flow; for now the API logs verification links to the console.
 
 ---
 

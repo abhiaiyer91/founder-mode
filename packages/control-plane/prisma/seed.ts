@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { hashPassword } from 'better-auth/crypto'
 
 export async function seed() {
   const prisma = new PrismaClient()
@@ -6,6 +7,49 @@ export async function seed() {
     await prisma.deployment.deleteMany()
     await prisma.build.deleteMany()
     await prisma.project.deleteMany()
+    await prisma.member.deleteMany()
+    await prisma.invitation.deleteMany()
+    await prisma.session.deleteMany()
+    await prisma.account.deleteMany()
+    await prisma.verification.deleteMany()
+    await prisma.organization.deleteMany()
+    await prisma.user.deleteMany()
+
+    const ownerUser = await prisma.user.create({
+      data: {
+        name: 'Abi Aiyer',
+        email: 'abi@helix.run',
+        emailVerified: true,
+        username: 'abi',
+        displayUsername: 'abi',
+      },
+    })
+
+    const passwordHash = await hashPassword('helixstack')
+    await prisma.account.create({
+      data: {
+        accountId: ownerUser.email,
+        providerId: 'credential',
+        userId: ownerUser.id,
+        password: passwordHash,
+      },
+    })
+
+    const helixOrg = await prisma.organization.create({
+      data: {
+        name: 'HelixStack',
+        slug: 'helixstack',
+        createdAt: new Date(),
+      },
+    })
+
+    await prisma.member.create({
+      data: {
+        organizationId: helixOrg.id,
+        userId: ownerUser.id,
+        role: 'owner',
+      },
+    })
 
     const consoleProject = await prisma.project.create({
       data: {
@@ -18,6 +62,7 @@ export async function seed() {
         lastDeployAt: new Date(),
         previewDomain: 'preview.console.helix.run',
         productionDomain: 'console.helix.run',
+        organizationId: helixOrg.id,
       },
     })
 
@@ -32,6 +77,7 @@ export async function seed() {
         lastDeployAt: new Date(Date.now() - 1000 * 60 * 60 * 4),
         previewDomain: 'preview.ai-docs.helix.run',
         productionDomain: 'ai-docs.example.com',
+        organizationId: helixOrg.id,
       },
     })
 
@@ -78,7 +124,7 @@ export async function seed() {
       data: [
         {
           projectId: consoleProject.id,
-          buildId: consoleMainBuild!.id,
+          buildId: consoleMainBuild.id,
           kind: 'production',
           status: 'ready',
           url: 'https://console.helix.run',
@@ -93,7 +139,7 @@ export async function seed() {
         },
         {
           projectId: consoleProject.id,
-          buildId: consolePreviewBuild!.id,
+          buildId: consolePreviewBuild.id,
           kind: 'preview',
           status: 'ready',
           url: 'https://preview-pr42.console.helix.run',
@@ -107,7 +153,7 @@ export async function seed() {
         },
         {
           projectId: aiDocsProject.id,
-          buildId: aiDocsBuild!.id,
+          buildId: aiDocsBuild.id,
           kind: 'production',
           status: 'ready',
           url: 'https://ai-docs.example.com',

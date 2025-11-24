@@ -15,11 +15,12 @@
     "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "@helixstack/types": "workspace:*",
     "@fastify/cors": "^10.0.0",
+    "@helixstack/types": "workspace:*",
+    "@prisma/client": "^6.2.1",
+    "better-auth": "^1.4.1",
     "fastify": "^5.1.0",
-    "pino-pretty": "^11.3.0",
-    "@prisma/client": "^6.2.1"
+    "pino-pretty": "^11.3.0"
   },
   "devDependencies": {
     "prisma": "^6.2.1",

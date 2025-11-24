@@ -3,6 +3,7 @@ import cors from '@fastify/cors'
 import { registerProjectRoutes } from './routes/projects.js'
 import { registerWebhookRoutes } from './routes/webhooks.js'
 import { registerEventRoutes } from './routes/events.js'
+import { registerAuthRoutes } from './routes/auth.js'
 
 export const createServer = () => {
   const server = Fastify({
@@ -22,6 +23,7 @@ export const createServer = () => {
     methods: ['GET', 'POST', 'OPTIONS'],
   })
 
+  server.register(registerAuthRoutes)
   server.register(registerProjectRoutes)
   server.register(registerWebhookRoutes)
   server.register(registerEventRoutes)

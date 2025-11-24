@@ -42,6 +42,8 @@ export interface Project {
   lastDeployAt: string
   previewDomain: string
   productionDomain: string
+  organizationId?: string | null
+  organizationName?: string | null
 }
 
 export interface RollbackPayload {

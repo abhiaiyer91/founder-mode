@@ -12,7 +12,10 @@ import type { RestartPayload, RollbackPayload } from '@helixstack/types'
 export const registerProjectRoutes = async (app: FastifyInstance) => {
   app.get('/healthz', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
 
-  app.get('/projects', async () => listProjects())
+  app.get('/projects', async (request) => {
+    const { organizationId } = (request.query ?? {}) as { organizationId?: string }
+    return listProjects(organizationId)
+  })
 
   app.get('/projects/:projectId', async (request, reply) => {
     const { projectId } = request.params as { projectId: string }
