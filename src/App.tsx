@@ -4,92 +4,6 @@ import { useControlPlane } from './hooks/useControlPlane'
 import { controlPlaneApi } from './lib/api'
 import './App.css'
 
-const pillars = [
-  {
-    title: 'Run anywhere',
-    description: 'Install the HelixStack control plane on any Kubernetes, Nomad, or bare-metal cluster. Swap planes without re‑architecting the whole system.',
-  },
-  {
-    title: 'Node-first DX',
-    description: 'Ship SSR, edge functions, cron jobs, and background workers with a single pipeline optimised for Node, Bun, and TypeScript projects.',
-  },
-  {
-    title: 'Pluggable everything',
-    description: 'Providers, runtimes, buildpacks, and observability sinks are all replaceable modules with a stable TypeScript SDK.',
-  },
-]
-
-const features = [
-  { name: 'Git-native deploys', detail: 'Atomic deploys for every commit, branch previews, instant rollbacks.', badge: 'Build plane' },
-  { name: 'Edge + VM runtime', detail: 'Run latency-sensitive code on isolates or Firecracker micro-VMs.', badge: 'Runtime plane' },
-  { name: 'Programmable routing', detail: 'Flow traffic by headers, cookies, geography, or scheduled rules.', badge: 'Delivery plane' },
-  { name: 'Observability fan-out', detail: 'Live tail logs, OTLP traces, and metrics streaming to any sink.', badge: 'Observability' },
-  { name: 'Policy guardrails', detail: 'OPA/Rego hooks enforce budgets, residency, and review requirements.', badge: 'Control plane' },
-  { name: 'Provider marketplace', detail: 'Publish plug-ins for AWS, Fly, Cloudflare, or your own infra.', badge: 'Plug-ins' },
-]
-
-const architecture = [
-  { title: 'Control Plane', stack: 'Fastify, Postgres, Redis', summary: 'Projects, secrets, deployments, policy evaluation, and event fan-out via NATS JetStream.' },
-  { title: 'Build Plane', stack: 'BuildKit, Turborepo, OCI registry', summary: 'Source cloning, caching, artifact signing, and provenance attestations.' },
-  { title: 'Runtime Plane', stack: 'Firecracker, Bun/Node 22', summary: 'Cold-start aware scheduler, edge isolates, cron orchestrator, and log drains.' },
-  { title: 'Delivery Plane', stack: 'Cloudflare/Fastly adapters', summary: 'TLS, CDN, programmable routing, cache invalidation, and streaming optimizations.' },
-]
-
-const flowSteps = [
-  {
-    title: 'Connect repo',
-    detail: 'OAuth with GitHub/GitLab, choose a project, and declare the build/start commands HelixStack should execute.',
-    note: 'Supports custom scripts like `pnpm build` or `npm run start`.',
-  },
-  {
-    title: 'Build & attest',
-    detail: 'Workers clone the commit, run dependency install, execute your build/start command, and store signed artifacts in an OCI registry.',
-    note: 'Cache-aware, framework autodetection, provenance via Sigstore.',
-  },
-  {
-    title: 'PR preview deploy',
-    detail: 'Every pull request spins up an isolated namespace with its own URL, secrets, and runtime limits.',
-    note: 'Tear down automatically when the PR closes.',
-  },
-  {
-    title: 'Ship to main',
-    detail: 'Merges promote artifacts to production with zero-downtime rollouts across every region and CDN POP.',
-    note: 'Health checks gate traffic; failures auto-roll back.',
-  },
-]
-
-const pluginTypes = [
-  { title: 'Provider SDK', hooks: 'register → provision → deploy → destroy' },
-  { title: 'Buildpack SDK', hooks: 'detect → compile → release' },
-  { title: 'Runtime Adapter', hooks: 'prepareVm → deployFunctions → collectLogs' },
-  { title: 'Observability Sink', hooks: 'ingestLogs → ingestMetrics → ingestTraces' },
-]
-
-const operationalControls = [
-  {
-    title: 'Rollbacks',
-    description: 'Select any previous artifact (preview or production) and promote it instantly without re-running the build pipeline.',
-    meta: 'Region-scoped or global.',
-  },
-  {
-    title: 'Restarts',
-    description: 'Rehydrate runtimes using the current artifact to pick up secret rotations, env changes, or runtime patches.',
-    meta: 'No rebuild required.',
-  },
-  {
-    title: 'Redeploy',
-    description: 'Kick off a fresh build from the same commit if dependencies or plug-ins changed after the initial run.',
-    meta: 'CLI, API, or UI.',
-  },
-]
-
-const milestones = [
-  { label: 'Milestone 0', detail: 'Repo + UX prototype + plug-in contracts (Weeks 1-2).' },
-  { label: 'Milestone 1', detail: 'Control plane, build workers, CLI, local provider (Weeks 3-6).' },
-  { label: 'Milestone 2', detail: 'Edge runtime, CDN integration, secrets, logs (Weeks 7-10).' },
-  { label: 'Milestone 3', detail: 'Multi-cloud providers, observability stack, policy engine (Weeks 11-15).' },
-]
-
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -97,6 +11,11 @@ const formatDate = (value: string) =>
     hour: 'numeric',
     minute: 'numeric',
   }).format(new Date(value))
+
+const environmentLabel: Record<string, string> = {
+  production: 'Production',
+  preview: 'Preview',
+}
 
 function App() {
   const {
@@ -141,7 +60,7 @@ function App() {
     <article key={deployment.id} className="deployment-card">
       <div className="deployment-card__header">
         <span className={`status-pill ${deployment.status}`}>{deployment.status}</span>
-        <span className="deployment-env">{deployment.environment === 'production' ? 'Production' : 'Preview'}</span>
+        <span className="deployment-env">{environmentLabel[deployment.environment] ?? deployment.environment}</span>
       </div>
       <h4>{deployment.commitMessage}</h4>
       <p className="deployment-meta">
@@ -150,7 +69,7 @@ function App() {
       <p className="deployment-url">{deployment.url}</p>
       <div className="deployment-actions">
         <button
-          className="cta inline"
+          className="btn primary small"
           disabled={actionLoading}
           onClick={() => handleAction(deployment, 'restart')}
         >
@@ -158,11 +77,11 @@ function App() {
         </button>
         {deployment.environment === 'production' && (
           <button
-            className="cta ghost small"
+            className="btn ghost small"
             disabled={actionLoading}
             onClick={() => handleAction(deployment, 'rollback')}
           >
-            Rollback to this build
+            Rollback
           </button>
         )}
       </div>
@@ -170,229 +89,122 @@ function App() {
   )
 
   return (
-    <div className="app">
-      <header className="hero">
-        <div className="badge">Open-source deployment platform</div>
-        <h1>HelixStack</h1>
-        <p className="subtitle">
-          Ship Node apps with the ergonomics of Vercel and the freedom to run on any cloud. HelixStack splits build,
-          runtime, delivery, and observability planes so operators can compose their own stack without sacrificing
-          developer experience.
-        </p>
-        <div className="cta-group">
-          <a className="cta primary" href="https://github.com/abhiaiyer91/vite-project" target="_blank" rel="noreferrer">
-            View on GitHub
-          </a>
-          <a
-            className="cta ghost"
-            href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/architecture.md"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Read the architecture
-          </a>
+    <div className="app-shell">
+      <header className="app-header">
+        <div>
+          <p className="eyebrow">HelixStack control plane</p>
+          <h1>Projects dashboard</h1>
+        </div>
+        <div className="connection-status">
+          <span className={`connection-dot ${error ? 'error' : 'ok'}`} />
+          <span>{error ? 'Control plane unreachable' : 'Live updates active'}</span>
         </div>
       </header>
 
-      <section className="pillars">
-        {pillars.map(pillar => (
-          <article key={pillar.title}>
-            <h3>{pillar.title}</h3>
-            <p>{pillar.description}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="live-console">
-        <div className="section-heading">
-          <p className="eyebrow">Live console</p>
-          <h2>Projects from the control plane API.</h2>
-          <p className="flow-subtitle">
-            Select a repo to inspect preview and production deployments backed by the Fastify server you just started.
-          </p>
-        </div>
-        {error && <div className="error-banner">Control plane unavailable: {error}</div>}
-        <div className="project-selector">
-          <label htmlFor="project-select">Project</label>
-          <select
-            id="project-select"
-            value={selectedProjectId ?? ''}
-            onChange={event => selectProject(event.target.value)}
-            disabled={loading || projects.length === 0}
-          >
+      <div className="app-layout">
+        <aside className="sidebar">
+          <div className="sidebar-header">
+            <h2>Projects</h2>
+            <span>{projects.length}</span>
+          </div>
+          <div className="project-list">
+            {loading && projects.length === 0 && <p className="muted">Loading projects…</p>}
             {projects.map(project => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
+              <button
+                key={project.id}
+                className={`project-item ${selectedProjectId === project.id ? 'active' : ''}`}
+                onClick={() => selectProject(project.id)}
+              >
+                <div>
+                  <p className="project-name">{project.name}</p>
+                  <span className="project-provider">{project.provider}</span>
+                </div>
+                <span className="project-branch">{project.defaultBranch}</span>
+              </button>
             ))}
-          </select>
-        </div>
-        {selectedProject ? (
-          <div className="project-detail">
-            <div>
-              <p className="eyebrow">Repository</p>
-              <a href={selectedProject.repoUrl} target="_blank" rel="noreferrer">
-                {selectedProject.repoUrl}
-              </a>
-            </div>
-            <div>
-              <p className="eyebrow">Build command</p>
-              <p>{selectedProject.buildCommand}</p>
-            </div>
-            <div>
-              <p className="eyebrow">Start command</p>
-              <p>{selectedProject.startCommand}</p>
-            </div>
-            <div>
-              <p className="eyebrow">Provider</p>
-              <p>{selectedProject.provider}</p>
-            </div>
-            <div>
-              <p className="eyebrow">Preview</p>
-              <p>{selectedProject.previewDomain}</p>
-            </div>
-            <div>
-              <p className="eyebrow">Production</p>
-              <p>{selectedProject.productionDomain}</p>
-            </div>
+            {!loading && projects.length === 0 && (
+              <p className="muted">Start the control plane server to seed demo projects.</p>
+            )}
           </div>
-        ) : (
-          <p className="muted">Start the control plane server to load project data.</p>
-        )}
+        </aside>
 
-        <div className="deployments-columns">
-          <div>
-            <div className="deployments-header">
-              <h3>Production deployments</h3>
-              <span>{productionDeployments.length} records</span>
+        <main className="content">
+          {error && <div className="error-banner">Control plane unavailable: {error}</div>}
+
+          {selectedProject ? (
+            <>
+              <section className="project-overview">
+                <div className="overview-grid">
+                  <article>
+                    <p className="eyebrow">Repository</p>
+                    <a href={selectedProject.repoUrl} target="_blank" rel="noreferrer">
+                      {selectedProject.repoUrl}
+                    </a>
+                  </article>
+                  <article>
+                    <p className="eyebrow">Default branch</p>
+                    <p>{selectedProject.defaultBranch}</p>
+                  </article>
+                  <article>
+                    <p className="eyebrow">Build command</p>
+                    <p>{selectedProject.buildCommand}</p>
+                  </article>
+                  <article>
+                    <p className="eyebrow">Start command</p>
+                    <p>{selectedProject.startCommand}</p>
+                  </article>
+                  <article>
+                    <p className="eyebrow">Preview domain</p>
+                    <p>{selectedProject.previewDomain}</p>
+                  </article>
+                  <article>
+                    <p className="eyebrow">Production domain</p>
+                    <p>{selectedProject.productionDomain}</p>
+                  </article>
+                </div>
+              </section>
+
+              <section className="deployments-panel">
+                <div>
+                  <div className="panel-header">
+                    <h3>Production</h3>
+                    <span>{productionDeployments.length} records</span>
+                  </div>
+                  <div className="deployment-list">
+                    {productionDeployments.length === 0 && <p className="muted">No production deploys yet.</p>}
+                    {productionDeployments.map(renderDeploymentCard)}
+                  </div>
+                </div>
+                <div>
+                  <div className="panel-header">
+                    <h3>Previews</h3>
+                    <span>{previewDeployments.length} branches</span>
+                  </div>
+                  <div className="deployment-list">
+                    {previewDeployments.length === 0 && <p className="muted">Ship a PR to see data.</p>}
+                    {previewDeployments.map(renderDeploymentCard)}
+                  </div>
+                </div>
+              </section>
+
+              <section className="activity-feed">
+                <div className="panel-header">
+                  <h3>Activity</h3>
+                  <span>Latest event</span>
+                </div>
+                {actionMessage && <p className="action-message">{actionMessage}</p>}
+                {lastEventMessage && <p className="action-message">{lastEventMessage}</p>}
+                {!actionMessage && !lastEventMessage && <p className="muted">Waiting for events…</p>}
+              </section>
+            </>
+          ) : (
+            <div className="empty-state">
+              <h3>No project selected</h3>
+              <p>Pick a project from the left rail to inspect its deployments.</p>
             </div>
-            <div className="deployment-list">
-              {productionDeployments.length === 0 && <p className="muted">No production deploys yet.</p>}
-              {productionDeployments.map(renderDeploymentCard)}
-            </div>
-          </div>
-          <div>
-            <div className="deployments-header">
-              <h3>Preview deploys</h3>
-              <span>{previewDeployments.length} branches</span>
-            </div>
-            <div className="deployment-list">
-              {previewDeployments.length === 0 && <p className="muted">Ship a PR to see data.</p>}
-              {previewDeployments.map(renderDeploymentCard)}
-            </div>
-          </div>
-        </div>
-        {actionMessage && <p className="action-message">{actionMessage}</p>}
-        {lastEventMessage && <p className="action-message">{lastEventMessage}</p>}
-      </section>
-
-      <section className="feature-grid">
-        <div className="section-heading">
-          <p className="eyebrow">Capabilities</p>
-          <h2>Everything you expect from Netlify/Vercel, but portable.</h2>
-        </div>
-        <div className="grid">
-          {features.map(feature => (
-            <article key={feature.name}>
-              <span className="badge subtle">{feature.badge}</span>
-              <h3>{feature.name}</h3>
-              <p>{feature.detail}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="architecture">
-        <div className="section-heading">
-          <p className="eyebrow">Planes</p>
-          <h2>Composable control, build, runtime, delivery.</h2>
-        </div>
-        <div className="grid">
-          {architecture.map(layer => (
-            <article key={layer.title}>
-              <div className="layer-header">
-                <h3>{layer.title}</h3>
-                <span>{layer.stack}</span>
-              </div>
-              <p>{layer.summary}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="deployment-flow">
-        <div className="section-heading">
-          <p className="eyebrow">Flow</p>
-          <h2>Connect repo → run your build/start command → deploy.</h2>
-          <p className="flow-subtitle">
-            HelixStack mirrors your existing scripts. Previews spin up for every PR; merges to main go straight to production with automatic rollbacks and restarts.
-          </p>
-        </div>
-        <div className="flow-grid">
-          {flowSteps.map(step => (
-            <article key={step.title}>
-              <h3>{step.title}</h3>
-              <p>{step.detail}</p>
-              <span>{step.note}</span>
-            </article>
-          ))}
-        </div>
-        <div className="ops-grid">
-          {operationalControls.map(control => (
-            <article key={control.title}>
-              <h3>{control.title}</h3>
-              <p>{control.description}</p>
-              <span>{control.meta}</span>
-            </article>
-          ))}
-        </div>
-        <a
-          className="cta inline"
-          href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/deployment-flow.md"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Explore the full deployment flow →
-        </a>
-      </section>
-
-      <section className="plugins">
-        <div className="section-heading">
-          <p className="eyebrow">SDK</p>
-          <h2>Plug-ins keep HelixStack cloud-agnostic.</h2>
-        </div>
-        <div className="plugin-cards">
-          {pluginTypes.map(type => (
-            <article key={type.title}>
-              <h3>{type.title}</h3>
-              <p>{type.hooks}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="roadmap">
-        <div className="section-heading">
-          <p className="eyebrow">Roadmap</p>
-          <h2>Open milestones for contributors.</h2>
-        </div>
-        <div className="timeline">
-          {milestones.map(milestone => (
-            <article key={milestone.label}>
-              <h3>{milestone.label}</h3>
-              <p>{milestone.detail}</p>
-            </article>
-          ))}
-        </div>
-        <a
-          className="cta inline"
-          href="https://github.com/abhiaiyer91/vite-project/blob/main/docs/roadmap.md"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Read the detailed roadmap →
-        </a>
-      </section>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
