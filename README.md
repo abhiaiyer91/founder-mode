@@ -1,69 +1,161 @@
-# React + TypeScript + Vite
+# HelixStack — Pluggable Node Server Deployment Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+HelixStack is an open source platform that delivers the experience of Netlify, Vercel, or Cloudflare Workers while keeping the entire deployment architecture portable to any cloud or on‑prem environment. The goal is to provide a modern developer experience (instant previews, atomic deploys, global edge runtime) combined with a modular control plane that operators can host wherever they need.
 
-Currently, two official plugins are available:
+> **Status:** Design/Prototype. This repo currently tracks the product vision, UI experiments, and architectural assets while the core services are implemented.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## Why HelixStack?
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Neutral architecture** – No hard dependency on a single cloud vendor; every subsystem is deployable on Kubernetes, Nomad, ECS, or bare metal.
+- **Node-first workflow** – Automatic builds for Node/TypeScript projects, but extensible to other runtimes through plug‑ins.
+- **Composable surfaces** – Build plane, runtime plane, CDN/edge, and observability are all replaceable modules.
+- **Operator-friendly** – GitOps-ready configuration, policy hooks, and clear SLOs for each subsystem.
+- **Developer joy** – Git integrations, preview URLs, logs/metrics streaming, instant rollbacks.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Platform Overview
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Plane | Responsibilities | Default implementation | Pluggable via |
+| --- | --- | --- | --- |
+| **Control Plane** | Projects, builds, secrets, deployments, policy | Node (Fastify) + Postgres | gRPC/REST adapters |
+| **Build Plane** | Source cloning, dependency graph, caching, artifact publish | BuildKit + Turborepo workers | OCI buildpack drivers |
+| **Runtime Plane** | Execute SSR/Edge functions, manage Node pools, cold start mitigation | Firecracker micro‑VMs + Bun runtime | Runtime provider plug‑in |
+| **Delivery Plane** | CDN, TLS, routing rules, cache invalidation | Cloudflare Workers + R2 | CDN provider plug‑in |
+| **Observability** | Logs, traces, metrics, deploy events | Tempo + Loki + Prometheus | OTLP sinks |
+
+Each plane communicates via a message bus (NATS JetStream) and shares metadata through the control plane API. Operators may swap planes by implementing the corresponding plug‑in contract.
+
+---
+
+## Plug‑in Model
+
+- **Provider SDK** – A TypeScript interface that defines lifecycle hooks (`prepare()`, `deploy()`, `promote()`, `cleanup()`).
+- **Secrets & Config** – Plug‑ins request secrets through a scoped vault broker; no direct cloud credentials stored in the core DB.
+- **Runtime Extensions** – Developers can package middleware (edge handlers, request transforms) that run before/after user functions.
+- **Policy Hooks** – Organizations inject policies (allowed regions, budget limits) that run during the deploy pipeline.
+
+---
+
+## Deployment Flow
+
+Connecting a repo gives HelixStack enough information to run your build or custom start command. Every PR automatically creates an isolated preview deployment, and merges to `main` promote artifacts to production with zero downtime. Operators can trigger manual restarts (reuse the last artifact but refresh the runtime) or rollbacks (promote a previously successful artifact) without touching the build plane.
+
+See `docs/deployment-flow.md` for the full event sequence covering repo connection, build, preview deploys, production releases, rollbacks, and restarts.
+
+---
+
+## Repository Layout (planned)
+
+```
+packages/
+  control-plane/         # Fastify API + GraphQL facade
+  build-plane/           # Workers orchestrating BuildKit
+  runtime-plane/         # VM/Function manager
+  provider-sdk/          # Plug-in contracts + scaffolding
+apps/
+  console/               # React dashboard (this repo today)
+  cli/                   # helix CLI for local dev + deploys
+infra/
+  helm/                  # Helm charts + Kustomize overlays
+docs/
+  architecture.md
+  roadmap.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The current repo hosts the console app and documentation. Future milestones will flesh out each package as the architecture solidifies.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started (UI Prototype)
+
+```bash
+pnpm install
+pnpm dev
 ```
+
+The development server boots the HelixStack console prototype where we iterate on UX for project management, deploy logs, and provider configuration.
+
+---
+
+## Contributing
+
+1. Check `docs/roadmap.md` for the current milestone and open issues.
+2. File design proposals as GitHub Discussions before starting complex features.
+3. Ensure new plug‑ins include integration tests via the provider SDK test harness.
+
+---
+
+## Control Plane Dev Server
+
+A Fastify-based control-plane skeleton lives in `packages/control-plane`.
+
+```bash
+# Start the API server
+pnpm --filter @helixstack/control-plane dev
+
+# Build for production
+pnpm --filter @helixstack/control-plane build
+```
+
+Available routes (SQLite/Prisma data seeded via `db:seed`):
+
+- `GET /healthz` – health probe.
+- `GET /projects` – list seeded projects with repo + command metadata.
+- `GET /projects/:projectId/deployments` – preview & production history.
+- `POST /projects/:projectId/deployments/:deploymentId/rollback` – simulates rollback.
+- `POST /projects/:projectId/deployments/:deploymentId/restart` – simulates restart.
+- `GET /events/deployments` – Server-Sent Events stream pushing deployment/restart/rollback events.
+- `ALL /auth/*` – Better Auth handlers (username/password, org-aware sessions, email verification stubs).
+- `POST /webhooks/github` – placeholder for webhook ingestion.
+
+> The React console reads live data from these endpoints. Set `VITE_API_BASE_URL` (defaults to `http://localhost:4000`) when running `pnpm dev` so the UI can reach your control plane instance.
+
+---
+
+### Database & Seeding
+
+Prisma + SQLite back the control plane data. All Prisma commands are scoped to the control-plane package:
+
+```bash
+# Generate Prisma client
+pnpm --filter @helixstack/control-plane db:generate
+
+# Apply schema changes + create migrations
+pnpm --filter @helixstack/control-plane db:migrate
+
+# Re-seed the dev database with demo data
+pnpm --filter @helixstack/control-plane db:seed
+```
+
+The SQLite file lives in `packages/control-plane/prisma/dev.db` (ignored by git). Seeds are also reused in the Vitest suites to guarantee deterministic fixtures.
+
+---
+
+### Authentication
+
+- Better Auth is mounted at `/auth/*` with username/password and organization plugins enabled.
+- The seed script provisions an owner account: `abi@helix.run / helixstack`. Use `POST /auth/sign-in/username` with `{ "username": "abi", "password": "helixstack" }` to grab a session token.
+- New orgs and users will be created via Better Auth once we hook the console sign-in flow; for now the API logs verification links to the console.
+
+---
+
+## Testing
+
+```bash
+# Run all workspace tests (currently backend coverage)
+pnpm test
+
+# Or target the control plane package
+pnpm --filter @helixstack/control-plane test
+```
+
+The backend suite covers the in-memory deployment store (deploy/restart/rollback event emission) and smoke-tests the Fastify routes.
+
+---
+
+## License
+
+Apache 2.0 (to be finalized). Contributions are welcome once the governance doc is published.
