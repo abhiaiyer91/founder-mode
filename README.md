@@ -535,6 +535,41 @@ Or configure it in the game's Settings screen.
 
 ---
 
+## 🧪 Testing
+
+The game includes a comprehensive test suite using **Vitest**:
+
+```bash
+# Run tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage
+pnpm test:coverage
+```
+
+**Test Coverage:**
+| Module | Coverage | Description |
+|--------|----------|-------------|
+| `src/lib/pm/pmBrain.ts` | ~98% | PM brain logic, product state analysis |
+| `src/store/gameStore.ts` | ~35% | Core game mechanics, state management |
+| `src/types/*.ts` | 100% | Type definitions |
+
+**What's Tested:**
+- ✅ Project creation
+- ✅ Employee hiring/firing
+- ✅ Task creation, assignment, completion
+- ✅ Game tick progression
+- ✅ Mission creation and lifecycle
+- ✅ PM brain evaluation and proposals
+- ✅ Task queue operations
+- ✅ Control groups
+- ✅ Epics system
+
+---
+
 ## 🤝 Contributing
 
 This is an open-source project! We welcome contributions of all kinds:
