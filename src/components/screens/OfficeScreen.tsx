@@ -61,13 +61,16 @@ export function OfficeScreen() {
     tasks, 
     money, 
     setScreen,
-    notifications 
+    notifications,
+    pmGenerateTask
   } = useGameStore();
 
   const idleEmployees = employees.filter(e => e.status === 'idle').length;
   const activeTasks = tasks.filter(t => t.status === 'in_progress').length;
   const todoTasks = tasks.filter(t => t.status === 'todo' || t.status === 'backlog').length;
   const completedTasks = tasks.filter(t => t.status === 'done').length;
+  const hasPMs = employees.some(e => e.role === 'pm');
+  const hasIdlePMs = employees.some(e => e.role === 'pm' && e.status === 'idle');
 
   const menuItems: MenuItem[] = [
     { id: 'hire', label: 'Hire Team', shortcut: 'H', icon: '👥' },
@@ -161,6 +164,21 @@ export function OfficeScreen() {
                   </div>
                 </div>
               </Box>
+
+              {hasPMs && (
+                <Box title="PM ACTIONS" className="pm-panel">
+                  <button 
+                    className="pm-action-btn"
+                    onClick={pmGenerateTask}
+                    disabled={!hasIdlePMs}
+                  >
+                    📊 Generate Tasks
+                  </button>
+                  {!hasIdlePMs && (
+                    <p className="pm-busy">All PMs are currently busy</p>
+                  )}
+                </Box>
+              )}
             </div>
           </div>
 

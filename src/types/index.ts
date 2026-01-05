@@ -112,6 +112,80 @@ export interface GameNotification {
   read: boolean;
 }
 
+// Random Events
+export type GameEventType = 
+  | 'morale_boost'
+  | 'morale_drop'
+  | 'productivity_boost'
+  | 'investor_interest'
+  | 'bug_discovered'
+  | 'team_lunch'
+  | 'coffee_machine_broken'
+  | 'competitor_launch'
+  | 'viral_moment'
+  | 'server_outage';
+
+export interface GameEvent {
+  id: string;
+  type: GameEventType;
+  title: string;
+  description: string;
+  effect: () => void;
+}
+
+export const EVENT_DEFINITIONS: Omit<GameEvent, 'id' | 'effect'>[] = [
+  {
+    type: 'morale_boost',
+    title: '🎉 Team Celebration!',
+    description: 'The team had a great week! Morale increased for everyone.',
+  },
+  {
+    type: 'morale_drop',
+    title: '😔 Tough Week',
+    description: 'Long hours are taking a toll. Team morale decreased.',
+  },
+  {
+    type: 'productivity_boost',
+    title: '☕ Coffee Upgrade',
+    description: 'New espresso machine installed! Productivity boost for all.',
+  },
+  {
+    type: 'investor_interest',
+    title: '💰 Investor Interest',
+    description: 'A VC noticed your progress! Bonus funding received.',
+  },
+  {
+    type: 'bug_discovered',
+    title: '🐛 Critical Bug Found',
+    description: 'QA found a major bug. A new urgent task has been created.',
+  },
+  {
+    type: 'team_lunch',
+    title: '🍕 Team Lunch',
+    description: 'Pizza Friday! Team bonding improves morale.',
+  },
+  {
+    type: 'coffee_machine_broken',
+    title: '☕ Coffee Machine Broken',
+    description: 'The coffee machine is down! Productivity takes a small hit.',
+  },
+  {
+    type: 'competitor_launch',
+    title: '🚀 Competitor Launched',
+    description: 'A competitor shipped a similar feature. Time to move faster!',
+  },
+  {
+    type: 'viral_moment',
+    title: '📈 Viral Moment',
+    description: 'Your product got featured on social media! Excitement is high.',
+  },
+  {
+    type: 'server_outage',
+    title: '🔥 Server Issues',
+    description: 'Cloud provider having issues. Infrastructure task created.',
+  },
+];
+
 // Actions
 export interface GameActions {
   // Navigation
@@ -140,6 +214,12 @@ export interface GameActions {
   // Notifications
   addNotification: (message: string, type: GameNotification['type']) => void;
   dismissNotification: (id: string) => void;
+  
+  // Events
+  triggerRandomEvent: () => void;
+  
+  // PM Actions
+  pmGenerateTask: () => void;
 }
 
 // Employee Templates for Hiring

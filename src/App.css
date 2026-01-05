@@ -1,5 +1,6 @@
 /* App Container */
 .app {
   min-height: 100vh;
+  padding-bottom: 50px; /* Space for status bar */
   background: var(--bg-pattern);
 }

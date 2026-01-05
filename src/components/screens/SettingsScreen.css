@@ -1,0 +1,183 @@
+/* Settings Screen */
+.settings-screen {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-layout h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.settings-section {
+  margin-bottom: 8px;
+}
+
+.section-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0 0 12px 0;
+}
+
+/* Speed Options */
+.speed-options {
+  margin-bottom: 12px;
+}
+
+.current-speed {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.speed-badge {
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.speed-badge.paused {
+  background: var(--terminal-border);
+  color: var(--text-muted);
+}
+
+.speed-badge.normal {
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.speed-badge.fast {
+  background: rgba(210, 153, 34, 0.2);
+  color: var(--color-warning);
+}
+
+.speed-badge.turbo {
+  background: rgba(248, 81, 73, 0.2);
+  color: var(--color-error);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-item .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.stat-item .value {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+/* Save Actions */
+.save-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.save-btn, .reset-btn {
+  padding: 10px 20px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+.save-btn {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--terminal-bg);
+}
+
+.save-btn:hover {
+  filter: brightness(1.2);
+}
+
+.reset-btn {
+  background: transparent;
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.reset-btn:hover {
+  background: var(--color-error);
+  color: var(--terminal-bg);
+}
+
+/* Shortcuts */
+.shortcuts-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.shortcut kbd {
+  min-width: 40px;
+  text-align: center;
+}
+
+.shortcut span {
+  color: var(--text-secondary);
+}
+
+/* About */
+.about-content {
+  font-size: 13px;
+}
+
+.about-content p {
+  margin: 0 0 8px 0;
+  color: var(--text-secondary);
+}
+
+.about-content .tagline {
+  color: var(--color-accent);
+  font-style: italic;
+}
+
+/* Footer */
+.settings-footer {
+  padding-top: 12px;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}

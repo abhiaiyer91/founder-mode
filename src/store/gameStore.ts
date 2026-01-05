@@ -10,12 +10,39 @@ import type {
   EmployeeSkillLevel,
   Task,
   TaskStatus,
+  TaskType,
+  TaskPriority,
 } from '../types';
 import {
   EMPLOYEE_TEMPLATES,
   FIRST_NAMES,
   LAST_NAMES,
+  EVENT_DEFINITIONS,
 } from '../types';
+
+// Task ideas that PMs can generate
+const PM_TASK_IDEAS = [
+  { title: 'User authentication flow', type: 'feature' as TaskType },
+  { title: 'Dashboard analytics widget', type: 'feature' as TaskType },
+  { title: 'Mobile responsive design', type: 'design' as TaskType },
+  { title: 'API rate limiting', type: 'infrastructure' as TaskType },
+  { title: 'Onboarding tutorial', type: 'feature' as TaskType },
+  { title: 'Dark mode support', type: 'design' as TaskType },
+  { title: 'Email notification system', type: 'feature' as TaskType },
+  { title: 'Performance optimization', type: 'infrastructure' as TaskType },
+  { title: 'Social media sharing', type: 'marketing' as TaskType },
+  { title: 'User settings page', type: 'feature' as TaskType },
+  { title: 'Search functionality', type: 'feature' as TaskType },
+  { title: 'Landing page redesign', type: 'marketing' as TaskType },
+  { title: 'Database backup system', type: 'infrastructure' as TaskType },
+  { title: 'Accessibility improvements', type: 'design' as TaskType },
+  { title: 'Payment integration', type: 'feature' as TaskType },
+  { title: 'Admin dashboard', type: 'feature' as TaskType },
+  { title: 'SEO optimization', type: 'marketing' as TaskType },
+  { title: 'Error logging system', type: 'infrastructure' as TaskType },
+  { title: 'User feedback form', type: 'feature' as TaskType },
+  { title: 'Animation polish', type: 'design' as TaskType },
+];
 
 // Helper to generate random employee name
 function generateEmployeeName(): string {
@@ -290,6 +317,129 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     set(state => ({
       notifications: state.notifications.filter(n => n.id !== id),
     }));
+  },
+
+  // Random Events
+  triggerRandomEvent: () => {
+    const state = get();
+    if (state.employees.length === 0) return;
+
+    const eventDef = EVENT_DEFINITIONS[Math.floor(Math.random() * EVENT_DEFINITIONS.length)];
+    
+    // Apply event effects
+    switch (eventDef.type) {
+      case 'morale_boost':
+      case 'team_lunch':
+      case 'viral_moment': {
+        const boostedEmployees = state.employees.map(e => ({
+          ...e,
+          morale: Math.min(100, e.morale + 15),
+        }));
+        set({ employees: boostedEmployees });
+        break;
+      }
+      case 'morale_drop':
+      case 'coffee_machine_broken': {
+        const droppedEmployees = state.employees.map(e => ({
+          ...e,
+          morale: Math.max(0, e.morale - 10),
+        }));
+        set({ employees: droppedEmployees });
+        break;
+      }
+      case 'productivity_boost': {
+        const boostedEmployees = state.employees.map(e => ({
+          ...e,
+          productivity: Math.min(100, e.productivity + 10),
+        }));
+        set({ employees: boostedEmployees });
+        break;
+      }
+      case 'investor_interest': {
+        const bonus = 10000 + Math.floor(Math.random() * 15000);
+        set({ money: state.money + bonus });
+        get().addNotification(`💰 Received ${bonus.toLocaleString()} in bonus funding!`, 'success');
+        break;
+      }
+      case 'bug_discovered': {
+        get().createTask({
+          title: 'Critical: Fix production bug',
+          description: 'Users are reporting issues. High priority fix needed.',
+          type: 'bug',
+          priority: 'critical',
+          status: 'todo',
+          assigneeId: null,
+          estimatedTicks: 50,
+        });
+        break;
+      }
+      case 'server_outage': {
+        get().createTask({
+          title: 'Infrastructure: Server stability',
+          description: 'Improve server reliability and monitoring.',
+          type: 'infrastructure',
+          priority: 'high',
+          status: 'todo',
+          assigneeId: null,
+          estimatedTicks: 80,
+        });
+        break;
+      }
+      case 'competitor_launch': {
+        // Speed boost for a while - morale boost from competition
+        const motivatedEmployees = state.employees.map(e => ({
+          ...e,
+          productivity: Math.min(100, e.productivity + 5),
+        }));
+        set({ employees: motivatedEmployees });
+        break;
+      }
+    }
+
+    get().addNotification(`${eventDef.title}: ${eventDef.description}`, 'info');
+  },
+
+  // PM Task Generation
+  pmGenerateTask: () => {
+    const state = get();
+    const pms = state.employees.filter(e => e.role === 'pm' && e.status === 'idle');
+    
+    if (pms.length === 0) {
+      get().addNotification('📊 No available PMs to generate tasks', 'warning');
+      return;
+    }
+
+    // Get unused task ideas
+    const existingTitles = state.tasks.map(t => t.title.toLowerCase());
+    const availableIdeas = PM_TASK_IDEAS.filter(
+      idea => !existingTitles.includes(idea.title.toLowerCase())
+    );
+
+    if (availableIdeas.length === 0) {
+      get().addNotification('📊 PM has no new task ideas right now', 'info');
+      return;
+    }
+
+    // PM generates task based on skill level
+    const pm = pms[0];
+    const numTasks = pm.skillLevel === 'senior' ? 3 : pm.skillLevel === 'mid' ? 2 : 1;
+    
+    for (let i = 0; i < Math.min(numTasks, availableIdeas.length); i++) {
+      const idea = availableIdeas[Math.floor(Math.random() * availableIdeas.length)];
+      const priorities: TaskPriority[] = ['low', 'medium', 'medium', 'high'];
+      
+      get().createTask({
+        title: idea.title,
+        description: `Task created by ${pm.name}`,
+        type: idea.type,
+        priority: priorities[Math.floor(Math.random() * priorities.length)],
+        status: 'backlog',
+        assigneeId: null,
+        estimatedTicks: 60 + Math.floor(Math.random() * 80),
+      });
+    }
+
+    get().addNotification(`📊 ${pm.name} added ${numTasks} task(s) to the backlog!`, 'success');
   },
 }));
 
