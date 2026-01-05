@@ -6,6 +6,7 @@ import {
   DashboardScreen,
   CommandCenter,
   TaskQueueScreen,
+  TechTreeScreen,
   OfficeScreen, 
   HireScreen, 
   TasksScreen,
@@ -14,6 +15,7 @@ import {
   SettingsScreen 
 } from './components/screens';
 import { StatusBar } from './components/StatusBar';
+import { RTSTopBar } from './components/RTSTopBar';
 import { useSession } from './lib/auth';
 import type { GameScreen, GameSpeed } from './types';
 import './App.css';
@@ -28,7 +30,10 @@ function App() {
     processQueue,
     triggerRandomEvent,
     tick,
-    project
+    project,
+    selectedEmployeeIds,
+    setControlGroup,
+    selectControlGroup,
   } = useGameStore();
   
   // Auth state
@@ -94,27 +99,53 @@ function App() {
 
     // Speed controls (when in game)
     if (project) {
-      const speedMap: Record<string, GameSpeed> = {
-        '0': 'paused',
-        '1': 'normal',
-        '2': 'fast',
-        '3': 'turbo',
-      };
-      if (speedMap[e.key]) {
+      // Control groups: Ctrl+1-9 to set, 1-9 to recall (when not setting speed)
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9) {
+        if (e.ctrlKey || e.metaKey) {
+          // Set control group
+          e.preventDefault();
+          setControlGroup(num, selectedEmployeeIds);
+          return;
+        } else if (!e.shiftKey) {
+          // Check if we should use as speed or control group
+          // Use as speed only for 1-3, otherwise control group
+          if (num <= 3) {
+            const speedMap: Record<number, GameSpeed> = {
+              1: 'normal',
+              2: 'fast',
+              3: 'turbo',
+            };
+            e.preventDefault();
+            setGameSpeed(speedMap[num]);
+            return;
+          } else {
+            // Recall control group for 4-9
+            e.preventDefault();
+            selectControlGroup(num);
+            return;
+          }
+        }
+      }
+      
+      if (e.key === '0') {
         e.preventDefault();
-        setGameSpeed(speedMap[e.key]);
+        setGameSpeed('paused');
         return;
       }
 
-      // Screen shortcuts (when in command or office)
-      if (screen === 'command' || screen === 'office') {
+      // Screen shortcuts (when in main screens)
+      const mainScreens: GameScreen[] = ['dashboard', 'command', 'office'];
+      if (mainScreens.includes(screen)) {
         const screenMap: Record<string, GameScreen> = {
+          'd': 'dashboard',
+          'c': 'command',
           'h': 'hire',
           't': 'tasks',
           'e': 'team',
-          'c': 'code',
+          'q': 'queue',
+          'u': 'tech', // Upgrades/tech tree
           's': 'settings',
-          'q': 'queue', // Task queue
         };
         if (screenMap[e.key.toLowerCase()]) {
           e.preventDefault();
@@ -122,7 +153,7 @@ function App() {
         }
       }
     }
-  }, [screen, setScreen, setGameSpeed, project]);
+  }, [screen, setScreen, setGameSpeed, project, selectedEmployeeIds, setControlGroup, selectControlGroup]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -170,6 +201,8 @@ function App() {
         return <CommandCenter />;
       case 'queue':
         return <TaskQueueScreen />;
+      case 'tech':
+        return <TechTreeScreen />;
       case 'office':
         return <OfficeScreen />;
       case 'hire':
@@ -187,12 +220,19 @@ function App() {
     }
   };
 
-  // Dashboard, Command Center, and Queue have their own status bar built-in
-  const showStatusBar = project && !['dashboard', 'command', 'queue'].includes(screen);
+  // Screens with built-in status bars
+  const fullScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tech'];
+  const showStatusBar = project && !fullScreens.includes(screen);
+  
+  // Show top bar when in game
+  const showTopBar = project && screen !== 'start';
 
   return (
     <div className="app">
-      {renderScreen()}
+      {showTopBar && <RTSTopBar />}
+      <div className="app-content">
+        {renderScreen()}
+      </div>
       {showStatusBar && <StatusBar />}
     </div>
   );

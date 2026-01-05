@@ -16,6 +16,8 @@ import type {
   ActivityLogEntry,
   QueuedTaskItem,
 } from '../types';
+import type { RallyPoint, MinimapEvent } from '../types/rts';
+import { DEFAULT_UPGRADES } from '../types/rts';
 import {
   EMPLOYEE_TEMPLATES,
   FIRST_NAMES,
@@ -104,6 +106,19 @@ const initialState: GameState = {
     github: { enabled: false, repo: null },
     linear: { enabled: false, teamId: null },
   },
+  
+  // RTS Features
+  controlGroups: Array.from({ length: 9 }, (_, i) => ({ id: i + 1, employeeIds: [] })),
+  rallyPoints: [
+    { taskType: 'feature', targetEmployeeIds: [], enabled: false },
+    { taskType: 'bug', targetEmployeeIds: [], enabled: false },
+    { taskType: 'design', targetEmployeeIds: [], enabled: false },
+    { taskType: 'marketing', targetEmployeeIds: [], enabled: false },
+    { taskType: 'infrastructure', targetEmployeeIds: [], enabled: false },
+  ] as RallyPoint[],
+  upgrades: DEFAULT_UPGRADES,
+  alerts: [],
+  minimapActivity: [],
 };
 
 // Create the store with persistence
@@ -1106,6 +1121,127 @@ export const useGameStore = create<GameState & GameActions>()(
     }));
     get().addNotification('🗑️ Queue cleared', 'info');
   },
+
+  // ============================================
+  // RTS Features - Control Groups, Rally Points, Upgrades
+  // ============================================
+  
+  setControlGroup: (groupId, employeeIds) => {
+    const state = get();
+    const newGroups = state.controlGroups.map(g => 
+      g.id === groupId ? { ...g, employeeIds } : g
+    );
+    set({ controlGroups: newGroups });
+    
+    if (employeeIds.length > 0) {
+      get().addNotification(`🎮 Control group ${groupId} set (${employeeIds.length} units)`, 'info');
+    }
+  },
+  
+  selectControlGroup: (groupId) => {
+    const state = get();
+    const group = state.controlGroups.find(g => g.id === groupId);
+    if (group && group.employeeIds.length > 0) {
+      set({ selectedEmployeeIds: group.employeeIds });
+      get().addNotification(`🎮 Selected group ${groupId}`, 'info');
+    }
+  },
+  
+  setRallyPoint: (taskType, employeeIds) => {
+    const state = get();
+    const newRallyPoints = state.rallyPoints.map(rp => 
+      rp.taskType === taskType 
+        ? { ...rp, targetEmployeeIds: employeeIds, enabled: employeeIds.length > 0 }
+        : rp
+    );
+    set({ rallyPoints: newRallyPoints });
+    
+    if (employeeIds.length > 0) {
+      get().addNotification(`🚩 Rally point set: ${taskType} → ${employeeIds.length} employees`, 'info');
+    }
+  },
+  
+  purchaseUpgrade: (upgradeId) => {
+    const state = get();
+    const upgrade = state.upgrades.find(u => u.id === upgradeId);
+    
+    if (!upgrade) return;
+    if (upgrade.purchased) {
+      get().addNotification('Already purchased!', 'warning');
+      return;
+    }
+    if (!upgrade.unlocked) {
+      get().addNotification('Upgrade not unlocked yet!', 'warning');
+      return;
+    }
+    if (state.money < upgrade.cost) {
+      get().addNotification(`Not enough money! Need $${upgrade.cost.toLocaleString()}`, 'error');
+      return;
+    }
+    
+    // Purchase the upgrade
+    const newUpgrades = state.upgrades.map(u => {
+      if (u.id === upgradeId) {
+        return { ...u, purchased: true };
+      }
+      // Unlock upgrades that require this one
+      if (u.requires?.includes(upgradeId)) {
+        const allRequirementsMet = u.requires.every((reqId: string) => {
+          if (reqId === upgradeId) return true;
+          const req = state.upgrades.find(up => up.id === reqId);
+          return req?.purchased;
+        });
+        if (allRequirementsMet) {
+          return { ...u, unlocked: true };
+        }
+      }
+      return u;
+    });
+    
+    set({
+      money: state.money - upgrade.cost,
+      upgrades: newUpgrades,
+    });
+    
+    get().addNotification(`🎉 Purchased: ${upgrade.name}!`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `Purchased upgrade: ${upgrade.name}`,
+      type: 'money',
+    });
+    
+    // Add minimap event
+    get().addMinimapEvent({
+      type: 'deploy',
+      x: 50,
+      y: 50,
+      label: upgrade.name,
+    });
+  },
+  
+  dismissAlert: (alertId) => {
+    set(state => ({
+      alerts: state.alerts.map(a => 
+        a.id === alertId ? { ...a, dismissed: true } : a
+      ),
+    }));
+  },
+  
+  addMinimapEvent: (event) => {
+    const state = get();
+    const newEvent = {
+      id: uuidv4(),
+      timestamp: Date.now(),
+      type: event.type,
+      x: event.x,
+      y: event.y,
+      label: event.label,
+    } satisfies MinimapEvent;
+    
+    // Keep last 50 events
+    const newEvents = [newEvent, ...state.minimapActivity].slice(0, 50);
+    set({ minimapActivity: newEvents });
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -1126,6 +1262,9 @@ export const useGameStore = create<GameState & GameActions>()(
         activityLog: state.activityLog.slice(0, 50),
         taskQueue: state.taskQueue,
         integrations: state.integrations,
+        controlGroups: state.controlGroups,
+        rallyPoints: state.rallyPoints,
+        upgrades: state.upgrades,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {

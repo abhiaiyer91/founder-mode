@@ -4,6 +4,7 @@ export { StartScreen } from './StartScreen';
 export { DashboardScreen } from './DashboardScreen';
 export { CommandCenter } from './CommandCenter';
 export { TaskQueueScreen } from './TaskQueueScreen';
+export { TechTreeScreen } from './TechTreeScreen';
 export { OfficeScreen } from './OfficeScreen';
 export { HireScreen } from './HireScreen';
 export { TasksScreen } from './TasksScreen';

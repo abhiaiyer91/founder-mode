@@ -5,6 +5,29 @@
 // Re-export integration types
 export * from './integrations';
 
+// Import and re-export RTS types
+import type { 
+  ControlGroup as ControlGroupType, 
+  RallyPoint as RallyPointType, 
+  Upgrade as UpgradeType, 
+  UpgradeCategory as UpgradeCategoryType,
+  UpgradeEffect as UpgradeEffectType,
+  ProductionStats as ProductionStatsType,
+  GameAlert as GameAlertType,
+  RTSState as RTSStateType,
+  MinimapEvent as MinimapEventType,
+} from './rts';
+export type ControlGroup = ControlGroupType;
+export type RallyPoint = RallyPointType;
+export type Upgrade = UpgradeType;
+export type UpgradeCategory = UpgradeCategoryType;
+export type UpgradeEffect = UpgradeEffectType;
+export type ProductionStats = ProductionStatsType;
+export type GameAlert = GameAlertType;
+export type RTSState = RTSStateType;
+export type MinimapEvent = MinimapEventType;
+export { DEFAULT_UPGRADES } from './rts';
+
 // Task Queue for RTS-style continuous execution
 export interface TaskQueue {
   items: QueuedTaskItem[];
@@ -103,6 +126,7 @@ export type GameScreen =
   | 'dashboard' // Clean split-view (recommended)
   | 'command'   // RTS-style command center
   | 'queue'     // Task queue / import view
+  | 'tech'      // Tech tree / upgrades
   | 'office' 
   | 'team' 
   | 'hire' 
@@ -174,6 +198,13 @@ export interface GameState {
       teamId: string | null;
     };
   };
+  
+  // RTS Features
+  controlGroups: ControlGroup[];
+  rallyPoints: RallyPoint[];
+  upgrades: Upgrade[];
+  alerts: GameAlert[];
+  minimapActivity: MinimapEvent[];
 }
 
 export interface GameNotification {
@@ -324,6 +355,14 @@ export interface GameActions {
   importFromGitHub: (issues: Array<{ number: number; title: string; body: string | null; labels: Array<{ name: string }> }>) => void;
   importFromLinear: (issues: Array<{ id: string; identifier: string; title: string; description: string | null; priority: number; labels: Array<{ name: string }> }>) => void;
   clearQueue: () => void;
+  
+  // RTS Features
+  setControlGroup: (groupId: number, employeeIds: string[]) => void;
+  selectControlGroup: (groupId: number) => void;
+  setRallyPoint: (taskType: RallyPoint['taskType'], employeeIds: string[]) => void;
+  purchaseUpgrade: (upgradeId: string) => void;
+  dismissAlert: (alertId: string) => void;
+  addMinimapEvent: (event: Omit<MinimapEvent, 'id' | 'timestamp'>) => void;
 }
 
 // Employee Templates for Hiring

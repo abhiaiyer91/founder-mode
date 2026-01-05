@@ -1,0 +1,137 @@
+import { useGameStore } from '../store/gameStore';
+import type { GameScreen } from '../types';
+import './RTSTopBar.css';
+
+// Format game time
+function formatGameTime(ticks: number): string {
+  const days = Math.floor(ticks / 480);
+  const weeks = Math.floor(days / 7);
+  const remainingDays = days % 7;
+  if (weeks > 0) {
+    return `W${weeks + 1}D${remainingDays + 1}`;
+  }
+  return `Day ${days + 1}`;
+}
+
+export function RTSTopBar() {
+  const {
+    screen,
+    tick,
+    money,
+    runway,
+    employees,
+    tasks,
+    taskQueue,
+    gameSpeed,
+    alerts,
+    setScreen,
+    setGameSpeed,
+    togglePause,
+  } = useGameStore();
+
+  const queueCount = taskQueue.items.filter(i => i.status === 'queued').length;
+  const activeCount = tasks.filter(t => t.status === 'in_progress').length;
+  const idleCount = employees.filter(e => e.status === 'idle').length;
+  const unreadAlerts = alerts.filter(a => !a.dismissed).length;
+
+  const views: { id: GameScreen; label: string; icon: string; hotkey: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
+    { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
+    { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
+    { id: 'tasks', label: 'Tasks', icon: '📋', hotkey: 'T' },
+    { id: 'team', label: 'Team', icon: '👥', hotkey: 'E' },
+    { id: 'hire', label: 'Hire', icon: '👋', hotkey: 'H' },
+  ];
+
+  // Only show in game screens
+  const gameScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tasks', 'team', 'hire', 'office', 'code', 'settings'];
+  if (!gameScreens.includes(screen)) return null;
+
+  return (
+    <div className="rts-topbar">
+      {/* Left: Resources */}
+      <div className="topbar-section resources">
+        <div className="resource money" title="Cash on hand">
+          <span className="resource-icon">💰</span>
+          <span className="resource-value">${money.toLocaleString()}</span>
+        </div>
+        <div className="resource runway" title="Months of runway">
+          <span className="resource-icon">📅</span>
+          <span className="resource-value">{runway}mo</span>
+        </div>
+        <div className="resource time" title="Game time">
+          <span className="resource-icon">⏱️</span>
+          <span className="resource-value">{formatGameTime(tick)}</span>
+        </div>
+      </div>
+
+      {/* Center: View Switcher */}
+      <div className="topbar-section views">
+        {views.map(view => (
+          <button
+            key={view.id}
+            className={`view-btn ${screen === view.id ? 'active' : ''}`}
+            onClick={() => setScreen(view.id)}
+            title={`${view.label} [${view.hotkey}]`}
+          >
+            <span className="view-icon">{view.icon}</span>
+            <span className="view-label">{view.label}</span>
+            {view.id === 'queue' && queueCount > 0 && (
+              <span className="view-badge">{queueCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Right: Status & Speed */}
+      <div className="topbar-section status">
+        <div className="status-indicators">
+          <span className="indicator" title="Active tasks">
+            🔨 {activeCount}
+          </span>
+          <span className="indicator idle" title="Idle employees">
+            💤 {idleCount}
+          </span>
+          {unreadAlerts > 0 && (
+            <span className="indicator alert" title="Alerts">
+              ⚠️ {unreadAlerts}
+            </span>
+          )}
+        </div>
+
+        <div className="speed-controls">
+          <button
+            className={`speed-btn ${gameSpeed === 'paused' ? 'active paused' : ''}`}
+            onClick={togglePause}
+            title="Pause [Space]"
+          >
+            {gameSpeed === 'paused' ? '▶' : '⏸'}
+          </button>
+          <button
+            className={`speed-btn ${gameSpeed === 'normal' ? 'active' : ''}`}
+            onClick={() => setGameSpeed('normal')}
+            title="Normal [1]"
+          >
+            1×
+          </button>
+          <button
+            className={`speed-btn ${gameSpeed === 'fast' ? 'active' : ''}`}
+            onClick={() => setGameSpeed('fast')}
+            title="Fast [2]"
+          >
+            2×
+          </button>
+          <button
+            className={`speed-btn ${gameSpeed === 'turbo' ? 'active' : ''}`}
+            onClick={() => setGameSpeed('turbo')}
+            title="Turbo [3]"
+          >
+            3×
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default RTSTopBar;

@@ -1,0 +1,249 @@
+/* Tech Tree Screen */
+
+.tech-tree-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  gap: 16px;
+}
+
+/* Header */
+.tech-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+}
+
+.back-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.tech-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.tech-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-icon {
+  font-size: 16px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color-accent);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Content */
+.tech-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tech-intro {
+  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Categories Grid */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Category Section */
+.category-section {
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--color-accent);
+}
+
+.category-icon {
+  font-size: 18px;
+}
+
+.category-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.category-progress {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.category-upgrades {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Upgrade Card */
+.upgrade-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.upgrade-card.available {
+  border-color: var(--color-accent);
+}
+
+.upgrade-card.available:hover {
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.upgrade-card.purchased {
+  border-color: var(--color-success);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.upgrade-card.locked {
+  opacity: 0.5;
+}
+
+.upgrade-card.expensive {
+  opacity: 0.7;
+}
+
+.upgrade-icon {
+  font-size: 24px;
+  width: 40px;
+  text-align: center;
+}
+
+.upgrade-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.upgrade-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.upgrade-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.upgrade-effects {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.effect {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.effect.positive {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.effect.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.upgrade-action {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.status-badge.purchased {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.status-badge.locked {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.buy-btn {
+  padding: 8px 16px;
+  background: var(--color-accent);
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.buy-btn:hover:not(.disabled) {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.buy-btn.disabled {
+  background: var(--terminal-border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}

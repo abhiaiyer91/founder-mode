@@ -42,21 +42,38 @@ The **Command Center** is your main headquarters showing everything at once:
 - Press `I` to select all idle employees
 - Assign selected employees to tasks with one click
 
-**Hotkeys**:
+**Hotkeys** (StarCraft-style):
 | Key | Action |
 |-----|--------|
 | `Space` | Pause/Resume |
-| `1/2/3` | Game speed |
+| `1/2/3` | Game speed (Normal/Fast/Turbo) |
+| `Ctrl+1-9` | Set control group |
+| `4-9` | Recall control group |
+| `D` | Dashboard view |
+| `C` | Command center view |
 | `Q` | Task queue |
-| `I` | Select idle |
+| `U` | Tech tree / Upgrades |
 | `H` | Hire screen |
-| `Esc` | Deselect |
+| `T` | Tasks board |
+| `E` | Team view |
+| `Esc` | Go back |
+
+**Control Groups** (like StarCraft!):
+- Select employees, press `Ctrl+1-9` to assign to a group
+- Press `4-9` to instantly select that group
+- Groups persist across sessions
 
 **Task Queue** (RTS-style import):
 - Press `Q` or click "📥 Queue" to open the Task Queue
 - Import issues from **GitHub** or **Linear**
 - Tasks auto-assign to idle employees
 - Queue executes continuously like RTS command queuing
+
+**Tech Tree** (Company Upgrades):
+- Press `U` to open the Tech Tree
+- Purchase upgrades to boost productivity, morale, and efficiency
+- Upgrades unlock other upgrades in a tree structure
+- Categories: Engineering, Culture, Tools, Processes
 
 ---
 
@@ -356,7 +373,16 @@ Or configure it in the game's Settings screen.
 - [x] Auto-assign to idle employees
 - [x] Priority and type auto-detection
 
-### Phase 4: Advanced Features
+### Phase 4: Full RTS Experience ✅
+- [x] Unified top bar with view switcher
+- [x] Control groups (Ctrl+1-9 to save, 4-9 to recall)
+- [x] Rally points for auto-assignment
+- [x] Tech tree / company upgrades (13 upgrades across 4 categories)
+- [x] Minimap with real-time activity events
+- [x] Multiple view modes (Dashboard, Command Center, Queue)
+- [x] Production pipeline visualization
+
+### Phase 5: Advanced Features
 - [ ] Multiple project types (web, mobile, API)
 - [ ] Company events and challenges
 - [ ] Investor meetings
