@@ -2,6 +2,17 @@
 // FOUNDER MODE - Core Type Definitions
 // ============================================
 
+// RTS Activity Log Entry
+export interface ActivityLogEntry {
+  id: string;
+  tick: number;
+  timestamp: number;
+  message: string;
+  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system';
+  employeeId?: string;
+  taskId?: string;
+}
+
 // Employee Types
 export type EmployeeRole = 'engineer' | 'designer' | 'pm' | 'marketer';
 
@@ -60,6 +71,7 @@ export interface Project {
 // Game State
 export type GameScreen = 
   | 'start' 
+  | 'command'  // RTS-style main view
   | 'office' 
   | 'team' 
   | 'hire' 
@@ -112,6 +124,12 @@ export interface GameState {
   selectedEmployeeId: string | null;
   selectedTaskId: string | null;
   notifications: GameNotification[];
+  
+  // RTS State
+  activityLog: ActivityLogEntry[];
+  selectedEmployeeIds: string[]; // Multi-select for RTS
+  isPaused: boolean;
+  showCommandPalette: boolean;
 }
 
 export interface GameNotification {
@@ -204,6 +222,7 @@ export interface GameActions {
   // Game Control
   setGameSpeed: (speed: GameSpeed) => void;
   gameTick: () => void;
+  togglePause: () => void;
   
   // Project
   startProject: (idea: string) => void;
@@ -215,15 +234,31 @@ export interface GameActions {
   // Tasks
   createTask: (task: Omit<Task, 'id' | 'createdAt' | 'progressTicks' | 'completedAt' | 'codeGenerated' | 'filesCreated'>) => void;
   assignTask: (taskId: string, employeeId: string) => void;
+  unassignTask: (taskId: string) => void;
   updateTaskStatus: (taskId: string, status: TaskStatus) => void;
   
-  // Selection
+  // Selection (RTS-style)
   selectEmployee: (id: string | null) => void;
+  selectEmployees: (ids: string[]) => void;
+  addToSelection: (id: string) => void;
   selectTask: (id: string | null) => void;
+  clearSelection: () => void;
+  selectAllIdle: () => void;
+  
+  // Quick Commands (RTS hotkeys)
+  quickAssignToTask: (taskId: string) => void;
+  quickHire: (role: EmployeeRole) => void;
+  boostMorale: () => void;
   
   // Notifications
   addNotification: (message: string, type: GameNotification['type']) => void;
   dismissNotification: (id: string) => void;
+  
+  // Activity Log
+  logActivity: (entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>) => void;
+  
+  // Command Palette
+  toggleCommandPalette: () => void;
   
   // Events
   triggerRandomEvent: () => void;

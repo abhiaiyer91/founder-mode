@@ -2,11 +2,54 @@
 
 > *Build a real startup. Ship real code. Play the game.*
 
-**Founder Mode** is a startup simulation game where you play as a solo founder building your company from the ground up. But here's the twist: your AI team actually writes real code that gets committed to GitHub. It's not just a game—it's a development tool disguised as one.
+**Founder Mode** is a real-time strategy game where you manage a startup and your AI team builds actual software. Think *StarCraft* meets *Y Combinator* — select your engineers, assign them to tasks, and watch real code get generated.
 
-Think *RollerCoaster Tycoon* meets *Y Combinator*, with a retro terminal UI aesthetic.
+**The twist?** Your team uses AI to generate actual code, designs, and marketing copy that you can use in real projects.
 
 ![Founder Mode](https://img.shields.io/badge/status-alpha-orange) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![React](https://img.shields.io/badge/React-19-cyan)
+
+---
+
+## 🎮 RTS-Style Gameplay
+
+The **Command Center** is your main headquarters showing everything at once:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🏢 COMMAND CENTER                              🎮 Command 📋 Tasks 👥 Team  │
+├──────────────────┬─────────────────────────────────┬────────────────────────┤
+│ 👥 Team (4)      │ 📋 Tasks                        │ 🎯 Project: MyApp      │
+│                  │                                 │ [████████░░] 67%       │
+│ 👨‍💻 Alex      ⚡78│ 📥 Todo (3) │ 🔨 Active (2)    │                        │
+│ [████░░] 67%     │ ┌─────────┐ │ ┌─────────────┐  │ ────────────────────── │
+│                  │ │✨Feature│ │ │🐛 Fix login │  │ 📜 Activity            │
+│ 👩‍💻 Sam       ⚡85│ │Dashboard│ │ │ 👨‍💻 Alex     │  │ ▸ Alex started task   │
+│ [idle]           │ │+Assign  │ │ │ [███░░] 45% │  │ ▸ Sam hired            │
+│                  │ └─────────┘ │ └─────────────┘  │ ▸ Bug discovered!      │
+│ 🎨 Jordan    ⚡72│             │                  │                        │
+│ [████████] 100%  │             │ 👀 Review (1)    │                        │
+│                  │             │ ┌─────────────┐  │                        │
+│ 📊 Casey     ⚡90│             │ │🎨 UI polish │  │                        │
+│ [idle]           │             │ │[✓ Approve]  │  │                        │
+└──────────────────┴─────────────┴─────────────────┴────────────────────────┘
+│ 💰 $45,000 │ ⏱️ Week 2 │ 👥 4 │ 💤 2 idle │ 🔨 2 active │ ⏸ ▶ ▶▶ ▶▶▶     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Unit Selection** (RTS-style):
+- Click employees to select them
+- Ctrl/Cmd+Click for multi-select
+- Press `I` to select all idle employees
+- Assign selected employees to tasks with one click
+
+**Hotkeys**:
+| Key | Action |
+|-----|--------|
+| `Space` | Pause/Resume |
+| `1/2/3` | Game speed |
+| `I` | Select idle |
+| `H` | Hire screen |
+| `Esc` | Deselect |
 
 ---
 
@@ -175,16 +218,35 @@ Or configure it in the game's Settings screen.
 
 ## 🎮 Controls
 
+**Game Speed**
 | Key | Action |
 |-----|--------|
-| `↑` `↓` | Navigate menus |
-| `Enter` | Select / Confirm |
-| `Esc` | Back / Cancel |
-| `Tab` | Switch panels |
-| `H` | Hire menu |
-| `T` | Tasks view |
+| `Space` | Pause/Resume |
+| `1` | Normal speed |
+| `2` | Fast speed |
+| `3` | Turbo speed |
+
+**Selection (RTS-style)**
+| Key | Action |
+|-----|--------|
+| `Click` | Select employee |
+| `Ctrl+Click` | Add to selection |
+| `I` | Select all idle |
+| `Esc` | Clear selection |
+
+**Navigation**
+| Key | Action |
+|-----|--------|
+| `H` | Hire screen |
+| `T` | Tasks board |
 | `C` | Code view |
-| `G` | Git status |
+
+**Quick Actions**
+| Action | How |
+|--------|-----|
+| Assign task | Select employee(s), click task |
+| Approve review | Click "✓ Approve" on review tasks |
+| Boost morale | Click 🍕 Boost ($1,000) |
 
 ---
 
@@ -195,17 +257,20 @@ Or configure it in the game's Settings screen.
 - [x] Game state management
 - [x] Basic screens and navigation
 
-### Phase 2: Core Gameplay 🚧
-- [ ] Employee hiring and management
-- [ ] Task creation and assignment
-- [ ] Resource management (money, time)
-- [ ] Project progress tracking
+### Phase 2: Core Gameplay ✅
+- [x] RTS-style Command Center
+- [x] Employee hiring and management
+- [x] Task creation and assignment
+- [x] Unit selection and hotkeys
+- [x] Activity feed and minimap
+- [x] Resource management (money, time)
+- [x] Project progress tracking
 
-### Phase 3: AI Integration
-- [ ] Connect to AI coding agents
-- [ ] Real code generation
-- [ ] Git commit integration
-- [ ] Code review simulation
+### Phase 3: AI Integration ✅
+- [x] Mastra agent framework
+- [x] Real code generation
+- [x] 12+ AI tools
+- [x] Fallback modes (Server → API → Simulation)
 
 ### Phase 4: Advanced Features
 - [ ] Multiple project types (web, mobile, API)

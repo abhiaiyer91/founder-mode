@@ -12,6 +12,7 @@ import type {
   TaskStatus,
   TaskType,
   TaskPriority,
+  ActivityLogEntry,
 } from '../types';
 import {
   EMPLOYEE_TEMPLATES,
@@ -85,6 +86,11 @@ const initialState: GameState = {
   selectedEmployeeId: null,
   selectedTaskId: null,
   notifications: [],
+  // RTS State
+  activityLog: [],
+  selectedEmployeeIds: [],
+  isPaused: false,
+  showCommandPalette: false,
 };
 
 // Create the store
@@ -96,6 +102,15 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
   // Game Control
   setGameSpeed: (speed: GameSpeed) => set({ gameSpeed: speed }),
+  
+  togglePause: () => {
+    const state = get();
+    if (state.gameSpeed === 'paused') {
+      set({ gameSpeed: 'normal', isPaused: false });
+    } else {
+      set({ gameSpeed: 'paused', isPaused: true });
+    }
+  },
 
   gameTick: () => {
     const state = get();
@@ -123,7 +138,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       const newProgress = task.progressTicks + progressIncrement;
 
       if (newProgress >= task.estimatedTicks) {
-        // Task completed!
+        // Task goes to review
+        get().logActivity({
+          tick: state.tick,
+          message: `${assignee.name} finished "${task.title}" → Ready for review`,
+          type: 'work',
+          employeeId: assignee.id,
+          taskId: task.id,
+        });
         return {
           ...task,
           progressTicks: task.estimatedTicks,
@@ -148,6 +170,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   // Project
   startProject: (idea: string) => {
     const projectName = idea.split(' ').slice(0, 3).join(' ');
+    const tick = get().tick;
     set({
       project: {
         id: uuidv4(),
@@ -156,12 +179,17 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         idea,
         techStack: ['TypeScript', 'React'],
         repository: null,
-        createdAt: get().tick,
+        createdAt: tick,
       },
-      screen: 'office',
+      screen: 'command', // Go to RTS-style Command Center
       gameSpeed: 'normal',
     });
     get().addNotification(`🚀 Started project: ${projectName}`, 'success');
+    get().logActivity({
+      tick,
+      message: `Founded "${projectName}" - Let's build something great!`,
+      type: 'system',
+    });
   },
 
   // Team Management
@@ -201,6 +229,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     });
 
     get().addNotification(`👋 Hired ${newEmployee.name} as ${template.title}!`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `Hired ${newEmployee.name} (${template.title})`,
+      type: 'hire',
+      employeeId: newEmployee.id,
+    });
   },
 
   fireEmployee: (id: string) => {
@@ -268,6 +302,13 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     });
 
     get().addNotification(`✅ Assigned "${task.title}" to ${employee.name}`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `${employee.name} started working on "${task.title}"`,
+      type: 'work',
+      employeeId: employee.id,
+      taskId: task.id,
+    });
   },
 
   updateTaskStatus: (taskId: string, status: TaskStatus) => {
@@ -295,6 +336,13 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           },
         });
         get().addNotification(`🎉 Task completed: ${task.title}`, 'success');
+        get().logActivity({
+          tick: state.tick,
+          message: `✅ "${task.title}" completed!`,
+          type: 'complete',
+          employeeId: task.assigneeId || undefined,
+          taskId: task.id,
+        });
         return;
       }
     }
@@ -302,9 +350,165 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     set({ tasks: updatedTasks });
   },
 
-  // Selection
-  selectEmployee: (id) => set({ selectedEmployeeId: id }),
+  // Unassign task
+  unassignTask: (taskId: string) => {
+    const state = get();
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task || !task.assigneeId) return;
+
+    const employee = state.employees.find(e => e.id === task.assigneeId);
+    
+    const updatedTasks = state.tasks.map(t =>
+      t.id === taskId
+        ? { ...t, assigneeId: null, status: 'todo' as TaskStatus }
+        : t
+    );
+
+    const updatedEmployees = state.employees.map(e =>
+      e.id === task.assigneeId
+        ? { ...e, status: 'idle' as const, currentTaskId: null }
+        : e
+    );
+
+    set({ tasks: updatedTasks, employees: updatedEmployees });
+    
+    if (employee) {
+      get().logActivity({
+        tick: state.tick,
+        message: `${employee.name} unassigned from "${task.title}"`,
+        type: 'task',
+        employeeId: employee.id,
+        taskId: task.id,
+      });
+    }
+  },
+
+  // Selection (RTS-style)
+  selectEmployee: (id) => set({ 
+    selectedEmployeeId: id,
+    selectedEmployeeIds: id ? [id] : [],
+  }),
+  
+  selectEmployees: (ids) => set({ 
+    selectedEmployeeIds: ids,
+    selectedEmployeeId: ids[0] || null,
+  }),
+  
+  addToSelection: (id) => {
+    const state = get();
+    if (!state.selectedEmployeeIds.includes(id)) {
+      set({ 
+        selectedEmployeeIds: [...state.selectedEmployeeIds, id],
+        selectedEmployeeId: id,
+      });
+    }
+  },
+  
   selectTask: (id) => set({ selectedTaskId: id }),
+  
+  clearSelection: () => set({ 
+    selectedEmployeeId: null, 
+    selectedEmployeeIds: [],
+    selectedTaskId: null,
+  }),
+  
+  selectAllIdle: () => {
+    const state = get();
+    const idleIds = state.employees
+      .filter(e => e.status === 'idle')
+      .map(e => e.id);
+    set({ 
+      selectedEmployeeIds: idleIds,
+      selectedEmployeeId: idleIds[0] || null,
+    });
+    if (idleIds.length > 0) {
+      get().addNotification(`Selected ${idleIds.length} idle employee(s)`, 'info');
+    }
+  },
+  
+  // Quick Commands (RTS hotkeys)
+  quickAssignToTask: (taskId: string) => {
+    const state = get();
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    // Find first selected idle employee that matches task type
+    const roleForTask = task.type === 'feature' || task.type === 'bug' || task.type === 'infrastructure' 
+      ? 'engineer'
+      : task.type === 'design' 
+      ? 'designer' 
+      : task.type === 'marketing' 
+      ? 'marketer' 
+      : null;
+    
+    const selectedEmployee = state.employees.find(e => 
+      state.selectedEmployeeIds.includes(e.id) && 
+      e.status === 'idle' &&
+      (!roleForTask || e.role === roleForTask)
+    ) || state.employees.find(e => 
+      state.selectedEmployeeIds.includes(e.id) && 
+      e.status === 'idle'
+    );
+    
+    if (selectedEmployee) {
+      get().assignTask(taskId, selectedEmployee.id);
+      get().logActivity({
+        tick: state.tick,
+        message: `Quick assigned: ${selectedEmployee.name} → "${task.title}"`,
+        type: 'task',
+        employeeId: selectedEmployee.id,
+        taskId,
+      });
+    } else {
+      get().addNotification('No suitable idle employee selected', 'warning');
+    }
+  },
+  
+  quickHire: (role: EmployeeRole) => {
+    // Hire a mid-level employee of this role
+    get().hireEmployee(role, 'mid');
+  },
+  
+  boostMorale: () => {
+    const state = get();
+    if (state.money < 1000) {
+      get().addNotification('Not enough money for team boost ($1,000 needed)', 'error');
+      return;
+    }
+    
+    const boostedEmployees = state.employees.map(e => ({
+      ...e,
+      morale: Math.min(100, e.morale + 20),
+      productivity: Math.min(100, e.productivity + 5),
+    }));
+    
+    set({ 
+      employees: boostedEmployees,
+      money: state.money - 1000,
+    });
+    
+    get().addNotification('🍕 Team pizza party! Morale boosted (+20)', 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: 'Team morale boosted with pizza party',
+      type: 'event',
+    });
+  },
+
+  // Activity Log
+  logActivity: (entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>) => {
+    const newEntry: ActivityLogEntry = {
+      ...entry,
+      id: uuidv4(),
+      timestamp: Date.now(),
+    };
+    set(state => ({
+      activityLog: [newEntry, ...state.activityLog].slice(0, 100), // Keep last 100 entries
+    }));
+  },
+  
+  // Command Palette
+  toggleCommandPalette: () => set(state => ({ showCommandPalette: !state.showCommandPalette })),
 
   // Notifications
   addNotification: (message, type) => {

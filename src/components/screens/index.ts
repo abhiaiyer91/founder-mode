@@ -1,5 +1,6 @@
 // Game Screens
 export { StartScreen } from './StartScreen';
+export { CommandCenter } from './CommandCenter';
 export { OfficeScreen } from './OfficeScreen';
 export { HireScreen } from './HireScreen';
 export { TasksScreen } from './TasksScreen';

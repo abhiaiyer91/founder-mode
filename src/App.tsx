@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useGameStore } from './store/gameStore';
 import { 
   StartScreen, 
+  CommandCenter,
   OfficeScreen, 
   HireScreen, 
   TasksScreen,
@@ -119,6 +120,8 @@ function App() {
     switch (screen) {
       case 'start':
         return <StartScreen />;
+      case 'command':
+        return <CommandCenter />;
       case 'office':
         return <OfficeScreen />;
       case 'hire':
@@ -136,10 +139,13 @@ function App() {
     }
   };
 
+  // Command Center has its own status bar built-in
+  const showStatusBar = project && screen !== 'command';
+
   return (
     <div className="app">
       {renderScreen()}
-      {project && <StatusBar />}
+      {showStatusBar && <StatusBar />}
     </div>
   );
 }
