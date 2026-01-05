@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { SavePanel } from './SavePanel';
 import type { GameScreen } from '../types';
 import './RTSTopBar.css';
 
@@ -14,6 +16,8 @@ function formatGameTime(ticks: number): string {
 }
 
 export function RTSTopBar() {
+  const [showSavePanel, setShowSavePanel] = useState(false);
+  
   const {
     screen,
     tick,
@@ -37,6 +41,7 @@ export function RTSTopBar() {
   const activeCount = tasks.filter(t => t.status === 'in_progress').length;
   const idleCount = employees.filter(e => e.status === 'idle').length;
   const unreadAlerts = alerts.filter(a => !a.dismissed).length;
+  const completedWithCode = tasks.filter(t => t.status === 'done' && t.codeGenerated).length;
 
   const views: { id: GameScreen; label: string; icon: string; hotkey: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
@@ -122,6 +127,14 @@ export function RTSTopBar() {
           )}
         </div>
 
+        <button
+          className={`save-btn ${completedWithCode > 0 ? 'has-code' : ''}`}
+          onClick={() => setShowSavePanel(true)}
+          title="Save to GitHub"
+        >
+          💾 {completedWithCode > 0 && <span className="code-count">{completedWithCode}</span>}
+        </button>
+
         <div className="speed-controls">
           <button
             className={`speed-btn ${gameSpeed === 'paused' ? 'active paused' : ''}`}
@@ -153,6 +166,11 @@ export function RTSTopBar() {
           </button>
         </div>
       </div>
+
+      <SavePanel 
+        isOpen={showSavePanel}
+        onClose={() => setShowSavePanel(false)}
+      />
     </div>
   );
 }

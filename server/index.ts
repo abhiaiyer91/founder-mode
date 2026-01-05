@@ -6,6 +6,7 @@ import { auth } from './auth';
 import { agents, allTools } from './mastra';
 import gameRoutes from './routes/game';
 import integrationRoutes from './routes/integrations';
+import githubRoutes from './routes/github';
 import { checkDatabaseConnection } from './db';
 import type { AgentRole } from './mastra';
 
@@ -27,6 +28,9 @@ app.use('/api/game', gameRoutes);
 
 // Integrations API - mount at /api/integrations
 app.use('/api/integrations', integrationRoutes);
+
+// GitHub API - mount at /api/github
+app.use('/api/github', githubRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
