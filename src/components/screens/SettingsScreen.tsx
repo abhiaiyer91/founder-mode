@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Terminal, Box, Menu, Input } from '../tui';
 import type { MenuItem } from '../tui';
 import { useGameStore } from '../../store/gameStore';
-import { aiService } from '../../lib/ai';
+import { aiService, mastraClient } from '../../lib/ai';
 import type { GameSpeed } from '../../types';
 import './SettingsScreen.css';
 
@@ -24,6 +24,20 @@ export function SettingsScreen() {
 
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [mastraConnected, setMastraConnected] = useState(false);
+  const [checkingMastra, setCheckingMastra] = useState(false);
+
+  // Check Mastra server connection
+  useEffect(() => {
+    checkMastraConnection();
+  }, []);
+
+  const checkMastraConnection = async () => {
+    setCheckingMastra(true);
+    const connected = await mastraClient.checkHealth();
+    setMastraConnected(connected);
+    setCheckingMastra(false);
+  };
 
   const speedOptions: MenuItem[] = [
     { id: 'paused', label: '⏸️ Paused', shortcut: '0' },
@@ -83,11 +97,31 @@ export function SettingsScreen() {
               Connect your AI provider to power your team with real intelligence.
               Your employees will use AI to write actual code, create designs, and more!
             </p>
+
+            {/* Mastra Server Status */}
+            <div className="mastra-status">
+              <div className="status-row">
+                <span className="status-label">Mastra Server:</span>
+                <span className={`status-badge ${mastraConnected ? 'enabled' : 'disabled'}`}>
+                  {checkingMastra ? '⏳ Checking...' : mastraConnected ? '🟢 CONNECTED' : '🔴 NOT RUNNING'}
+                </span>
+                <button className="check-btn" onClick={checkMastraConnection} disabled={checkingMastra}>
+                  ↻ Refresh
+                </button>
+              </div>
+              {!mastraConnected && (
+                <div className="mastra-help">
+                  <p>Start the Mastra server for full AI power:</p>
+                  <code>pnpm dev:server</code>
+                  <p className="hint">Or run both frontend and server: <code>pnpm dev:all</code></p>
+                </div>
+              )}
+            </div>
             
             <div className="ai-status">
-              <span className="status-label">Status:</span>
-              <span className={`status-badge ${aiSettings.enabled ? 'enabled' : 'disabled'}`}>
-                {aiSettings.enabled ? '🟢 AI ENABLED' : '🔴 SIMULATION MODE'}
+              <span className="status-label">AI Status:</span>
+              <span className={`status-badge ${aiSettings.enabled ? 'enabled' : mastraConnected ? 'enabled' : 'disabled'}`}>
+                {mastraConnected ? '🚀 MASTRA MODE' : aiSettings.enabled ? '🟢 OPENAI MODE' : '🔴 SIMULATION MODE'}
               </span>
             </div>
 

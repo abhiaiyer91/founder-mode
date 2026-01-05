@@ -98,21 +98,46 @@ src/
     └── index.ts             # TypeScript interfaces
 ```
 
-### AI Architecture
+### AI Architecture (Powered by Mastra)
 
-The game uses a **Mastra-inspired agent architecture** that's browser-compatible:
+The game uses **Mastra**, a powerful AI agent framework:
 
-- **Agent Definitions**: Each role (Engineer, PM, Designer, Marketer) has a defined persona and system prompt
-- **AI Service**: Handles API calls to OpenAI with graceful fallbacks
-- **Simulation Mode**: Works without an API key using intelligent simulations
-
-```typescript
-// Example: Engineer agent working on a task
-const result = await aiService.engineerWorkOnTask(task, projectContext);
-// Returns: { code, files, explanation }
+```
+┌─────────────────────────────────────────────────────────────┐
+│  BROWSER (React Game)                                       │
+│  └── AI Service ──→ Mastra Client                          │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ HTTP
+┌─────────────────────▼───────────────────────────────────────┐
+│  SERVER (Mastra)                                            │
+│  ├── Engineer Agent ──→ Code Tools                         │
+│  ├── PM Agent ──→ Product Tools                            │
+│  ├── Designer Agent ──→ Design Tools                       │
+│  └── Marketer Agent ──→ Marketing Tools                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-When you're ready for full Mastra integration (server-side), the agent definitions can be directly ported.
+**Features:**
+- **Agents**: Each role has a full Mastra agent with personality and expertise
+- **Tools**: 12+ tools for code generation, task breakdown, design, and marketing
+- **Fallback Chain**: Mastra server → OpenAI direct → Simulation mode
+
+```
+server/
+├── mastra/
+│   ├── agents/         # Agent definitions with prompts
+│   │   ├── engineer.ts # Writes React/TypeScript code
+│   │   ├── pm.ts       # Breaks down projects into tasks
+│   │   ├── designer.ts # Creates CSS and design systems
+│   │   └── marketer.ts # Writes copy and campaigns
+│   ├── tools/          # Mastra tools
+│   │   ├── code.ts     # generateReactComponent, fixBug, etc.
+│   │   ├── product.ts  # breakdownProject, prioritizeTasks
+│   │   ├── design.ts   # createDesignSystem, createComponentStyles
+│   │   └── marketing.ts # createLandingPageCopy, createSocialPost
+│   └── index.ts        # Mastra configuration
+└── index.ts            # Express server with endpoints
+```
 
 ---
 
@@ -122,12 +147,29 @@ When you're ready for full Mastra integration (server-side), the agent definitio
 # Install dependencies
 pnpm install
 
-# Start the game
+# Option 1: Start game only (simulation mode)
 pnpm dev
+
+# Option 2: Start game + Mastra AI server (full AI power!)
+pnpm dev:all
+
+# Option 3: Start servers separately
+pnpm dev          # Frontend on :5173
+pnpm dev:server   # Mastra server on :3001
 
 # Build for production
 pnpm build
 ```
+
+### Environment Setup
+
+For AI features, set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY=sk-your-key-here
+```
+
+Or configure it in the game's Settings screen.
 
 ---
 

@@ -138,6 +138,73 @@
   cursor: pointer;
 }
 
+/* Mastra Status */
+.mastra-status {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.check-btn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.check-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.check-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.mastra-help {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.mastra-help p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.mastra-help code {
+  display: inline-block;
+  padding: 4px 8px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.mastra-help .hint {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.mastra-help .hint code {
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
 .settings-layout {
   display: flex;
   flex-direction: column;
