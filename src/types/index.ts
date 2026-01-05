@@ -17,6 +17,9 @@ import type {
   PMThought as PMThoughtType,
   ProductState as ProductStateType,
   PMBrainState as PMBrainStateType,
+  PMProposal as PMProposalType,
+  ProposalType as ProposalTypeType,
+  ProposalStatus as ProposalStatusType,
 } from './missions';
 
 export type Mission = MissionType;
@@ -29,6 +32,9 @@ export type ProductPhase = ProductPhaseType;
 export type PMThought = PMThoughtType;
 export type ProductState = ProductStateType;
 export type PMBrainState = PMBrainStateType;
+export type PMProposal = PMProposalType;
+export type ProposalType = ProposalTypeType;
+export type ProposalStatus = ProposalStatusType;
 export { MISSION_TEMPLATES } from './missions';
 
 // Import and re-export achievement types
@@ -471,12 +477,17 @@ export interface GameActions {
   
   // PM Brain (continuous product thinking loop)
   togglePMBrain: () => void;
-  togglePMAutoGenerate: () => void;
   runPMEvaluation: () => void;
   addPMThought: (thought: Omit<PMThought, 'id' | 'timestamp'>) => void;
   createEpic: (name: string, description: string, phase: ProductPhase) => string;
   addMissionToEpic: (epicId: string, missionId: string) => void;
   updateEpicStatus: (epicId: string, status: EpicStatus) => void;
+  
+  // PM Proposals (human-in-the-loop decisions)
+  approveProposal: (proposalId: string) => void;
+  rejectProposal: (proposalId: string) => void;
+  dismissProposal: (proposalId: string) => void;
+  getPendingProposals: () => PMProposal[];
 }
 
 // Employee Templates for Hiring

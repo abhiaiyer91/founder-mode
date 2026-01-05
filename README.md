@@ -135,6 +135,38 @@ Mission: User Authentication
 └── Status: Active → Ready for PR → Merged! 🎉
 ```
 
+**PM Advisor** (Human-in-the-Loop):
+
+The PM agent continuously analyzes your product state and makes **suggestions**, but **YOU decide** what to build:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ 🧠 PM ADVISOR                           2 pending  │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 📬 AWAITING YOUR DECISION                          │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 🎯 MISSION  HIGH                                │ │
+│ │ New Mission: User Authentication                │ │
+│ │                                                 │ │
+│ │ 💭 PM's Reasoning:                              │ │
+│ │ "Product is in MVP phase. 2 employees are      │ │
+│ │  idle with 0 pending tasks. This mission       │ │
+│ │  will advance the product."                    │ │
+│ │                                                 │ │
+│ │     [❌ Reject]            [✅ Approve]        │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 💭 PM IS THINKING...                               │
+│ 👁️ Product is in MVP phase with 3 features.        │
+│ ⚠️ 2 idle employees with no pending tasks.         │
+│ 💡 Proposing mission: User Authentication          │
+└─────────────────────────────────────────────────────┘
+```
+
+The PM suggests, you approve - just like advisors in Civilization!
+
 ---
 
 ## 🎯 The Vision

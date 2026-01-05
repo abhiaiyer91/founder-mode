@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SavePanel } from './SavePanel';
+import { PMAdvisorBadge } from './PMAdvisor';
 import type { GameScreen } from '../types';
 import './RTSTopBar.css';
 
@@ -76,6 +77,7 @@ export function RTSTopBar() {
           <span className="resource-icon">⏱️</span>
           <span className="resource-value">{formatGameTime(tick)}</span>
         </div>
+        <PMAdvisorBadge />
       </div>
 
       {/* Center: View Switcher */}

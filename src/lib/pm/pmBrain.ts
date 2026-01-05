@@ -79,7 +79,7 @@ export interface PMState {
  * Analyze current product state from tasks and missions
  */
 export function analyzeProductState(
-  project: Project | null,
+  _project: Project | null, // Used for future product name analysis
   tasks: Task[],
   missions: Mission[],
   tick: number

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Terminal } from '../tui';
 import { useGameStore } from '../../store/gameStore';
+import { PMAdvisor } from '../PMAdvisor';
 import './DashboardScreen.css';
 
 // Format game time
@@ -370,6 +371,11 @@ export function DashboardScreen() {
                   <div className="empty-activity">No activity yet</div>
                 )}
               </div>
+            </div>
+            
+            {/* PM Advisor - Human in the Loop */}
+            <div className="panel advisor-panel">
+              <PMAdvisor />
             </div>
           </div>
         </div>

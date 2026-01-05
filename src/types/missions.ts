@@ -58,13 +58,48 @@ export interface ProductState {
   techDebtScore: number;
 }
 
+// PM Proposal - suggestions awaiting player approval
+export type ProposalType = 'mission' | 'hire' | 'priority' | 'tech' | 'pivot';
+export type ProposalStatus = 'pending' | 'approved' | 'rejected' | 'expired';
+
+export interface PMProposal {
+  id: string;
+  type: ProposalType;
+  title: string;
+  description: string;
+  reasoning: string; // Why the PM suggests this
+  priority: MissionPriority;
+  createdAt: number;
+  expiresAt: number | null; // Some proposals are time-sensitive
+  status: ProposalStatus;
+  
+  // Payload depends on type
+  payload: {
+    // For mission proposals
+    missionName?: string;
+    missionDescription?: string;
+    tasks?: Array<{ title: string; type: string; estimatedTicks: number }>;
+    
+    // For hire proposals
+    role?: string;
+    skillLevel?: string;
+    
+    // For priority proposals
+    taskId?: string;
+    suggestedPriority?: string;
+    
+    // For tech proposals
+    upgradeId?: string;
+  };
+}
+
 export interface PMBrainState {
   enabled: boolean;
   thoughts: PMThought[];
+  proposals: PMProposal[]; // Suggestions awaiting player approval
   epics: Epic[];
   productState: ProductState | null;
   lastEvaluation: number;
-  autoGenerateEnabled: boolean;
   evaluationInterval: number; // ticks between evaluations
 }
 

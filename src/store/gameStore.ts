@@ -24,6 +24,7 @@ import type {
   ProductPhase,
   PMThought,
   PMBrainState,
+  PMProposal,
 } from '../types';
 import { 
   analyzeProductState, 
@@ -153,14 +154,14 @@ const initialState: GameState = {
   missions: [],
   activeMissionId: null,
   
-  // PM Brain (continuous product thinking)
+  // PM Brain (continuous product thinking - human in the loop)
   pmBrain: {
     enabled: true,
     thoughts: [],
+    proposals: [], // Suggestions awaiting player approval
     epics: [],
     productState: null,
     lastEvaluation: 0,
-    autoGenerateEnabled: true,
     evaluationInterval: 120, // Evaluate every 2 minutes of game time
   } as PMBrainState,
 };
@@ -1941,15 +1942,6 @@ export const useGameStore = create<GameState & GameActions>()(
     );
   },
 
-  togglePMAutoGenerate: () => {
-    set(state => ({
-      pmBrain: {
-        ...state.pmBrain,
-        autoGenerateEnabled: !state.pmBrain.autoGenerateEnabled,
-      },
-    }));
-  },
-
   runPMEvaluation: () => {
     const state = get();
     if (!state.project || !state.pmBrain.enabled) return;
@@ -1985,37 +1977,87 @@ export const useGameStore = create<GameState & GameActions>()(
       },
     }));
     
-    // Auto-generate missions if enabled
-    if (state.pmBrain.autoGenerateEnabled) {
-      const pendingTasks = state.tasks.filter(t => t.status === 'todo' || t.status === 'backlog').length;
-      const idleEmployees = state.employees.filter(e => e.status === 'idle').length;
-      const activeMissions = state.missions.filter(m => m.status === 'active').length;
+    // === HUMAN IN THE LOOP ===
+    // Instead of auto-generating, create PROPOSALS for the player to approve
+    const pendingTasks = state.tasks.filter(t => t.status === 'todo' || t.status === 'backlog').length;
+    const idleEmployees = state.employees.filter(e => e.status === 'idle').length;
+    const activeMissions = state.missions.filter(m => m.status === 'active').length;
+    const pendingProposals = state.pmBrain.proposals.filter(p => p.status === 'pending');
+    
+    // Only suggest if we need work AND don't have too many pending proposals
+    if (idleEmployees > 0 && pendingTasks < idleEmployees && activeMissions < 2 && pendingProposals.length < 3) {
+      const suggestions = evaluateNextMissions(productState, state.missions, 1);
       
-      // Only auto-generate if we need work
-      if (idleEmployees > 0 && pendingTasks < idleEmployees && activeMissions < 2) {
-        const suggestions = evaluateNextMissions(productState, state.missions, 1);
+      // Check we haven't already proposed this mission
+      const proposedNames = new Set(pendingProposals.map(p => p.payload.missionName?.toLowerCase()));
+      
+      for (const template of suggestions) {
+        if (proposedNames.has(template.name.toLowerCase())) continue;
         
-        if (suggestions.length > 0) {
-          const template = suggestions[0];
-          
-          get().addPMThought({
-            type: 'decision',
-            message: `Creating new mission: ${template.name}`,
-          });
-          
-          get().createMissionWithTasks(
-            template.name,
-            template.description,
-            template.priority,
-            template.tasks as Array<{ title: string; type: TaskType; estimatedTicks: number }>
-          );
-          
-          get().addPMThought({
-            type: 'action',
-            message: `✅ Mission "${template.name}" created with ${template.tasks.length} tasks`,
-          });
-        }
+        // Create a proposal for player approval
+        const proposal: PMProposal = {
+          id: uuidv4(),
+          type: 'mission',
+          title: `New Mission: ${template.name}`,
+          description: template.description,
+          reasoning: `Product is in ${productState.phase} phase. ${idleEmployees} employees are idle with only ${pendingTasks} pending tasks. This mission will advance the product.`,
+          priority: template.priority,
+          createdAt: state.tick,
+          expiresAt: null, // Missions don't expire
+          status: 'pending',
+          payload: {
+            missionName: template.name,
+            missionDescription: template.description,
+            tasks: template.tasks,
+          },
+        };
+        
+        set(state => ({
+          pmBrain: {
+            ...state.pmBrain,
+            proposals: [proposal, ...state.pmBrain.proposals],
+          },
+        }));
+        
+        get().addPMThought({
+          type: 'decision',
+          message: `💡 Proposing mission: ${template.name}`,
+        });
+        
+        get().addNotification(`🧠 PM suggests: ${template.name}`, 'info');
+        
+        break; // Only one proposal per evaluation
       }
+    }
+    
+    // Suggest hiring if we have money but few employees
+    if (state.employees.length < 3 && state.money > 30000 && !pendingProposals.some(p => p.type === 'hire')) {
+      const neededRole = state.employees.length === 0 ? 'engineer' : 
+        state.employees.filter(e => e.role === 'engineer').length === 0 ? 'engineer' :
+        state.employees.filter(e => e.role === 'designer').length === 0 ? 'designer' : 'pm';
+      
+      const proposal: PMProposal = {
+        id: uuidv4(),
+        type: 'hire',
+        title: `Hire a ${neededRole}`,
+        description: `Your team is small. Consider hiring a ${neededRole} to increase capacity.`,
+        reasoning: `Only ${state.employees.length} employees. Budget: $${state.money.toLocaleString()}. A ${neededRole} would help the team.`,
+        priority: 'medium',
+        createdAt: state.tick,
+        expiresAt: null,
+        status: 'pending',
+        payload: {
+          role: neededRole,
+          skillLevel: 'mid',
+        },
+      };
+      
+      set(state => ({
+        pmBrain: {
+          ...state.pmBrain,
+          proposals: [proposal, ...state.pmBrain.proposals],
+        },
+      }));
     }
   },
 
@@ -2091,6 +2133,97 @@ export const useGameStore = create<GameState & GameActions>()(
         ),
       },
     }));
+  },
+
+  // ============================================
+  // PM Proposals - Human in the Loop
+  // ============================================
+
+  approveProposal: (proposalId: string) => {
+    const state = get();
+    const proposal = state.pmBrain.proposals.find(p => p.id === proposalId);
+    
+    if (!proposal || proposal.status !== 'pending') return;
+    
+    // Mark as approved
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        proposals: state.pmBrain.proposals.map(p =>
+          p.id === proposalId ? { ...p, status: 'approved' as const } : p
+        ),
+      },
+    }));
+    
+    // Execute the proposal
+    switch (proposal.type) {
+      case 'mission': {
+        if (proposal.payload.missionName && proposal.payload.tasks) {
+          get().createMissionWithTasks(
+            proposal.payload.missionName,
+            proposal.payload.missionDescription || '',
+            proposal.priority,
+            proposal.payload.tasks as Array<{ title: string; type: TaskType; estimatedTicks: number }>
+          );
+          get().addNotification(`✅ Approved: ${proposal.payload.missionName}`, 'success');
+        }
+        break;
+      }
+      
+      case 'hire': {
+        if (proposal.payload.role) {
+          get().setScreen('hire');
+          get().addNotification(`👋 Opening hiring for ${proposal.payload.role}`, 'info');
+        }
+        break;
+      }
+      
+      case 'tech': {
+        if (proposal.payload.upgradeId) {
+          get().purchaseUpgrade(proposal.payload.upgradeId);
+        }
+        break;
+      }
+    }
+    
+    get().addPMThought({
+      type: 'action',
+      message: `✅ Player approved: ${proposal.title}`,
+    });
+  },
+
+  rejectProposal: (proposalId: string) => {
+    const state = get();
+    const proposal = state.pmBrain.proposals.find(p => p.id === proposalId);
+    
+    if (!proposal) return;
+    
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        proposals: state.pmBrain.proposals.map(p =>
+          p.id === proposalId ? { ...p, status: 'rejected' as const } : p
+        ),
+      },
+    }));
+    
+    get().addPMThought({
+      type: 'action',
+      message: `❌ Player rejected: ${proposal.title}`,
+    });
+  },
+
+  dismissProposal: (proposalId: string) => {
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        proposals: state.pmBrain.proposals.filter(p => p.id !== proposalId),
+      },
+    }));
+  },
+
+  getPendingProposals: () => {
+    return get().pmBrain.proposals.filter(p => p.status === 'pending');
   },
     }),
     {
