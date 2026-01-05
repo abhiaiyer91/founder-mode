@@ -24,9 +24,13 @@ export function RTSTopBar() {
     taskQueue,
     gameSpeed,
     alerts,
+    focusMode,
+    autopilot,
     setScreen,
     setGameSpeed,
     togglePause,
+    toggleFocusMode,
+    toggleAutopilot,
   } = useGameStore();
 
   const queueCount = taskQueue.items.filter(i => i.status === 'queued').length;
@@ -87,6 +91,23 @@ export function RTSTopBar() {
 
       {/* Right: Status & Speed */}
       <div className="topbar-section status">
+        <div className="mode-toggles">
+          <button
+            className={`mode-btn ${autopilot ? 'active' : ''}`}
+            onClick={toggleAutopilot}
+            title="Autopilot - AI works autonomously"
+          >
+            🤖 {autopilot ? 'AUTO' : 'Manual'}
+          </button>
+          <button
+            className={`mode-btn ${focusMode ? 'active' : ''}`}
+            onClick={toggleFocusMode}
+            title="Focus Mode - Hide distractions"
+          >
+            🎯 {focusMode ? 'Focus' : 'Normal'}
+          </button>
+        </div>
+
         <div className="status-indicators">
           <span className="indicator" title="Active tasks">
             🔨 {activeCount}
@@ -94,7 +115,7 @@ export function RTSTopBar() {
           <span className="indicator idle" title="Idle employees">
             💤 {idleCount}
           </span>
-          {unreadAlerts > 0 && (
+          {unreadAlerts > 0 && !focusMode && (
             <span className="indicator alert" title="Alerts">
               ⚠️ {unreadAlerts}
             </span>

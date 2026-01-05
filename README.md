@@ -395,7 +395,23 @@ Or configure it in the game's Settings screen.
 - [x] **Trophy Room** - Dedicated achievements screen
 - [x] **CSS Animations** - Glowing legendary achievements, slide-in alerts
 
-### Phase 5: Advanced Features
+### Phase 5: Productivity Focus ✅
+- [x] **🤖 Autopilot Mode** - Let the AI team work completely autonomously
+  - Auto-hires employees when needed
+  - Auto-generates tasks via PM
+  - Auto-approves code reviews
+  - Auto-boosts morale when low
+- [x] **🎯 Focus Mode** - Hide all distractions
+  - Auto-dismisses event alerts
+  - Hides notification popups
+  - Disables random events
+  - Clean, minimal UI
+- [x] **Toggle Controls** - Quick buttons in top bar
+  - One-click Autopilot toggle
+  - One-click Focus Mode toggle
+- [x] **Events are optional** - Can be disabled entirely
+
+### Phase 6: Advanced Features
 - [ ] Multiple project types (web, mobile, API)
 - [ ] Company events and challenges
 - [ ] Investor meetings

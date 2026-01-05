@@ -34,11 +34,15 @@ function App() {
     checkAchievements,
     triggerEvent,
     updatePlayTime,
+    runAutopilot,
     tick,
     project,
     selectedEmployeeIds,
     setControlGroup,
     selectControlGroup,
+    autopilot,
+    focusMode,
+    eventsEnabled,
   } = useGameStore();
   
   // Auth state
@@ -61,18 +65,24 @@ function App() {
     const interval = setInterval(() => {
       gameTick();
       processQueue(); // Process task queue every tick
+      if (autopilot) {
+        runAutopilot(); // Run autopilot logic
+      }
     }, speeds[gameSpeed as keyof typeof speeds] || 1000);
 
     return () => clearInterval(interval);
-  }, [gameSpeed, gameTick, processQueue]);
+  }, [gameSpeed, gameTick, processQueue, autopilot, runAutopilot]);
 
   // Random events (every ~5 minutes of game time / 300 ticks)
+  // Skip if events disabled or in focus mode
   useEffect(() => {
     if (tick > 0 && tick % 300 === 0 && Math.random() > 0.5) {
-      triggerRandomEvent();
-      triggerEvent(); // New event system
+      if (eventsEnabled && !focusMode) {
+        triggerRandomEvent();
+        triggerEvent(); // New event system
+      }
     }
-  }, [tick, triggerRandomEvent, triggerEvent]);
+  }, [tick, triggerRandomEvent, triggerEvent, eventsEnabled, focusMode]);
 
   // Check achievements periodically
   useEffect(() => {
@@ -260,7 +270,7 @@ function App() {
         {renderScreen()}
       </div>
       {showStatusBar && <StatusBar />}
-      {project && <EventPanel />}
+      {project && !focusMode && <EventPanel />}
     </div>
   );
 }

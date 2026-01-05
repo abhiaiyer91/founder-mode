@@ -111,6 +111,37 @@
   color: white;
 }
 
+/* Mode Toggles */
+.mode-toggles {
+  display: flex;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.mode-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.mode-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #000;
+  font-weight: bold;
+}
+
 /* Status Indicators */
 .status-indicators {
   display: flex;

@@ -238,6 +238,11 @@ export interface GameState {
   activeEvents: ActiveEvent[];
   totalPlayTime: number; // in seconds
   sessionStartTime: number;
+  
+  // Focus & Autopilot
+  focusMode: boolean; // Hide distractions, auto-dismiss events
+  autopilot: boolean; // Full autonomous operation
+  eventsEnabled: boolean; // Toggle random events
 }
 
 export interface GameNotification {
@@ -404,6 +409,12 @@ export interface GameActions {
   makeEventChoice: (eventId: string, choiceId: string) => void;
   updatePlayTime: () => void;
   applyEventEffect: (effect: { type: string; value: number; target?: string; duration?: number }) => void;
+  
+  // Focus & Autopilot
+  toggleFocusMode: () => void;
+  toggleAutopilot: () => void;
+  toggleEvents: () => void;
+  runAutopilot: () => void; // Called each tick in autopilot mode
 }
 
 // Employee Templates for Hiring

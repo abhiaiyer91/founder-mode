@@ -129,6 +129,11 @@ const initialState: GameState = {
   activeEvents: [] as ActiveEvent[],
   totalPlayTime: 0,
   sessionStartTime: Date.now(),
+  
+  // Focus & Autopilot - Let users build without distractions
+  focusMode: false,
+  autopilot: false,
+  eventsEnabled: true, // Can be disabled if distracting
 };
 
 // Create the store with persistence
@@ -1562,6 +1567,111 @@ export const useGameStore = create<GameState & GameActions>()(
       get().unlockAchievement('all-nighter');
     }
   },
+
+  // ============================================
+  // Focus & Autopilot - Stay productive!
+  // ============================================
+  
+  toggleFocusMode: () => {
+    const state = get();
+    const newFocusMode = !state.focusMode;
+    
+    // Auto-dismiss all alerts when entering focus mode
+    if (newFocusMode) {
+      set({
+        focusMode: true,
+        alerts: state.alerts.map(a => ({ ...a, dismissed: true })),
+      });
+      get().addNotification('🎯 Focus Mode ON - Distractions hidden', 'info');
+    } else {
+      set({ focusMode: false });
+      get().addNotification('Focus Mode OFF', 'info');
+    }
+  },
+  
+  toggleAutopilot: () => {
+    const state = get();
+    const newAutopilot = !state.autopilot;
+    
+    set({ 
+      autopilot: newAutopilot,
+      // Auto-enable queue processing and focus mode with autopilot
+      taskQueue: {
+        ...state.taskQueue,
+        autoAssignEnabled: newAutopilot ? true : state.taskQueue.autoAssignEnabled,
+      },
+      focusMode: newAutopilot ? true : state.focusMode,
+      gameSpeed: newAutopilot ? 'fast' : state.gameSpeed,
+    });
+    
+    if (newAutopilot) {
+      get().addNotification('🤖 Autopilot ON - AI team working autonomously', 'success');
+      get().logActivity({
+        tick: state.tick,
+        message: 'Autopilot engaged - AI team working autonomously',
+        type: 'system',
+      });
+    } else {
+      get().addNotification('Autopilot OFF - Manual control', 'info');
+    }
+  },
+  
+  toggleEvents: () => {
+    const state = get();
+    set({ eventsEnabled: !state.eventsEnabled });
+    get().addNotification(
+      state.eventsEnabled ? '🔕 Random events disabled' : '🔔 Random events enabled',
+      'info'
+    );
+  },
+  
+  runAutopilot: () => {
+    const state = get();
+    if (!state.autopilot) return;
+    
+    // Auto-hire if we have money and few employees
+    if (state.employees.length < 3 && state.money > 20000) {
+      // Find a role we need
+      const hasEngineer = state.employees.some(e => e.role === 'engineer');
+      const hasDesigner = state.employees.some(e => e.role === 'designer');
+      const hasPM = state.employees.some(e => e.role === 'pm');
+      
+      const neededRole = !hasEngineer ? 'engineer' : !hasDesigner ? 'designer' : !hasPM ? 'pm' : 'engineer';
+      
+      // Hire using existing function
+      get().hireEmployee(neededRole, 'mid');
+    }
+    
+    // Auto-generate tasks if queue is empty and we have a PM
+    const hasPM = state.employees.some(e => e.role === 'pm');
+    const queuedTasks = state.taskQueue.items.filter(i => i.status === 'queued').length;
+    const todoTasks = state.tasks.filter(t => t.status === 'todo' || t.status === 'backlog').length;
+    
+    if (hasPM && queuedTasks < 2 && todoTasks < 3) {
+      get().pmGenerateTask();
+    }
+    
+    // Auto-approve reviews
+    const reviewTasks = state.tasks.filter(t => t.status === 'review');
+    for (const task of reviewTasks) {
+      get().updateTaskStatus(task.id, 'done');
+      get().logActivity({
+        tick: state.tick,
+        message: `Auto-approved: "${task.title}"`,
+        type: 'complete',
+        taskId: task.id,
+      });
+    }
+    
+    // Auto-boost morale if low
+    const avgMorale = state.employees.length > 0
+      ? state.employees.reduce((sum, e) => sum + e.morale, 0) / state.employees.length
+      : 100;
+    
+    if (avgMorale < 50 && state.money > 5000) {
+      get().boostMorale();
+    }
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -1587,6 +1697,9 @@ export const useGameStore = create<GameState & GameActions>()(
         upgrades: state.upgrades,
         achievements: state.achievements,
         totalPlayTime: state.totalPlayTime,
+        focusMode: state.focusMode,
+        autopilot: state.autopilot,
+        eventsEnabled: state.eventsEnabled,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {
