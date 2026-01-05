@@ -1,0 +1,110 @@
+/* Start Screen */
+.start-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.start-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.logo-section {
+  text-align: center;
+}
+
+.ascii-logo {
+  color: var(--color-accent);
+  font-size: 8px;
+  line-height: 1.2;
+  margin: 0;
+  overflow: hidden;
+  text-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+@media (min-width: 800px) {
+  .ascii-logo {
+    font-size: 10px;
+  }
+}
+
+.tagline {
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.idea-box {
+  max-width: 100%;
+}
+
+.idea-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prompt-text {
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.prompt-text .highlight {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.idea-input {
+  margin-top: 8px;
+}
+
+.char-count {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.char-count .warning {
+  color: var(--color-warning);
+}
+
+.submit-hint {
+  text-align: center;
+  padding: 8px;
+}
+
+.submit-hint .ready {
+  color: var(--color-success);
+}
+
+.submit-hint .waiting {
+  color: var(--text-muted);
+}
+
+.submit-hint kbd {
+  background: var(--terminal-header-bg);
+  border: 1px solid var(--terminal-border);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+
+.tips-section {
+  padding: 12px;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+}
+
+.tip {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 13px;
+}
+
+.tip strong {
+  color: var(--color-warning);
+}

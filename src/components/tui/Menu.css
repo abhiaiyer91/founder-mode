@@ -1,0 +1,62 @@
+/* TUI Menu */
+.tui-menu {
+  display: flex;
+  font-family: var(--font-mono);
+}
+
+.tui-menu.vertical {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tui-menu.horizontal {
+  flex-direction: row;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.1s;
+  border: 1px solid transparent;
+}
+
+.menu-item:hover:not(.disabled) {
+  color: var(--text-primary);
+  background: var(--terminal-hover-bg);
+}
+
+.menu-item.selected {
+  color: var(--color-accent);
+  background: var(--terminal-selected-bg);
+  border-color: var(--color-accent);
+}
+
+.menu-item.disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.menu-icon {
+  flex-shrink: 0;
+}
+
+.menu-label {
+  flex: 1;
+}
+
+.menu-shortcut {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  flex-shrink: 0;
+}
+
+.menu-item.selected .menu-shortcut {
+  color: var(--color-accent-dim);
+}

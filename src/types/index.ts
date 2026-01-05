@@ -1,0 +1,183 @@
+// ============================================
+// FOUNDER MODE - Core Type Definitions
+// ============================================
+
+// Employee Types
+export type EmployeeRole = 'engineer' | 'designer' | 'pm' | 'marketer';
+
+export type EmployeeStatus = 'idle' | 'working' | 'blocked' | 'on_break';
+
+export type EmployeeSkillLevel = 'junior' | 'mid' | 'senior' | 'lead';
+
+export interface Employee {
+  id: string;
+  name: string;
+  role: EmployeeRole;
+  skillLevel: EmployeeSkillLevel;
+  status: EmployeeStatus;
+  avatarEmoji: string;
+  salary: number; // Monthly salary
+  productivity: number; // 0-100
+  morale: number; // 0-100
+  currentTaskId: string | null;
+  hiredAt: number; // Game tick when hired
+}
+
+// Task Types
+export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export type TaskType = 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  type: TaskType;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assigneeId: string | null;
+  estimatedTicks: number; // How many game ticks to complete
+  progressTicks: number; // Current progress
+  createdAt: number; // Game tick when created
+  completedAt: number | null;
+  codeGenerated: string | null; // Generated code snippet
+  filesCreated: string[]; // File paths created/modified
+}
+
+// Project Types
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  idea: string; // Original founder idea
+  techStack: string[];
+  repository: string | null; // GitHub repo URL
+  createdAt: number;
+}
+
+// Game State
+export type GameScreen = 
+  | 'start' 
+  | 'office' 
+  | 'team' 
+  | 'hire' 
+  | 'tasks' 
+  | 'code' 
+  | 'git' 
+  | 'settings';
+
+export type GameSpeed = 'paused' | 'normal' | 'fast' | 'turbo';
+
+export interface GameStats {
+  totalRevenue: number;
+  totalExpenses: number;
+  tasksCompleted: number;
+  linesOfCodeGenerated: number;
+  commitsCreated: number;
+  featuresShipped: number;
+}
+
+export interface GameState {
+  // Meta
+  screen: GameScreen;
+  gameSpeed: GameSpeed;
+  tick: number; // Game time unit
+  startedAt: Date;
+  
+  // Resources
+  money: number;
+  runway: number; // Months of runway left
+  
+  // Entities
+  project: Project | null;
+  employees: Employee[];
+  tasks: Task[];
+  
+  // Stats
+  stats: GameStats;
+  
+  // UI State
+  selectedEmployeeId: string | null;
+  selectedTaskId: string | null;
+  notifications: GameNotification[];
+}
+
+export interface GameNotification {
+  id: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  timestamp: number;
+  read: boolean;
+}
+
+// Actions
+export interface GameActions {
+  // Navigation
+  setScreen: (screen: GameScreen) => void;
+  
+  // Game Control
+  setGameSpeed: (speed: GameSpeed) => void;
+  gameTick: () => void;
+  
+  // Project
+  startProject: (idea: string) => void;
+  
+  // Team
+  hireEmployee: (role: EmployeeRole, skillLevel: EmployeeSkillLevel) => void;
+  fireEmployee: (id: string) => void;
+  
+  // Tasks
+  createTask: (task: Omit<Task, 'id' | 'createdAt' | 'progressTicks' | 'completedAt' | 'codeGenerated' | 'filesCreated'>) => void;
+  assignTask: (taskId: string, employeeId: string) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
+  
+  // Selection
+  selectEmployee: (id: string | null) => void;
+  selectTask: (id: string | null) => void;
+  
+  // Notifications
+  addNotification: (message: string, type: GameNotification['type']) => void;
+  dismissNotification: (id: string) => void;
+}
+
+// Employee Templates for Hiring
+export interface EmployeeTemplate {
+  role: EmployeeRole;
+  skillLevel: EmployeeSkillLevel;
+  baseSalary: number;
+  emoji: string;
+  title: string;
+}
+
+export const EMPLOYEE_TEMPLATES: EmployeeTemplate[] = [
+  { role: 'engineer', skillLevel: 'junior', baseSalary: 5000, emoji: '👨‍💻', title: 'Junior Engineer' },
+  { role: 'engineer', skillLevel: 'mid', baseSalary: 8000, emoji: '👩‍💻', title: 'Software Engineer' },
+  { role: 'engineer', skillLevel: 'senior', baseSalary: 12000, emoji: '🧑‍💻', title: 'Senior Engineer' },
+  { role: 'engineer', skillLevel: 'lead', baseSalary: 15000, emoji: '👨‍🔬', title: 'Lead Engineer' },
+  { role: 'designer', skillLevel: 'junior', baseSalary: 4000, emoji: '🎨', title: 'Junior Designer' },
+  { role: 'designer', skillLevel: 'mid', baseSalary: 6000, emoji: '🎨', title: 'Product Designer' },
+  { role: 'designer', skillLevel: 'senior', baseSalary: 9000, emoji: '🎨', title: 'Senior Designer' },
+  { role: 'pm', skillLevel: 'junior', baseSalary: 5000, emoji: '📊', title: 'Associate PM' },
+  { role: 'pm', skillLevel: 'mid', baseSalary: 7000, emoji: '📊', title: 'Product Manager' },
+  { role: 'pm', skillLevel: 'senior', baseSalary: 11000, emoji: '📊', title: 'Senior PM' },
+  { role: 'marketer', skillLevel: 'junior', baseSalary: 3500, emoji: '📢', title: 'Marketing Associate' },
+  { role: 'marketer', skillLevel: 'mid', baseSalary: 5000, emoji: '📢', title: 'Growth Marketer' },
+  { role: 'marketer', skillLevel: 'senior', baseSalary: 8000, emoji: '📢', title: 'Head of Marketing' },
+];
+
+// Name generator data
+export const FIRST_NAMES = [
+  'Alex', 'Jordan', 'Sam', 'Taylor', 'Casey', 'Morgan', 'Riley', 'Quinn',
+  'Avery', 'Charlie', 'Dakota', 'Finley', 'Harper', 'Hayden', 'Jamie', 'Jesse',
+  'Kai', 'Logan', 'Max', 'Parker', 'Peyton', 'Reese', 'River', 'Rowan',
+  'Sage', 'Skyler', 'Spencer', 'Sydney', 'Blake', 'Drew', 'Ellis', 'Frankie'
+];
+
+export const LAST_NAMES = [
+  'Chen', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller',
+  'Davis', 'Rodriguez', 'Martinez', 'Anderson', 'Taylor', 'Thomas', 'Moore', 'Jackson',
+  'Martin', 'Lee', 'Thompson', 'White', 'Lopez', 'Harris', 'Clark', 'Lewis',
+  'Robinson', 'Walker', 'Hall', 'Young', 'King', 'Wright', 'Hill', 'Scott'
+];
