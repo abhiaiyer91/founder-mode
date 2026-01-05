@@ -1,10 +1,11 @@
+import 'dotenv/config';
 import express, { type Express } from 'express';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { agents, allTools } from './mastra';
 import gameRoutes from './routes/game';
-import { isConvexConfigured } from './lib/convex';
+import { checkDatabaseConnection } from './db';
 import type { AgentRole } from './mastra';
 
 const app: Express = express();
@@ -238,15 +239,23 @@ Use the createEmailCampaign tool.`;
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  // Check database connection
+  const dbConnected = await checkDatabaseConnection();
+  
   console.log(`
 🚀 Founder Mode Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 Running on http://localhost:${PORT}
 🤖 Agents: ${Object.keys(agents).join(', ')}
 🔐 Auth: better-auth enabled
-💾 Database: ${isConvexConfigured ? 'Convex' : 'In-memory (set CONVEX_URL)'}
+💾 Database: ${dbConnected ? '✅ PostgreSQL connected' : '❌ PostgreSQL not connected'}
 
+${!dbConnected ? `
+⚠️  Database not connected. Run:
+    docker compose up -d
+    pnpm db:push
+` : ''}
 Endpoints:
   GET  /health                    - Health check
   

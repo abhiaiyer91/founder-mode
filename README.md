@@ -147,7 +147,7 @@ src/
 ┌─────────────────────────────────────────────────────────────────────┐
 │  CLIENT (Browser)                                                   │
 │  ┌───────────────────────────────────────────────────────────────┐ │
-│  │  Zustand Store ──→ localStorage (immediate)                   │ │
+│  │  Zustand Store ──→ localStorage (immediate, offline)          │ │
 │  │       ↓                                                        │ │
 │  │  Game API Client ──→ HTTP ─────────────────────────────────┐  │ │
 │  └───────────────────────────────────────────────────────────────┘ │
@@ -158,19 +158,35 @@ src/
 │  ┌───────────────────────────────────────────────────────────────┐ │
 │  │  /api/game/saves     - CRUD for game saves                    │ │
 │  │  /api/game/sync      - Full state sync (auto-save)            │ │
-│  │  /api/auth/*         - Authentication (better-auth)          │ │
+│  │  /api/auth/*         - Authentication (better-auth)           │ │
+│  │  /api/agents/*       - Mastra AI agents                       │ │
 │  └───────────────────────────────────────────────────────────────┘ │
 │                           ↓                                         │
 │  ┌───────────────────────────────────────────────────────────────┐ │
-│  │  Convex Client ──→ Convex Cloud                               │ │
+│  │  Drizzle ORM ──→ PostgreSQL (Docker)                          │ │
 │  └───────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Layers:**
-- **Local Storage**: Immediate persistence (works offline)
-- **API Server**: Handles auth, syncs to cloud
-- **Convex**: Real-time database (cloud saves, multiplayer-ready)
+**Tech Stack:**
+- **Zustand + localStorage**: Instant saves, works offline
+- **Express API**: Auth, validation, business logic
+- **Drizzle ORM**: Type-safe database queries
+- **PostgreSQL**: Production-ready relational database
+- **Docker**: Easy local development
+
+### Database Setup
+
+```bash
+# Start PostgreSQL with Docker
+docker compose up -d
+
+# Push schema to database
+pnpm db:push
+
+# Open Drizzle Studio (database GUI)
+pnpm db:studio
+```
 
 ### AI Architecture (Powered by Mastra)
 
