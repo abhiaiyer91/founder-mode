@@ -3,6 +3,7 @@ import { useGameStore } from './store/gameStore';
 import { 
   AuthScreen,
   StartScreen, 
+  RTSView,
   DashboardScreen,
   CommandCenter,
   TaskQueueScreen,
@@ -18,6 +19,7 @@ import {
 import { StatusBar } from './components/StatusBar';
 import { RTSTopBar } from './components/RTSTopBar';
 import { EventPanel } from './components/EventPanel';
+import { FloatingResources } from './components/FloatingResources';
 import { useSession } from './lib/auth';
 import type { GameScreen, GameSpeed } from './types';
 import './App.css';
@@ -168,9 +170,10 @@ function App() {
       }
 
       // Screen shortcuts (when in main screens)
-      const mainScreens: GameScreen[] = ['dashboard', 'command', 'office'];
+      const mainScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'office'];
       if (mainScreens.includes(screen)) {
         const screenMap: Record<string, GameScreen> = {
+          'r': 'rts',        // Isometric RTS view (new default)
           'd': 'dashboard',
           'c': 'command',
           'h': 'hire',
@@ -229,6 +232,8 @@ function App() {
     switch (screen) {
       case 'start':
         return <StartScreen />;
+      case 'rts':
+        return <RTSView />;
       case 'dashboard':
         return <DashboardScreen />;
       case 'command':
@@ -257,7 +262,7 @@ function App() {
   };
 
   // Screens with built-in status bars
-  const fullScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tech', 'achievements'];
+  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game
@@ -271,6 +276,7 @@ function App() {
       </div>
       {showStatusBar && <StatusBar />}
       {project && !focusMode && <EventPanel />}
+      {project && <FloatingResources />}
     </div>
   );
 }

@@ -1,0 +1,106 @@
+/* Floating Resources - RTS-style feedback */
+
+.floating-resources {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.floater {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  animation: float-up 2s ease-out forwards;
+  white-space: nowrap;
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.1);
+  }
+  30% {
+    transform: translateY(-20px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8);
+  }
+}
+
+.floater.positive {
+  border: 1px solid #4ade80;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
+.floater.positive .floater-value {
+  color: #4ade80;
+}
+
+.floater.negative {
+  border: 1px solid #f87171;
+  box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+}
+
+.floater.negative .floater-value {
+  color: #f87171;
+}
+
+.floater-icon {
+  font-size: 14px;
+}
+
+.floater-value {
+  font-size: 14px;
+}
+
+/* Type-specific styling */
+.floater.money.positive {
+  background: linear-gradient(135deg, rgba(0, 40, 20, 0.9), rgba(0, 60, 30, 0.9));
+}
+
+.floater.money.negative {
+  background: linear-gradient(135deg, rgba(40, 0, 0, 0.9), rgba(60, 20, 20, 0.9));
+}
+
+.floater.task {
+  background: linear-gradient(135deg, rgba(0, 30, 60, 0.9), rgba(0, 50, 80, 0.9));
+  border: 1px solid #60a5fa;
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+}
+
+.floater.task .floater-value {
+  color: #60a5fa;
+}
+
+.floater.xp {
+  background: linear-gradient(135deg, rgba(60, 40, 0, 0.9), rgba(80, 60, 0, 0.9));
+  border: 1px solid #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+}
+
+.floater.xp .floater-value {
+  color: #fbbf24;
+}
+
+.floater.morale {
+  background: linear-gradient(135deg, rgba(60, 20, 40, 0.9), rgba(80, 30, 50, 0.9));
+  border: 1px solid #f472b6;
+  box-shadow: 0 0 20px rgba(244, 114, 182, 0.3);
+}
+
+.floater.morale .floater-value {
+  color: #f472b6;
+}

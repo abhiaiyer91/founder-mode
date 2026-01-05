@@ -149,8 +149,9 @@ export interface Project {
 export type GameScreen = 
   | 'auth'         // Login/signup
   | 'start' 
-  | 'dashboard'    // Clean split-view (recommended)
-  | 'command'      // RTS-style command center
+  | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
+  | 'dashboard'    // Clean split-view
+  | 'command'      // TUI-style command center
   | 'queue'        // Task queue / import view
   | 'tech'         // Tech tree / upgrades
   | 'achievements' // Trophy room

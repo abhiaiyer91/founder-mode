@@ -44,6 +44,7 @@ export function RTSTopBar() {
   const completedWithCode = tasks.filter(t => t.status === 'done' && t.codeGenerated).length;
 
   const views: { id: GameScreen; label: string; icon: string; hotkey: string }[] = [
+    { id: 'rts', label: 'RTS', icon: '🏰', hotkey: 'R' },      // Isometric view (Civ/Warcraft)
     { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
     { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
     { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
@@ -55,7 +56,7 @@ export function RTSTopBar() {
   ];
 
   // Only show in game screens
-  const gameScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tasks', 'team', 'hire', 'office', 'code', 'settings'];
+  const gameScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
   if (!gameScreens.includes(screen)) return null;
 
   return (

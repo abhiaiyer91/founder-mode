@@ -2,7 +2,7 @@
 
 > *Build a real startup. Ship real code. Play the game.*
 
-**Founder Mode** is a real-time strategy game where you manage a startup and your AI team builds actual software. Think *StarCraft* meets *Y Combinator* — select your engineers, assign them to tasks, and watch real code get generated.
+**Founder Mode** is a real-time strategy game where you manage a startup and your AI team builds actual software. Think *Civilization* meets *Y Combinator* — select your engineers, assign them to tasks, and watch real code get generated.
 
 **The twist?** Your team uses AI to generate actual code, designs, and marketing copy that you can use in real projects.
 
@@ -10,7 +10,46 @@
 
 ---
 
-## 🎮 RTS-Style Gameplay
+## 🏰 Isometric RTS View (NEW!)
+
+The default view is now an **isometric RTS game view** inspired by Civilization and Warcraft:
+
+```
+                    🏗️ Engineering           🎨 Design
+                   ┌─────────────┐        ┌─────────┐
+                   │   👩‍💻 👨‍💻      │        │   🎨    │
+                   │  ███████    │        │  ████   │
+                   └─────────────┘        └─────────┘
+                
+       📢 Marketing              📋 Product           ☕ Break Room
+      ┌─────────┐              ┌─────────┐         ┌─────────┐
+      │  🔒     │              │   📊    │         │   🔒    │
+      │ $20k   │              │  ████   │         │ 3 emp   │
+      └─────────┘              └─────────┘         └─────────┘
+```
+
+**Features:**
+- **Isometric Grid** - Buildings arranged on an isometric plane
+- **Unit Sprites** - Animated employees with health/morale bars
+- **Fog of War** - Buildings unlock as you grow (hire, earn money, complete tasks)
+- **Selection Box** - Drag to select multiple units
+- **Minimap** - See your entire office at a glance
+- **Floating Resources** - +$1,000 floating numbers when you earn money
+- **Command Panel** - Quick actions for selected units
+
+**Fog of War Unlock Requirements:**
+| Building | Unlock Requirement |
+|----------|-------------------|
+| Engineering | Always unlocked |
+| Design | Hire 1 employee |
+| PM | Hire 2 employees |
+| Marketing | Earn $20,000 |
+| Break Room | Hire 3 employees |
+| Servers | Complete 5 tasks |
+
+---
+
+## 🎮 Multiple Game Views
 
 The **Command Center** is your main headquarters showing everything at once:
 
@@ -49,13 +88,16 @@ The **Command Center** is your main headquarters showing everything at once:
 | `1/2/3` | Game speed (Normal/Fast/Turbo) |
 | `Ctrl+1-9` | Set control group |
 | `4-9` | Recall control group |
+| `R` | **RTS isometric view (default)** |
 | `D` | Dashboard view |
 | `C` | Command center view |
 | `Q` | Task queue |
 | `U` | Tech tree / Upgrades |
+| `A` | Achievements |
 | `H` | Hire screen |
 | `T` | Tasks board |
 | `E` | Team view |
+| `S` | Settings |
 | `Esc` | Go back |
 
 **Control Groups** (like StarCraft!):
@@ -132,6 +174,25 @@ Imagine describing your startup idea in a text prompt, then hiring and managing 
 
 ### 4. Ship Real Code
 Your AI team commits actual working code to a GitHub repository. Watch your product come to life as engineers complete tasks, designers create assets, and the codebase grows.
+
+### 5. Push to GitHub (OAuth)
+Click **Save** in the top bar to push generated code to GitHub:
+
+1. **Sign in with GitHub** - No personal access tokens needed!
+2. **Select your repository** - Choose from your GitHub repos
+3. **Select files** - Pick which generated files to push
+4. **Push!** - Your code is committed to a `founder-mode` branch
+
+**GitHub OAuth Setup (for self-hosting):**
+```bash
+# 1. Create OAuth App at https://github.com/settings/developers
+# 2. Set Authorization callback URL to:
+#    http://localhost:3001/api/oauth/github/callback
+
+# 3. Add to .env:
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
+```
 
 ---
 

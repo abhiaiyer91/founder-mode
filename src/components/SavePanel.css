@@ -81,7 +81,8 @@
   margin-bottom: 4px;
 }
 
-.config-row input {
+.config-row input,
+.config-row select {
   width: 100%;
   padding: 10px 12px;
   background: var(--terminal-bg);
@@ -92,30 +93,110 @@
   font-size: 13px;
 }
 
-.config-row input:focus {
+.config-row select {
+  cursor: pointer;
+}
+
+.config-row select option {
+  background: var(--terminal-bg);
+}
+
+.config-row input:focus,
+.config-row select:focus {
   border-color: var(--color-accent);
   outline: none;
 }
 
-.test-btn {
-  padding: 10px 20px;
+/* Auth Prompt */
+.auth-prompt {
+  text-align: center;
+  padding: 20px;
+}
+
+.auth-prompt p {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.github-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #238636;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-mono);
+}
+
+.github-login-btn:hover {
+  background: #2ea043;
+}
+
+.github-login-btn svg {
+  flex-shrink: 0;
+}
+
+.oauth-warning {
+  color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Auth Connected */
+.auth-connected {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(74, 222, 128, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.user-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.logout-btn {
   background: transparent;
   border: 1px solid var(--terminal-border);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  cursor: pointer;
+  color: var(--text-muted);
+  padding: 6px 12px;
   border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.test-btn:hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.test-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.logout-btn:hover {
+  color: #f87171;
+  border-color: #f87171;
 }
 
 /* Files Section */

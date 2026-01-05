@@ -7,6 +7,7 @@ import { agents, allTools } from './mastra';
 import gameRoutes from './routes/game';
 import integrationRoutes from './routes/integrations';
 import githubRoutes from './routes/github';
+import oauthRoutes from './routes/oauth';
 import { checkDatabaseConnection } from './db';
 import type { AgentRole } from './mastra';
 
@@ -31,6 +32,9 @@ app.use('/api/integrations', integrationRoutes);
 
 // GitHub API - mount at /api/github
 app.use('/api/github', githubRoutes);
+
+// OAuth routes - mount at /api/oauth
+app.use('/api/oauth', oauthRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

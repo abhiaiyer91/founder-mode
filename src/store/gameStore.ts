@@ -226,7 +226,7 @@ export const useGameStore = create<GameState & GameActions>()(
         repository: null,
         createdAt: tick,
       },
-      screen: 'dashboard', // Go to clean Dashboard view
+      screen: 'rts', // Go to isometric RTS view (Civ/Warcraft style)
       gameSpeed: 'normal',
     });
     get().addNotification(`🚀 Started project: ${projectName}`, 'success');
@@ -1705,7 +1705,7 @@ export const useGameStore = create<GameState & GameActions>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Reset UI state on load
-          state.screen = state.project ? 'dashboard' : 'start';
+          state.screen = state.project ? 'rts' : 'start';
           state.gameSpeed = 'paused';
           state.selectedEmployeeId = null;
           state.selectedEmployeeIds = [];
