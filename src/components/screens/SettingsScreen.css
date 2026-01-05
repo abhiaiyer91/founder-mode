@@ -379,3 +379,139 @@
   border-color: var(--text-primary);
   color: var(--text-primary);
 }
+
+/* Persisted key badge */
+.persisted-badge {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 768px) {
+  .settings-screen {
+    padding: 10px;
+    padding-bottom: 80px; /* Space for mobile nav */
+  }
+
+  .settings-layout h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Stack save actions vertically */
+  .save-actions {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .reset-btn,
+  .enable-ai-btn,
+  .disable-ai-btn {
+    width: 100%;
+    padding: 14px 16px;
+    min-height: 48px; /* Touch target */
+  }
+
+  /* Single column stats on mobile */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--terminal-border);
+  }
+
+  .stat-item .value {
+    font-size: 16px;
+  }
+
+  /* Hide keyboard shortcuts on mobile (no keyboard!) */
+  .settings-section:has(.shortcuts-list) {
+    display: none;
+  }
+
+  /* Simpler AI status row */
+  .status-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .check-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    min-height: 44px;
+  }
+
+  /* Form actions */
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .cancel-btn {
+    width: 100%;
+    padding: 12px;
+    min-height: 48px;
+  }
+
+  /* Mastra help code blocks */
+  .mastra-help code {
+    font-size: 11px;
+    word-break: break-all;
+  }
+
+  /* Section descriptions */
+  .section-desc {
+    font-size: 12px;
+  }
+
+  /* AI features list */
+  .ai-features li {
+    font-size: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--terminal-border);
+  }
+
+  .ai-features li:last-child {
+    border-bottom: none;
+  }
+
+  /* Speed options - make touch-friendly */
+  .speed-options .menu {
+    flex-direction: column !important;
+    gap: 8px;
+  }
+
+  .speed-options .menu-item {
+    padding: 12px 16px;
+    min-height: 48px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-screen {
+    padding: 5px;
+  }
+
+  .settings-layout {
+    gap: 12px;
+  }
+
+  .ai-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .about-content p {
+    font-size: 12px;
+  }
+}

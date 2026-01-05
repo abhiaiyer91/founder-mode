@@ -21,7 +21,9 @@ import { StatusBar } from './components/StatusBar';
 import { RTSTopBar } from './components/RTSTopBar';
 import { EventPanel } from './components/EventPanel';
 import { FloatingResources } from './components/FloatingResources';
+import { MobileNav } from './components/MobileNav';
 import { useSession } from './lib/auth';
+import { getApiKey } from './lib/storage/secureStorage';
 import type { GameScreen, GameSpeed } from './types';
 import './App.css';
 
@@ -56,6 +58,19 @@ function App() {
   
   // Check if user should see auth screen
   const needsAuth = !session && !isGuest && !authLoading;
+  
+  // Get configureAI for restoring saved key
+  const { configureAI, aiSettings } = useGameStore();
+
+  // Restore saved API key on mount
+  useEffect(() => {
+    if (!aiSettings.enabled) {
+      const savedKey = getApiKey('openai');
+      if (savedKey) {
+        configureAI(savedKey);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Game loop
   useEffect(() => {
@@ -293,6 +308,7 @@ function App() {
       {showStatusBar && <StatusBar />}
       {project && !focusMode && <EventPanel />}
       {project && <FloatingResources />}
+      <MobileNav />
     </div>
   );
 }

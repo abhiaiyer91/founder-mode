@@ -70,6 +70,13 @@ export function StartScreen() {
                   <span className="waiting">Describe your vision to continue...</span>
                 )}
               </div>
+
+              {/* Mobile-friendly start button */}
+              {idea.length >= 10 && (
+                <button className="mobile-start-btn" onClick={handleSubmit}>
+                  🚀 Start Building
+                </button>
+              )}
             </div>
           </Box>
 

@@ -3,6 +3,7 @@ import { Terminal, Box, Menu, Input } from '../tui';
 import type { MenuItem } from '../tui';
 import { useGameStore } from '../../store/gameStore';
 import { aiService, mastraClient } from '../../lib/ai';
+import { saveApiKey, removeApiKey, hasStoredKey } from '../../lib/storage/secureStorage';
 import type { GameSpeed } from '../../types';
 import './SettingsScreen.css';
 
@@ -26,10 +27,12 @@ export function SettingsScreen() {
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [mastraConnected, setMastraConnected] = useState(false);
   const [checkingMastra, setCheckingMastra] = useState(false);
+  const [hasPersistedKey, setHasPersistedKey] = useState(false);
 
-  // Check Mastra server connection
+  // Check Mastra server connection and persisted key
   useEffect(() => {
     checkMastraConnection();
+    setHasPersistedKey(hasStoredKey('openai'));
   }, []);
 
   const checkMastraConnection = async () => {
@@ -52,10 +55,19 @@ export function SettingsScreen() {
 
   const handleConfigureAI = () => {
     if (apiKeyInput.trim()) {
-      configureAI(apiKeyInput.trim());
+      const key = apiKeyInput.trim();
+      configureAI(key);
+      saveApiKey('openai', key); // Persist the key
+      setHasPersistedKey(true);
       setApiKeyInput('');
       setShowApiKeyInput(false);
     }
+  };
+
+  const handleDisableAI = () => {
+    disableAI();
+    removeApiKey('openai'); // Remove persisted key
+    setHasPersistedKey(false);
   };
 
   const resetGame = () => {
@@ -130,9 +142,10 @@ export function SettingsScreen() {
                 <p>✅ Your team is powered by <strong>{aiSettings.model}</strong></p>
                 <p className="api-key-hint">
                   API Key: {aiService.getMaskedApiKey() || '****'}
+                  {hasPersistedKey && <span className="persisted-badge"> 💾 Saved</span>}
                 </p>
-                <button className="disable-ai-btn" onClick={disableAI}>
-                  Disable AI
+                <button className="disable-ai-btn" onClick={handleDisableAI}>
+                  Disable AI & Clear Saved Key
                 </button>
               </div>
             ) : showApiKeyInput ? (

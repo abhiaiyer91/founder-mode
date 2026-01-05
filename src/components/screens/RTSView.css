@@ -640,18 +640,38 @@
    ============================================ */
 
 @media (max-width: 768px) {
+  .rts-view {
+    /* Account for mobile nav */
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
+  }
+
   .rts-resource-bar {
     flex-wrap: wrap;
     gap: 8px;
+    padding: 6px 10px;
   }
   
   .resource-group {
-    gap: 8px;
+    gap: 6px;
   }
   
+  .resource {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  .resource-icon {
+    font-size: 12px;
+  }
+  
+  .resource-value {
+    font-size: 11px;
+  }
+  
+  /* Hide minimap on mobile - too small to be useful */
   .rts-minimap {
-    width: 140px;
-    height: 100px;
+    display: none;
   }
   
   .rts-command-panel {
@@ -659,15 +679,70 @@
     flex-wrap: wrap;
     padding: 8px;
     gap: 8px;
+    /* Ensure it's above mobile nav */
+    margin-bottom: 5px;
   }
   
   .command-section {
     border-right: none;
     padding: 4px 8px;
+    flex: 1;
+    min-width: fit-content;
   }
   
   .cmd-btn {
-    padding: 6px 12px;
+    padding: 10px 14px;
+    min-height: 44px; /* Touch target */
+    font-size: 12px;
+  }
+  
+  /* Scale down buildings for mobile */
+  .iso-building {
+    transform: scale(0.8);
+  }
+  
+  /* Scale down units */
+  .rts-unit {
+    transform: scale(0.85);
+  }
+  
+  /* Touch-friendly selection */
+  .rts-viewport {
+    cursor: default;
+    touch-action: pan-x pan-y;
+  }
+  
+  /* Larger touch targets for units */
+  .unit-sprite {
+    min-width: 50px;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rts-resource-bar {
+    padding: 4px 8px;
+  }
+  
+  .resource-group.tasks {
+    display: none; /* Hide task pipeline on very small screens */
+  }
+  
+  .time-display {
+    display: none; /* Hide time on very small screens */
+  }
+  
+  .rts-command-panel {
+    padding: 6px;
+  }
+  
+  .cmd-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  
+  .command-section-title {
+    font-size: 9px;
   }
 }
 

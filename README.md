@@ -580,6 +580,67 @@ This is an open-source project! We welcome contributions of all kinds:
 
 ---
 
+## 🚀 Deployment
+
+### Quick Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/founder-mode)
+
+1. Click the button above or run `vercel` in the project root
+2. Add environment variables in Vercel dashboard:
+   - `DATABASE_URL` - PostgreSQL connection string (use Vercel Postgres or Supabase)
+   - `OPENAI_API_KEY` - For AI features (optional, users can add their own)
+   - `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` - For GitHub OAuth
+
+### Manual Deployment
+
+```bash
+# Build the frontend
+pnpm build
+
+# The output is in dist/ - deploy to any static host
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes (server) | PostgreSQL connection string |
+| `OPENAI_API_KEY` | No | Default API key for AI features |
+| `VITE_API_URL` | Yes | API server URL |
+| `GITHUB_CLIENT_ID` | No | For GitHub OAuth |
+| `GITHUB_CLIENT_SECRET` | No | For GitHub OAuth |
+| `FRONTEND_URL` | Yes (server) | Frontend URL for OAuth redirects |
+
+### Local Development
+
+```bash
+# Start PostgreSQL (optional, for persistence)
+docker-compose up -d
+
+# Install dependencies
+pnpm install
+
+# Copy environment variables
+cp .env.example .env
+
+# Start frontend only
+pnpm dev
+
+# Start with backend server (for AI/persistence)
+pnpm dev:all
+```
+
+### Mobile Support
+
+The game is fully responsive and works great on mobile devices:
+- Bottom navigation bar for quick access
+- Touch-friendly controls
+- Optimized for phones and tablets
+- Works offline (game state saved locally)
+
+---
+
 ## 📜 License
 
 MIT License - Build something awesome!

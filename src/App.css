@@ -39,3 +39,34 @@
   color: var(--text-muted);
   letter-spacing: 2px;
 }
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 768px) {
+  .app {
+    /* Account for mobile nav at bottom */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .app-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Leave space for bottom nav */
+    padding-bottom: 70px;
+  }
+}
+
+/* Hide certain elements on mobile for cleaner UX */
+@media (max-width: 480px) {
+  /* Ensure loading screen works on small phones */
+  .loading-spinner {
+    font-size: 36px;
+  }
+
+  .loading-text {
+    font-size: 12px;
+  }
+}
