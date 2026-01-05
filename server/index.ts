@@ -3,6 +3,8 @@ import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { agents, allTools } from './mastra';
+import gameRoutes from './routes/game';
+import { isConvexConfigured } from './lib/convex';
 import type { AgentRole } from './mastra';
 
 const app: Express = express();
@@ -17,6 +19,9 @@ app.use(express.json());
 
 // Better Auth handler - mount at /api/auth
 app.all('/api/auth/*', toNodeHandler(auth));
+
+// Game state API - mount at /api/game
+app.use('/api/game', gameRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -240,18 +245,30 @@ app.listen(PORT, () => {
 📍 Running on http://localhost:${PORT}
 🤖 Agents: ${Object.keys(agents).join(', ')}
 🔐 Auth: better-auth enabled
+💾 Database: ${isConvexConfigured ? 'Convex' : 'In-memory (set CONVEX_URL)'}
 
 Endpoints:
   GET  /health                    - Health check
+  
+  Auth:
   ALL  /api/auth/*                - Authentication (better-auth)
+  
+  Game State:
+  GET  /api/game/saves            - List user's saves
+  POST /api/game/saves            - Create new save
+  GET  /api/game/saves/:id        - Get save details
+  PUT  /api/game/saves/:id        - Update save
+  DELETE /api/game/saves/:id      - Delete save
+  POST /api/game/sync             - Sync full game state
+  GET  /api/game/sync/:id         - Load game state
+  
+  AI Agents:
   GET  /api/agents                - List agents
   POST /api/agents/:role/generate - Generate with agent
-  POST /api/tools/:id/execute     - Execute tool directly
-  
-  POST /api/engineer/work   - Engineer works on task
-  POST /api/pm/breakdown    - PM breaks down project
-  POST /api/designer/create - Designer creates styles
-  POST /api/marketer/create - Marketer creates content
+  POST /api/engineer/work         - Engineer works on task
+  POST /api/pm/breakdown          - PM breaks down project
+  POST /api/designer/create       - Designer creates styles
+  POST /api/marketer/create       - Marketer creates content
 `);
 });
 

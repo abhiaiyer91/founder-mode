@@ -141,6 +141,37 @@ src/
     └── index.ts             # TypeScript interfaces
 ```
 
+### Persistence Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  CLIENT (Browser)                                                   │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │  Zustand Store ──→ localStorage (immediate)                   │ │
+│  │       ↓                                                        │ │
+│  │  Game API Client ──→ HTTP ─────────────────────────────────┐  │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+                                                                    │
+┌─────────────────────────────────────────────────────────────────────┐
+│  SERVER (Express)                                      localhost:3001│
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │  /api/game/saves     - CRUD for game saves                    │ │
+│  │  /api/game/sync      - Full state sync (auto-save)            │ │
+│  │  /api/auth/*         - Authentication (better-auth)          │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                           ↓                                         │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │  Convex Client ──→ Convex Cloud                               │ │
+│  └───────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Layers:**
+- **Local Storage**: Immediate persistence (works offline)
+- **API Server**: Handles auth, syncs to cloud
+- **Convex**: Real-time database (cloud saves, multiplayer-ready)
+
 ### AI Architecture (Powered by Mastra)
 
 The game uses **Mastra**, a powerful AI agent framework:
