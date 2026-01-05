@@ -7,19 +7,21 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
-    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:server\"",
+    "dev:convex": "convex dev",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:server\" \"pnpm dev:convex\"",
     "build": "tsc -b && vite build",
     "build:server": "tsc -p tsconfig.server.json",
     "start:server": "node dist-server/index.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "convex:push": "convex deploy"
   },
   "dependencies": {
     "@mastra/core": "^0.24.9",
     "@mastra/memory": "^0.15.13",
     "@mastra/server": "^0.24.9",
     "better-auth": "^1.4.10",
-    "better-sqlite3": "^12.5.0",
+    "convex": "^1.31.2",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "openai": "^6.15.0",
@@ -31,7 +33,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/react": "^19.1.8",
