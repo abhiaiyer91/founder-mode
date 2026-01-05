@@ -1,11 +1,76 @@
 /**
  * Missions - PM-created feature branches as git worktrees
  * 
- * Each mission represents a larger feature/epic that:
+ * Hierarchy:
+ * Epic (big goal) → Mission (feature branch) → Task (single work item)
+ * 
+ * Each mission represents a feature that:
  * - Has its own git branch (worktree)
  * - Contains multiple tasks
  * - Can be pushed and merged independently
  */
+
+// ============================================
+// Epics - High-level product goals
+// ============================================
+
+export type EpicStatus = 'planned' | 'active' | 'completed' | 'blocked';
+export type ProductPhase = 'mvp' | 'growth' | 'scale' | 'mature';
+
+export interface Epic {
+  id: string;
+  name: string;
+  description: string;
+  status: EpicStatus;
+  priority: MissionPriority;
+  missionIds: string[];
+  phase: ProductPhase;
+  createdAt: number;
+  completedAt: number | null;
+}
+
+// ============================================
+// PM Brain State
+// ============================================
+
+export interface PMThought {
+  id: string;
+  type: 'observation' | 'priority' | 'decision' | 'action';
+  message: string;
+  timestamp: number;
+}
+
+export interface ProductState {
+  phase: ProductPhase;
+  hasAuth: boolean;
+  hasDatabase: boolean;
+  hasAPI: boolean;
+  hasUI: boolean;
+  hasLanding: boolean;
+  hasPricing: boolean;
+  hasOnboarding: boolean;
+  hasAnalytics: boolean;
+  hasTesting: boolean;
+  hasCI: boolean;
+  hasDocumentation: boolean;
+  featureCount: number;
+  bugCount: number;
+  techDebtScore: number;
+}
+
+export interface PMBrainState {
+  enabled: boolean;
+  thoughts: PMThought[];
+  epics: Epic[];
+  productState: ProductState | null;
+  lastEvaluation: number;
+  autoGenerateEnabled: boolean;
+  evaluationInterval: number; // ticks between evaluations
+}
+
+// ============================================
+// Missions
+// ============================================
 
 export type MissionStatus = 
   | 'planning'      // PM is breaking down the mission

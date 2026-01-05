@@ -19,7 +19,17 @@ import type {
   MissionStatus,
   MissionPriority,
   MissionCommit,
+  Epic,
+  EpicStatus,
+  ProductPhase,
+  PMThought,
+  PMBrainState,
 } from '../types';
+import { 
+  analyzeProductState, 
+  evaluateNextMissions, 
+  generatePMThoughts,
+} from '../lib/pm/pmBrain';
 import type { RallyPoint, MinimapEvent } from '../types/rts';
 import type { ActiveEvent } from '../types/events';
 import { DEFAULT_UPGRADES } from '../types/rts';
@@ -142,6 +152,17 @@ const initialState: GameState = {
   // Missions (PM-created feature branches as git worktrees)
   missions: [],
   activeMissionId: null,
+  
+  // PM Brain (continuous product thinking)
+  pmBrain: {
+    enabled: true,
+    thoughts: [],
+    epics: [],
+    productState: null,
+    lastEvaluation: 0,
+    autoGenerateEnabled: true,
+    evaluationInterval: 120, // Evaluate every 2 minutes of game time
+  } as PMBrainState,
 };
 
 // Create the store with persistence
@@ -1859,6 +1880,218 @@ export const useGameStore = create<GameState & GameActions>()(
       get().addNotification(`🎉 Mission "${mission.name}" completed and merged!`, 'success');
     }
   },
+
+  // Create mission with pre-defined tasks
+  createMissionWithTasks: (
+    name: string, 
+    description: string, 
+    priority: MissionPriority,
+    taskDefs: Array<{ title: string; type: TaskType; estimatedTicks: number }>
+  ) => {
+    const missionId = get().createMission(name, description, priority);
+    
+    // Create tasks for this mission
+    taskDefs.forEach(taskDef => {
+      const taskId = uuidv4();
+      const task: Task = {
+        id: taskId,
+        title: taskDef.title,
+        description: `Part of mission: ${name}`,
+        type: taskDef.type,
+        status: 'backlog',
+        priority: priority === 'critical' ? 'high' : priority,
+        assigneeId: null,
+        estimatedTicks: taskDef.estimatedTicks,
+        progressTicks: 0,
+        createdAt: get().tick,
+        completedAt: null,
+        codeGenerated: null,
+        filesCreated: [],
+      };
+      
+      set(state => ({
+        tasks: [...state.tasks, task],
+        missions: state.missions.map(m =>
+          m.id === missionId
+            ? { ...m, taskIds: [...m.taskIds, taskId] }
+            : m
+        ),
+      }));
+    });
+    
+    return missionId;
+  },
+
+  // ============================================
+  // PM Brain - Continuous Product Thinking
+  // ============================================
+
+  togglePMBrain: () => {
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        enabled: !state.pmBrain.enabled,
+      },
+    }));
+    
+    const enabled = get().pmBrain.enabled;
+    get().addNotification(
+      enabled ? '🧠 PM Brain activated' : '🧠 PM Brain deactivated',
+      'info'
+    );
+  },
+
+  togglePMAutoGenerate: () => {
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        autoGenerateEnabled: !state.pmBrain.autoGenerateEnabled,
+      },
+    }));
+  },
+
+  runPMEvaluation: () => {
+    const state = get();
+    if (!state.project || !state.pmBrain.enabled) return;
+    
+    // Analyze current product state
+    const productState = analyzeProductState(
+      state.project,
+      state.tasks,
+      state.missions,
+      state.tick
+    );
+    
+    // Generate thoughts
+    const thoughts = generatePMThoughts(
+      productState,
+      state.missions,
+      state.tasks,
+      state.employees
+    );
+    
+    // Add thoughts to PM brain (keep last 20)
+    const pmThoughts: PMThought[] = thoughts.map(t => ({
+      ...t,
+      id: uuidv4(),
+    }));
+    
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        productState,
+        thoughts: [...pmThoughts, ...state.pmBrain.thoughts].slice(0, 20),
+        lastEvaluation: state.tick,
+      },
+    }));
+    
+    // Auto-generate missions if enabled
+    if (state.pmBrain.autoGenerateEnabled) {
+      const pendingTasks = state.tasks.filter(t => t.status === 'todo' || t.status === 'backlog').length;
+      const idleEmployees = state.employees.filter(e => e.status === 'idle').length;
+      const activeMissions = state.missions.filter(m => m.status === 'active').length;
+      
+      // Only auto-generate if we need work
+      if (idleEmployees > 0 && pendingTasks < idleEmployees && activeMissions < 2) {
+        const suggestions = evaluateNextMissions(productState, state.missions, 1);
+        
+        if (suggestions.length > 0) {
+          const template = suggestions[0];
+          
+          get().addPMThought({
+            type: 'decision',
+            message: `Creating new mission: ${template.name}`,
+          });
+          
+          get().createMissionWithTasks(
+            template.name,
+            template.description,
+            template.priority,
+            template.tasks as Array<{ title: string; type: TaskType; estimatedTicks: number }>
+          );
+          
+          get().addPMThought({
+            type: 'action',
+            message: `✅ Mission "${template.name}" created with ${template.tasks.length} tasks`,
+          });
+        }
+      }
+    }
+  },
+
+  addPMThought: (thought: Omit<PMThought, 'id' | 'timestamp'>) => {
+    const newThought: PMThought = {
+      ...thought,
+      id: uuidv4(),
+      timestamp: Date.now(),
+    };
+    
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        thoughts: [newThought, ...state.pmBrain.thoughts].slice(0, 20),
+      },
+    }));
+  },
+
+  createEpic: (name: string, description: string, phase: ProductPhase) => {
+    const id = uuidv4();
+    const epic: Epic = {
+      id,
+      name,
+      description,
+      status: 'planned',
+      priority: 'high',
+      missionIds: [],
+      phase,
+      createdAt: get().tick,
+      completedAt: null,
+    };
+    
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        epics: [...state.pmBrain.epics, epic],
+      },
+    }));
+    
+    get().addPMThought({
+      type: 'action',
+      message: `📋 Created epic: ${name}`,
+    });
+    
+    return id;
+  },
+
+  addMissionToEpic: (epicId: string, missionId: string) => {
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        epics: state.pmBrain.epics.map(e =>
+          e.id === epicId
+            ? { ...e, missionIds: [...e.missionIds, missionId] }
+            : e
+        ),
+      },
+    }));
+  },
+
+  updateEpicStatus: (epicId: string, status: EpicStatus) => {
+    set(state => ({
+      pmBrain: {
+        ...state.pmBrain,
+        epics: state.pmBrain.epics.map(e =>
+          e.id === epicId
+            ? { 
+                ...e, 
+                status,
+                completedAt: status === 'completed' ? state.tick : e.completedAt,
+              }
+            : e
+        ),
+      },
+    }));
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -1889,6 +2122,10 @@ export const useGameStore = create<GameState & GameActions>()(
         eventsEnabled: state.eventsEnabled,
         missions: state.missions,
         activeMissionId: state.activeMissionId,
+        pmBrain: {
+          ...state.pmBrain,
+          thoughts: state.pmBrain.thoughts.slice(0, 10), // Keep only recent thoughts
+        },
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {

@@ -38,6 +38,7 @@ function App() {
     triggerEvent,
     updatePlayTime,
     runAutopilot,
+    runPMEvaluation,
     tick,
     project,
     selectedEmployeeIds,
@@ -46,6 +47,7 @@ function App() {
     autopilot,
     focusMode,
     eventsEnabled,
+    pmBrain,
   } = useGameStore();
   
   // Auth state
@@ -93,6 +95,16 @@ function App() {
       checkAchievements();
     }
   }, [tick, checkAchievements]);
+
+  // PM Brain evaluation loop
+  useEffect(() => {
+    if (project && pmBrain.enabled && tick > 0) {
+      // Run evaluation at the configured interval
+      if (tick - pmBrain.lastEvaluation >= pmBrain.evaluationInterval) {
+        runPMEvaluation();
+      }
+    }
+  }, [tick, project, pmBrain.enabled, pmBrain.lastEvaluation, pmBrain.evaluationInterval, runPMEvaluation]);
 
   // Update play time every second
   useEffect(() => {

@@ -11,12 +11,24 @@ import type {
   MissionStatus as MissionStatusType,
   MissionPriority as MissionPriorityType,
   MissionCommit as MissionCommitType,
+  Epic as EpicType,
+  EpicStatus as EpicStatusType,
+  ProductPhase as ProductPhaseType,
+  PMThought as PMThoughtType,
+  ProductState as ProductStateType,
+  PMBrainState as PMBrainStateType,
 } from './missions';
 
 export type Mission = MissionType;
 export type MissionStatus = MissionStatusType;
 export type MissionPriority = MissionPriorityType;
 export type MissionCommit = MissionCommitType;
+export type Epic = EpicType;
+export type EpicStatus = EpicStatusType;
+export type ProductPhase = ProductPhaseType;
+export type PMThought = PMThoughtType;
+export type ProductState = ProductStateType;
+export type PMBrainState = PMBrainStateType;
 export { MISSION_TEMPLATES } from './missions';
 
 // Import and re-export achievement types
@@ -263,6 +275,9 @@ export interface GameState {
   // Missions (PM-created feature branches)
   missions: Mission[];
   activeMissionId: string | null;
+  
+  // PM Brain (continuous product thinking)
+  pmBrain: PMBrainState;
 }
 
 export interface GameNotification {
@@ -438,6 +453,12 @@ export interface GameActions {
   
   // Missions (PM-created feature branches as git worktrees)
   createMission: (name: string, description: string, priority: MissionPriority) => string;
+  createMissionWithTasks: (
+    name: string, 
+    description: string, 
+    priority: MissionPriority,
+    tasks: Array<{ title: string; type: TaskType; estimatedTicks: number }>
+  ) => string;
   startMission: (missionId: string) => void;
   setActiveMission: (missionId: string | null) => void;
   addTaskToMission: (missionId: string, taskId: string) => void;
@@ -447,6 +468,15 @@ export interface GameActions {
   setMissionPR: (missionId: string, prUrl: string, prNumber: number) => void;
   abandonMission: (missionId: string) => void;
   completeMission: (missionId: string) => void;
+  
+  // PM Brain (continuous product thinking loop)
+  togglePMBrain: () => void;
+  togglePMAutoGenerate: () => void;
+  runPMEvaluation: () => void;
+  addPMThought: (thought: Omit<PMThought, 'id' | 'timestamp'>) => void;
+  createEpic: (name: string, description: string, phase: ProductPhase) => string;
+  addMissionToEpic: (epicId: string, missionId: string) => void;
+  updateEpicStatus: (epicId: string, status: EpicStatus) => void;
 }
 
 // Employee Templates for Hiring
