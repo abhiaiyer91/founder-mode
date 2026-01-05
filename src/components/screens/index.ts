@@ -1,4 +1,5 @@
 // Game Screens
+export { AuthScreen } from './AuthScreen';
 export { StartScreen } from './StartScreen';
 export { CommandCenter } from './CommandCenter';
 export { OfficeScreen } from './OfficeScreen';

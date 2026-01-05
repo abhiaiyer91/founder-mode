@@ -70,6 +70,7 @@ export interface Project {
 
 // Game State
 export type GameScreen = 
+  | 'auth'     // Login/signup
   | 'start' 
   | 'command'  // RTS-style main view
   | 'office' 

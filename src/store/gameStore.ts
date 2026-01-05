@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   GameState,
@@ -93,12 +94,14 @@ const initialState: GameState = {
   showCommandPalette: false,
 };
 
-// Create the store
-export const useGameStore = create<GameState & GameActions>((set, get) => ({
-  ...initialState,
+// Create the store with persistence
+export const useGameStore = create<GameState & GameActions>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
-  // Navigation
-  setScreen: (screen: GameScreen) => set({ screen }),
+      // Navigation
+      setScreen: (screen: GameScreen) => set({ screen }),
 
   // Game Control
   setGameSpeed: (speed: GameSpeed) => set({ gameSpeed: speed }),
@@ -788,6 +791,41 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       get().addNotification(`⚠️ AI encountered an error. Falling back to simulation.`, 'warning');
     }
   },
-}));
+    }),
+    {
+      name: 'founder-mode-game',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist game state, not UI state
+      partialize: (state) => ({
+        tick: state.tick,
+        money: state.money,
+        runway: state.runway,
+        project: state.project,
+        employees: state.employees,
+        tasks: state.tasks,
+        stats: state.stats,
+        aiSettings: {
+          ...state.aiSettings,
+          apiKey: null, // Don't persist API key in localStorage
+        },
+        activityLog: state.activityLog.slice(0, 50), // Keep last 50 entries
+      }),
+      // Rehydrate with default UI state
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Reset UI state on load
+          state.screen = state.project ? 'command' : 'start';
+          state.gameSpeed = 'paused';
+          state.selectedEmployeeId = null;
+          state.selectedEmployeeIds = [];
+          state.selectedTaskId = null;
+          state.notifications = [];
+          state.isPaused = true;
+          state.showCommandPalette = false;
+        }
+      },
+    }
+  )
+);
 
 export default useGameStore;

@@ -1,5 +1,7 @@
 import express, { type Express } from 'express';
 import cors from 'cors';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './auth';
 import { agents, allTools } from './mastra';
 import type { AgentRole } from './mastra';
 
@@ -7,8 +9,14 @@ const app: Express = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3001'],
+  credentials: true,
+}));
 app.use(express.json());
+
+// Better Auth handler - mount at /api/auth
+app.all('/api/auth/*', toNodeHandler(auth));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -227,14 +235,16 @@ Use the createEmailCampaign tool.`;
 // Start server
 app.listen(PORT, () => {
   console.log(`
-🚀 Founder Mode Mastra Server
+🚀 Founder Mode Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📍 Running on http://localhost:${PORT}
-🤖 Agents loaded: ${Object.keys(agents).join(', ')}
+🤖 Agents: ${Object.keys(agents).join(', ')}
+🔐 Auth: better-auth enabled
 
 Endpoints:
-  GET  /health              - Health check
-  GET  /api/agents          - List agents
+  GET  /health                    - Health check
+  ALL  /api/auth/*                - Authentication (better-auth)
+  GET  /api/agents                - List agents
   POST /api/agents/:role/generate - Generate with agent
   POST /api/tools/:id/execute     - Execute tool directly
   

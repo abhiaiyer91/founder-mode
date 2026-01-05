@@ -1,6 +1,7 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useGameStore } from './store/gameStore';
 import { 
+  AuthScreen,
   StartScreen, 
   CommandCenter,
   OfficeScreen, 
@@ -11,6 +12,7 @@ import {
   SettingsScreen 
 } from './components/screens';
 import { StatusBar } from './components/StatusBar';
+import { useSession } from './lib/auth';
 import type { GameScreen, GameSpeed } from './types';
 import './App.css';
 
@@ -25,6 +27,13 @@ function App() {
     tick,
     project
   } = useGameStore();
+  
+  // Auth state
+  const { data: session, isPending: authLoading } = useSession();
+  const [isGuest, setIsGuest] = useState(false);
+  
+  // Check if user should see auth screen
+  const needsAuth = !session && !isGuest && !authLoading;
 
   // Game loop
   useEffect(() => {
@@ -115,8 +124,38 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Handle auth success
+  const handleAuthSuccess = () => {
+    setIsGuest(false);
+  };
+  
+  // Handle skip (guest mode)
+  const handleSkipAuth = () => {
+    setIsGuest(true);
+  };
+
   // Render current screen
   const renderScreen = () => {
+    // Show loading while checking auth
+    if (authLoading) {
+      return (
+        <div className="loading-screen">
+          <div className="loading-spinner">⏳</div>
+          <div className="loading-text">Loading...</div>
+        </div>
+      );
+    }
+    
+    // Show auth if needed (optional - can be skipped)
+    if (needsAuth && screen === 'start' && !project) {
+      return (
+        <AuthScreen 
+          onSuccess={handleAuthSuccess} 
+          onSkip={handleSkipAuth} 
+        />
+      );
+    }
+    
     switch (screen) {
       case 'start':
         return <StartScreen />;
