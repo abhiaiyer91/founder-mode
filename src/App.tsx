@@ -3,6 +3,7 @@ import { useGameStore } from './store/gameStore';
 import { 
   AuthScreen,
   StartScreen, 
+  DashboardScreen,
   CommandCenter,
   TaskQueueScreen,
   OfficeScreen, 
@@ -163,6 +164,8 @@ function App() {
     switch (screen) {
       case 'start':
         return <StartScreen />;
+      case 'dashboard':
+        return <DashboardScreen />;
       case 'command':
         return <CommandCenter />;
       case 'queue':
@@ -184,8 +187,8 @@ function App() {
     }
   };
 
-  // Command Center and Queue have their own status bar built-in
-  const showStatusBar = project && screen !== 'command' && screen !== 'queue';
+  // Dashboard, Command Center, and Queue have their own status bar built-in
+  const showStatusBar = project && !['dashboard', 'command', 'queue'].includes(screen);
 
   return (
     <div className="app">

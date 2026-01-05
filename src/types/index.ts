@@ -98,10 +98,11 @@ export interface Project {
 
 // Game State
 export type GameScreen = 
-  | 'auth'     // Login/signup
+  | 'auth'      // Login/signup
   | 'start' 
-  | 'command'  // RTS-style main view
-  | 'queue'    // Task queue / import view
+  | 'dashboard' // Clean split-view (recommended)
+  | 'command'   // RTS-style command center
+  | 'queue'     // Task queue / import view
   | 'office' 
   | 'team' 
   | 'hire' 
