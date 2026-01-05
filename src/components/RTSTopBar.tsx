@@ -41,6 +41,8 @@ export function RTSTopBar() {
     { id: 'tasks', label: 'Tasks', icon: '📋', hotkey: 'T' },
     { id: 'team', label: 'Team', icon: '👥', hotkey: 'E' },
     { id: 'hire', label: 'Hire', icon: '👋', hotkey: 'H' },
+    { id: 'tech', label: 'Tech', icon: '🔬', hotkey: 'U' },
+    { id: 'achievements', label: 'Trophies', icon: '🏆', hotkey: 'A' },
   ];
 
   // Only show in game screens

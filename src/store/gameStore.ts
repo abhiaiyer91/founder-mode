@@ -17,7 +17,11 @@ import type {
   QueuedTaskItem,
 } from '../types';
 import type { RallyPoint, MinimapEvent } from '../types/rts';
+import type { ActiveEvent } from '../types/events';
 import { DEFAULT_UPGRADES } from '../types/rts';
+import { DEFAULT_ACHIEVEMENTS } from '../types/achievements';
+import type { GameEvent as StoryEvent } from '../types/events';
+import { DEFAULT_EVENTS } from '../types/events';
 import {
   EMPLOYEE_TEMPLATES,
   FIRST_NAMES,
@@ -119,6 +123,12 @@ const initialState: GameState = {
   upgrades: DEFAULT_UPGRADES,
   alerts: [],
   minimapActivity: [],
+  
+  // Achievements & Events
+  achievements: DEFAULT_ACHIEVEMENTS,
+  activeEvents: [] as ActiveEvent[],
+  totalPlayTime: 0,
+  sessionStartTime: Date.now(),
 };
 
 // Create the store with persistence
@@ -1242,6 +1252,316 @@ export const useGameStore = create<GameState & GameActions>()(
     const newEvents = [newEvent, ...state.minimapActivity].slice(0, 50);
     set({ minimapActivity: newEvents });
   },
+
+  // ============================================
+  // Achievements & Events
+  // ============================================
+  
+  unlockAchievement: (achievementId) => {
+    const state = get();
+    const achievement = state.achievements.find(a => a.id === achievementId);
+    
+    if (!achievement || achievement.unlocked) return;
+    
+    const newAchievements = state.achievements.map(a =>
+      a.id === achievementId
+        ? { ...a, unlocked: true, unlockedAt: Date.now() }
+        : a
+    );
+    
+    set({ achievements: newAchievements });
+    
+    // Show achievement notification
+    get().addNotification(`🏆 Achievement Unlocked: ${achievement.name}!`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `Achievement unlocked: ${achievement.name}`,
+      type: 'event',
+    });
+    
+    // Add minimap event
+    get().addMinimapEvent({
+      type: 'deploy',
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      label: `🏆 ${achievement.name}`,
+    });
+  },
+  
+  checkAchievements: () => {
+    const state = get();
+    const { achievements, employees, tasks, money, tick, project, upgrades } = state;
+    
+    // Helper to unlock
+    const unlock = (id: string) => {
+      const achievement = achievements.find(a => a.id === id);
+      if (achievement && !achievement.unlocked) {
+        get().unlockAchievement(id);
+      }
+    };
+    
+    // Check project start
+    if (project) unlock('first-steps');
+    if (project) unlock('the-idea');
+    
+    // Check team achievements
+    if (employees.length >= 1) unlock('first-hire');
+    if (employees.length >= 10) unlock('army');
+    
+    const hasEngineer = employees.some(e => e.role === 'engineer');
+    const hasDesigner = employees.some(e => e.role === 'designer');
+    const hasPM = employees.some(e => e.role === 'pm');
+    const hasMarketer = employees.some(e => e.role === 'marketer');
+    if (hasEngineer && hasDesigner && hasPM && hasMarketer) unlock('full-stack-team');
+    
+    const highMoraleCount = employees.filter(e => e.morale >= 80).length;
+    if (highMoraleCount >= 5) unlock('dream-team');
+    
+    const seniorCount = employees.filter(e => e.skillLevel === 'senior' || e.skillLevel === 'lead').length;
+    if (seniorCount >= 3) unlock('senior-staff');
+    
+    if (employees.every(e => e.morale === 100) && employees.length > 0) unlock('perfectionist');
+    
+    // Check shipping achievements
+    const doneTasks = tasks.filter(t => t.status === 'done');
+    if (doneTasks.length >= 1) unlock('first-ship');
+    if (doneTasks.length >= 50) unlock('shipping-machine');
+    if (doneTasks.length >= 100) unlock('century');
+    
+    const bugsFixed = doneTasks.filter(t => t.type === 'bug').length;
+    const bugAchievement = achievements.find(a => a.id === 'bug-squasher');
+    if (bugAchievement && !bugAchievement.unlocked) {
+      if (bugsFixed >= 5) unlock('bug-squasher');
+    }
+    
+    const featuresShipped = doneTasks.filter(t => t.type === 'feature').length;
+    if (featuresShipped >= 10) unlock('feature-factory');
+    
+    // Check project progress
+    const totalTasks = tasks.length;
+    const doneCount = doneTasks.length;
+    const progress = totalTasks > 0 ? (doneCount / totalTasks) * 100 : 0;
+    if (progress >= 50) unlock('mvp');
+    if (progress >= 100 && totalTasks > 0) unlock('launch');
+    
+    // Check money achievements
+    if (money >= 1000) unlock('first-dollar');
+    if (money >= 100000) unlock('profitable');
+    if (money >= 1000000) unlock('unicorn');
+    
+    const purchasedUpgrades = upgrades.filter(u => u.purchased).length;
+    if (purchasedUpgrades >= 5) unlock('investor');
+    
+    // Check time achievements
+    const days = Math.floor(tick / 480);
+    const weeks = Math.floor(days / 7);
+    if (weeks >= 10) unlock('marathon');
+    
+    // Check time of day (secret)
+    const hour = new Date().getHours();
+    if (hour >= 0 && hour < 5) unlock('night-owl');
+    
+    // Update progressive achievements
+    const newAchievements = state.achievements.map(a => {
+      if (a.id === 'bug-squasher' && a.target) {
+        return { ...a, progress: Math.min(bugsFixed, a.target) };
+      }
+      if (a.id === 'feature-factory' && a.target) {
+        return { ...a, progress: Math.min(featuresShipped, a.target) };
+      }
+      if (a.id === 'shipping-machine' && a.target) {
+        return { ...a, progress: Math.min(doneTasks.length, a.target) };
+      }
+      if (a.id === 'century' && a.target) {
+        return { ...a, progress: Math.min(doneTasks.length, a.target) };
+      }
+      if (a.id === 'investor' && a.target) {
+        return { ...a, progress: Math.min(purchasedUpgrades, a.target) };
+      }
+      return a;
+    });
+    
+    set({ achievements: newAchievements });
+  },
+  
+  triggerEvent: (eventId) => {
+    const state = get();
+    
+    // Find event
+    let event: StoryEvent | undefined;
+    if (eventId) {
+      event = DEFAULT_EVENTS.find(e => e.id === eventId);
+    } else {
+      // Random event based on probability
+      const eligibleEvents = DEFAULT_EVENTS.filter(e => {
+        // Check requirements
+        if (e.requirements) {
+          for (const req of e.requirements) {
+            let value = 0;
+            if (req.type === 'money') value = state.money;
+            if (req.type === 'employees') value = state.employees.length;
+            if (req.type === 'tasks_done') value = state.tasks.filter(t => t.status === 'done').length;
+            if (req.type === 'week') value = Math.floor(state.tick / 480 / 7);
+            
+            const ops = {
+              '>': () => value > req.value,
+              '<': () => value < req.value,
+              '>=': () => value >= req.value,
+              '<=': () => value <= req.value,
+              '==': () => value === req.value,
+            };
+            if (!ops[req.operator]()) return false;
+          }
+        }
+        return Math.random() < e.probability;
+      });
+      
+      if (eligibleEvents.length > 0) {
+        event = eligibleEvents[Math.floor(Math.random() * eligibleEvents.length)];
+      }
+    }
+    
+    if (!event) return;
+    
+    // Create active event
+    const activeEvent: ActiveEvent = {
+      eventId: event.id,
+      startTick: state.tick,
+      effects: event.effects,
+    };
+    
+    // Add alert for the event
+    const alert = {
+      id: uuidv4(),
+      type: event.category === 'crisis' ? 'danger' as const : 
+            event.category === 'opportunity' ? 'opportunity' as const :
+            event.category === 'challenge' ? 'warning' as const : 'info' as const,
+      title: event.name,
+      message: event.description,
+      timestamp: Date.now(),
+      dismissed: false,
+      action: event.choices ? {
+        label: 'Make a choice',
+        callback: event.id,
+      } : undefined,
+    };
+    
+    set({
+      activeEvents: [...state.activeEvents, activeEvent],
+      alerts: [...state.alerts, alert],
+    });
+    
+    get().addNotification(`${event.icon} ${event.name}`, 
+      event.category === 'opportunity' ? 'success' : 
+      event.category === 'crisis' ? 'error' : 'warning'
+    );
+    
+    get().logActivity({
+      tick: state.tick,
+      message: `Event: ${event.name}`,
+      type: 'event',
+    });
+    
+    // Apply immediate effects (if no choices)
+    if (!event.choices) {
+      for (const effect of event.effects) {
+        get().applyEventEffect(effect);
+      }
+    }
+  },
+  
+  makeEventChoice: (eventId, choiceId) => {
+    const state = get();
+    const event = DEFAULT_EVENTS.find(e => e.id === eventId);
+    if (!event || !event.choices) return;
+    
+    const choice = event.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+    
+    // Check if can afford
+    if (choice.cost && state.money < choice.cost) {
+      get().addNotification(`Not enough money! Need $${choice.cost}`, 'error');
+      return;
+    }
+    
+    // Apply effects
+    for (const effect of choice.effects) {
+      get().applyEventEffect(effect);
+    }
+    
+    // Update active event
+    const newActiveEvents = state.activeEvents.map(ae =>
+      ae.eventId === eventId
+        ? { ...ae, choiceMade: choiceId }
+        : ae
+    );
+    
+    // Dismiss alert
+    const newAlerts = state.alerts.map(a =>
+      a.action?.callback === eventId
+        ? { ...a, dismissed: true }
+        : a
+    );
+    
+    set({
+      activeEvents: newActiveEvents,
+      alerts: newAlerts,
+    });
+    
+    get().addNotification(`Choice made: ${choice.label}`, 'info');
+  },
+  
+  applyEventEffect: (effect: { type: string; value: number; target?: string; duration?: number }) => {
+    const state = get();
+    
+    if (effect.type === 'money') {
+      set({ money: Math.max(0, state.money + effect.value) });
+    }
+    
+    if (effect.type === 'morale') {
+      let targetEmployees = state.employees;
+      if (effect.target === 'random' && state.employees.length > 0) {
+        const randomIndex = Math.floor(Math.random() * state.employees.length);
+        targetEmployees = [state.employees[randomIndex]];
+      }
+      
+      const newEmployees = state.employees.map(e => {
+        if (targetEmployees.includes(e)) {
+          return { ...e, morale: Math.max(0, Math.min(100, e.morale + effect.value)) };
+        }
+        return e;
+      });
+      set({ employees: newEmployees });
+    }
+    
+    if (effect.type === 'productivity') {
+      let targetEmployees = state.employees;
+      if (effect.target === 'random' && state.employees.length > 0) {
+        const randomIndex = Math.floor(Math.random() * state.employees.length);
+        targetEmployees = [state.employees[randomIndex]];
+      }
+      
+      const newEmployees = state.employees.map(e => {
+        if (targetEmployees.includes(e)) {
+          return { ...e, productivity: Math.max(0, Math.min(100, e.productivity + effect.value)) };
+        }
+        return e;
+      });
+      set({ employees: newEmployees });
+    }
+  },
+  
+  updatePlayTime: () => {
+    const state = get();
+    const now = Date.now();
+    const sessionSeconds = Math.floor((now - state.sessionStartTime) / 1000);
+    set({ totalPlayTime: state.totalPlayTime + 1 });
+    
+    // Check play time achievements
+    if (sessionSeconds >= 3600) { // 1 hour
+      get().unlockAchievement('all-nighter');
+    }
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -1265,6 +1585,8 @@ export const useGameStore = create<GameState & GameActions>()(
         controlGroups: state.controlGroups,
         rallyPoints: state.rallyPoints,
         upgrades: state.upgrades,
+        achievements: state.achievements,
+        totalPlayTime: state.totalPlayTime,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {

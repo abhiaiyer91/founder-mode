@@ -5,6 +5,7 @@ export { DashboardScreen } from './DashboardScreen';
 export { CommandCenter } from './CommandCenter';
 export { TaskQueueScreen } from './TaskQueueScreen';
 export { TechTreeScreen } from './TechTreeScreen';
+export { AchievementsScreen } from './AchievementsScreen';
 export { OfficeScreen } from './OfficeScreen';
 export { HireScreen } from './HireScreen';
 export { TasksScreen } from './TasksScreen';

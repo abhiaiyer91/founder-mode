@@ -7,6 +7,7 @@ import {
   CommandCenter,
   TaskQueueScreen,
   TechTreeScreen,
+  AchievementsScreen,
   OfficeScreen, 
   HireScreen, 
   TasksScreen,
@@ -16,6 +17,7 @@ import {
 } from './components/screens';
 import { StatusBar } from './components/StatusBar';
 import { RTSTopBar } from './components/RTSTopBar';
+import { EventPanel } from './components/EventPanel';
 import { useSession } from './lib/auth';
 import type { GameScreen, GameSpeed } from './types';
 import './App.css';
@@ -29,6 +31,9 @@ function App() {
     gameTick,
     processQueue,
     triggerRandomEvent,
+    checkAchievements,
+    triggerEvent,
+    updatePlayTime,
     tick,
     project,
     selectedEmployeeIds,
@@ -65,8 +70,26 @@ function App() {
   useEffect(() => {
     if (tick > 0 && tick % 300 === 0 && Math.random() > 0.5) {
       triggerRandomEvent();
+      triggerEvent(); // New event system
     }
-  }, [tick, triggerRandomEvent]);
+  }, [tick, triggerRandomEvent, triggerEvent]);
+
+  // Check achievements periodically
+  useEffect(() => {
+    if (tick > 0 && tick % 60 === 0) {
+      checkAchievements();
+    }
+  }, [tick, checkAchievements]);
+
+  // Update play time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (project) {
+        updatePlayTime();
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [project, updatePlayTime]);
 
   // Monthly payroll (every 1440 ticks = 1 day in-game)
   useEffect(() => {
@@ -145,6 +168,7 @@ function App() {
           'e': 'team',
           'q': 'queue',
           'u': 'tech', // Upgrades/tech tree
+          'a': 'achievements', // Trophy room
           's': 'settings',
         };
         if (screenMap[e.key.toLowerCase()]) {
@@ -203,6 +227,8 @@ function App() {
         return <TaskQueueScreen />;
       case 'tech':
         return <TechTreeScreen />;
+      case 'achievements':
+        return <AchievementsScreen />;
       case 'office':
         return <OfficeScreen />;
       case 'hire':
@@ -221,7 +247,7 @@ function App() {
   };
 
   // Screens with built-in status bars
-  const fullScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tech'];
+  const fullScreens: GameScreen[] = ['dashboard', 'command', 'queue', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game
@@ -234,6 +260,7 @@ function App() {
         {renderScreen()}
       </div>
       {showStatusBar && <StatusBar />}
+      {project && <EventPanel />}
     </div>
   );
 }

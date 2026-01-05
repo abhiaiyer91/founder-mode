@@ -5,6 +5,32 @@
 // Re-export integration types
 export * from './integrations';
 
+// Import and re-export achievement types
+import type { 
+  Achievement as AchievementType,
+  AchievementCategory as AchievementCategoryType,
+  AchievementTrigger as AchievementTriggerType,
+} from './achievements';
+export type Achievement = AchievementType;
+export type AchievementCategory = AchievementCategoryType;
+export type AchievementTrigger = AchievementTriggerType;
+export { DEFAULT_ACHIEVEMENTS, RARITY_COLORS } from './achievements';
+
+// Import and re-export event types (using StoryEvent to avoid conflict with legacy GameEvent)
+import type {
+  GameEvent as StoryEventDef,
+  EventCategory as EventCategoryType,
+  EventEffect as EventEffectType,
+  EventChoice as EventChoiceType,
+  ActiveEvent as ActiveEventType,
+} from './events';
+export type StoryEvent = StoryEventDef;
+export type EventCategory = EventCategoryType;
+export type EventEffect = EventEffectType;
+export type EventChoice = EventChoiceType;
+export type ActiveEvent = ActiveEventType;
+export { DEFAULT_EVENTS } from './events';
+
 // Import and re-export RTS types
 import type { 
   ControlGroup as ControlGroupType, 
@@ -121,12 +147,13 @@ export interface Project {
 
 // Game State
 export type GameScreen = 
-  | 'auth'      // Login/signup
+  | 'auth'         // Login/signup
   | 'start' 
-  | 'dashboard' // Clean split-view (recommended)
-  | 'command'   // RTS-style command center
-  | 'queue'     // Task queue / import view
-  | 'tech'      // Tech tree / upgrades
+  | 'dashboard'    // Clean split-view (recommended)
+  | 'command'      // RTS-style command center
+  | 'queue'        // Task queue / import view
+  | 'tech'         // Tech tree / upgrades
+  | 'achievements' // Trophy room
   | 'office' 
   | 'team' 
   | 'hire' 
@@ -205,6 +232,12 @@ export interface GameState {
   upgrades: Upgrade[];
   alerts: GameAlert[];
   minimapActivity: MinimapEvent[];
+  
+  // Achievements & Events
+  achievements: Achievement[];
+  activeEvents: ActiveEvent[];
+  totalPlayTime: number; // in seconds
+  sessionStartTime: number;
 }
 
 export interface GameNotification {
@@ -363,6 +396,14 @@ export interface GameActions {
   purchaseUpgrade: (upgradeId: string) => void;
   dismissAlert: (alertId: string) => void;
   addMinimapEvent: (event: Omit<MinimapEvent, 'id' | 'timestamp'>) => void;
+  
+  // Achievements & Events
+  unlockAchievement: (achievementId: string) => void;
+  checkAchievements: () => void;
+  triggerEvent: (eventId?: string) => void;
+  makeEventChoice: (eventId: string, choiceId: string) => void;
+  updatePlayTime: () => void;
+  applyEventEffect: (effect: { type: string; value: number; target?: string; duration?: number }) => void;
 }
 
 // Employee Templates for Hiring
