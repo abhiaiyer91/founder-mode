@@ -8,11 +8,15 @@ import './TasksScreen.css';
 function TaskCard({ 
   task, 
   onAssign, 
-  onUpdateStatus 
+  onUpdateStatus,
+  onAIBoost,
+  aiEnabled,
 }: { 
   task: Task; 
   onAssign: () => void;
   onUpdateStatus: (status: TaskStatus) => void;
+  onAIBoost: () => void;
+  aiEnabled: boolean;
 }) {
   const assignee = useGameStore(state => 
     state.employees.find(e => e.id === task.assigneeId)
@@ -63,8 +67,15 @@ function TaskCard({
         )}
         
         {assignee ? (
-          <div className="task-assignee">
-            {assignee.avatarEmoji} {assignee.name}
+          <div className="task-assignee-row">
+            <div className="task-assignee">
+              {assignee.avatarEmoji} {assignee.name}
+            </div>
+            {aiEnabled && task.status === 'in_progress' && (
+              <button className="ai-boost-button" onClick={onAIBoost}>
+                🤖 AI Boost
+              </button>
+            )}
           </div>
         ) : task.status !== 'done' && (
           <button className="assign-button" onClick={onAssign}>
@@ -100,7 +111,9 @@ export function TasksScreen() {
     setScreen, 
     createTask, 
     assignTask,
-    updateTaskStatus 
+    updateTaskStatus,
+    aiSettings,
+    aiWorkOnTask,
   } = useGameStore();
 
   const [showNewTask, setShowNewTask] = useState(false);
@@ -108,6 +121,10 @@ export function TasksScreen() {
   const [newTaskType, setNewTaskType] = useState<TaskType>('feature');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('medium');
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
+
+  const handleAIBoost = async (taskId: string) => {
+    await aiWorkOnTask(taskId);
+  };
 
   const columns: { status: TaskStatus; title: string }[] = [
     { status: 'backlog', title: '📥 BACKLOG' },
@@ -263,6 +280,8 @@ export function TasksScreen() {
                         task={task}
                         onAssign={() => setAssigningTaskId(task.id)}
                         onUpdateStatus={(status) => updateTaskStatus(task.id, status)}
+                        onAIBoost={() => handleAIBoost(task.id)}
+                        aiEnabled={aiSettings.enabled}
                       />
                     ))}
                 </div>

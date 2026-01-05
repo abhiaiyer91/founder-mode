@@ -1,6 +1,8 @@
-import { Terminal, Box, Menu } from '../tui';
+import { useState } from 'react';
+import { Terminal, Box, Menu, Input } from '../tui';
 import type { MenuItem } from '../tui';
 import { useGameStore } from '../../store/gameStore';
+import { aiService } from '../../lib/ai';
 import type { GameSpeed } from '../../types';
 import './SettingsScreen.css';
 
@@ -14,8 +16,14 @@ export function SettingsScreen() {
     employees,
     tasks,
     project,
-    stats
+    stats,
+    aiSettings,
+    configureAI,
+    disableAI,
   } = useGameStore();
+
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   const speedOptions: MenuItem[] = [
     { id: 'paused', label: '⏸️ Paused', shortcut: '0' },
@@ -26,6 +34,14 @@ export function SettingsScreen() {
 
   const handleSpeedChange = (item: MenuItem) => {
     setGameSpeed(item.id as GameSpeed);
+  };
+
+  const handleConfigureAI = () => {
+    if (apiKeyInput.trim()) {
+      configureAI(apiKeyInput.trim());
+      setApiKeyInput('');
+      setShowApiKeyInput(false);
+    }
   };
 
   const resetGame = () => {
@@ -61,6 +77,69 @@ export function SettingsScreen() {
         <div className="settings-layout">
           <h2>⚙️ Game Settings</h2>
 
+          {/* AI Configuration - Featured prominently */}
+          <Box title="🤖 AI CONFIGURATION (MASTRA)" variant="accent" className="settings-section ai-section">
+            <p className="section-desc">
+              Connect your AI provider to power your team with real intelligence.
+              Your employees will use AI to write actual code, create designs, and more!
+            </p>
+            
+            <div className="ai-status">
+              <span className="status-label">Status:</span>
+              <span className={`status-badge ${aiSettings.enabled ? 'enabled' : 'disabled'}`}>
+                {aiSettings.enabled ? '🟢 AI ENABLED' : '🔴 SIMULATION MODE'}
+              </span>
+            </div>
+
+            {aiSettings.enabled ? (
+              <div className="ai-enabled-info">
+                <p>✅ Your team is powered by <strong>{aiSettings.model}</strong></p>
+                <p className="api-key-hint">
+                  API Key: {aiService.getMaskedApiKey() || '****'}
+                </p>
+                <button className="disable-ai-btn" onClick={disableAI}>
+                  Disable AI
+                </button>
+              </div>
+            ) : showApiKeyInput ? (
+              <div className="api-key-form">
+                <Input
+                  value={apiKeyInput}
+                  onChange={setApiKeyInput}
+                  onSubmit={handleConfigureAI}
+                  placeholder="sk-..."
+                  prompt="OpenAI API Key:"
+                />
+                <div className="form-actions">
+                  <button className="save-btn" onClick={handleConfigureAI}>
+                    Connect AI
+                  </button>
+                  <button className="cancel-btn" onClick={() => setShowApiKeyInput(false)}>
+                    Cancel
+                  </button>
+                </div>
+                <p className="api-key-note">
+                  Your API key is stored locally and never sent to our servers.
+                  Get a key at <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>
+                </p>
+              </div>
+            ) : (
+              <button className="enable-ai-btn" onClick={() => setShowApiKeyInput(true)}>
+                🔑 Connect OpenAI API Key
+              </button>
+            )}
+
+            <div className="ai-features">
+              <h4>With AI enabled, your team can:</h4>
+              <ul>
+                <li>👨‍💻 <strong>Engineers</strong> - Write real, working code for your project</li>
+                <li>📊 <strong>PMs</strong> - Break down your idea into smart, prioritized tasks</li>
+                <li>🎨 <strong>Designers</strong> - Create CSS and design specifications</li>
+                <li>📢 <strong>Marketers</strong> - Write compelling copy and content</li>
+              </ul>
+            </div>
+          </Box>
+
           <Box title="GAME SPEED" className="settings-section">
             <p className="section-desc">
               Control how fast time passes in the game. Pausing stops all progress.
@@ -87,6 +166,14 @@ export function SettingsScreen() {
               <div className="stat-item">
                 <span className="label">Tasks Completed</span>
                 <span className="value">{stats.tasksCompleted}</span>
+              </div>
+              <div className="stat-item">
+                <span className="label">Lines of Code</span>
+                <span className="value">{stats.linesOfCodeGenerated}</span>
+              </div>
+              <div className="stat-item">
+                <span className="label">Commits</span>
+                <span className="value">{stats.commitsCreated}</span>
               </div>
               <div className="stat-item">
                 <span className="label">Team Size</span>
@@ -154,6 +241,7 @@ export function SettingsScreen() {
             <div className="about-content">
               <p><strong>Founder Mode</strong> v0.1.0</p>
               <p>A startup simulation game where your AI team builds real software.</p>
+              <p>Powered by <strong>Mastra</strong> AI framework.</p>
               <p className="tagline">"Build a real startup. Ship real code. Play the game."</p>
             </div>
           </Box>

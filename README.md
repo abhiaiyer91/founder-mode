@@ -73,33 +73,46 @@ Your AI team commits actual working code to a GitHub repository. Watch your prod
 ```
 src/
 ├── components/
-│   ├── tui/                 # Terminal UI components
+│   ├── tui/                 # Terminal UI component library
 │   │   ├── Terminal.tsx     # Main terminal container
-│   │   ├── Window.tsx       # Draggable windows
-│   │   ├── Input.tsx        # Text input with cursor
-│   │   ├── Menu.tsx         # Selectable menus
-│   │   └── ProgressBar.tsx  # ASCII progress bars
+│   │   ├── Input.tsx        # Text input with blinking cursor
+│   │   ├── Menu.tsx         # Keyboard-navigable menus
+│   │   ├── ProgressBar.tsx  # ASCII progress bars (█░)
+│   │   └── Box.tsx          # Styled containers
 │   ├── screens/             # Game screens
-│   │   ├── StartScreen.tsx  # Idea input
-│   │   ├── OfficeScreen.tsx # Main game view
+│   │   ├── StartScreen.tsx  # Startup idea input
+│   │   ├── OfficeScreen.tsx # Main dashboard
 │   │   ├── TeamScreen.tsx   # Team management
-│   │   ├── TasksScreen.tsx  # Task board
-│   │   └── CodeScreen.tsx   # View generated code
-│   └── game/                # Game entities
-│       ├── Employee.tsx     # Team member cards
-│       └── Task.tsx         # Task items
-├── hooks/
-│   ├── useGame.ts           # Main game state
-│   ├── useTeam.ts           # Team management
-│   └── useTasks.ts          # Task management
-├── types/
-│   └── index.ts             # TypeScript interfaces
-├── context/
-│   └── GameContext.tsx      # Global game state
-└── services/
-    ├── ai.ts                # AI agent integration
-    └── git.ts               # Git/GitHub operations
+│   │   ├── TasksScreen.tsx  # Kanban task board
+│   │   ├── CodeScreen.tsx   # View generated code
+│   │   ├── HireScreen.tsx   # Hire employees
+│   │   └── SettingsScreen.tsx # Game settings & AI config
+│   └── StatusBar.tsx        # Bottom status bar
+├── lib/
+│   └── ai/                  # AI Integration Layer
+│       ├── agents.ts        # Agent definitions (Mastra-style)
+│       └── index.ts         # AI service (OpenAI API)
+├── store/
+│   └── gameStore.ts         # Zustand game state
+└── types/
+    └── index.ts             # TypeScript interfaces
 ```
+
+### AI Architecture
+
+The game uses a **Mastra-inspired agent architecture** that's browser-compatible:
+
+- **Agent Definitions**: Each role (Engineer, PM, Designer, Marketer) has a defined persona and system prompt
+- **AI Service**: Handles API calls to OpenAI with graceful fallbacks
+- **Simulation Mode**: Works without an API key using intelligent simulations
+
+```typescript
+// Example: Engineer agent working on a task
+const result = await aiService.engineerWorkOnTask(task, projectContext);
+// Returns: { code, files, explanation }
+```
+
+When you're ready for full Mastra integration (server-side), the agent definitions can be directly ported.
 
 ---
 

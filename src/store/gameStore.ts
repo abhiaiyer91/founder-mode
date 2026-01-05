@@ -19,6 +19,7 @@ import {
   LAST_NAMES,
   EVENT_DEFINITIONS,
 } from '../types';
+import { aiService } from '../lib/ai';
 
 // Task ideas that PMs can generate
 const PM_TASK_IDEAS = [
@@ -74,6 +75,12 @@ const initialState: GameState = {
     linesOfCodeGenerated: 0,
     commitsCreated: 0,
     featuresShipped: 0,
+  },
+  aiSettings: {
+    enabled: false,
+    apiKey: null,
+    provider: 'openai',
+    model: 'gpt-4o-mini',
   },
   selectedEmployeeId: null,
   selectedTaskId: null,
@@ -440,6 +447,142 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     }
 
     get().addNotification(`📊 ${pm.name} added ${numTasks} task(s) to the backlog!`, 'success');
+  },
+
+  // AI Configuration
+  configureAI: (apiKey: string) => {
+    aiService.configure(apiKey);
+    set({
+      aiSettings: {
+        ...get().aiSettings,
+        enabled: true,
+        apiKey,
+      },
+    });
+    get().addNotification('🤖 AI agents activated! Your team is now powered by AI.', 'success');
+  },
+
+  disableAI: () => {
+    aiService.disable();
+    set({
+      aiSettings: {
+        ...get().aiSettings,
+        enabled: false,
+      },
+    });
+    get().addNotification('🤖 AI agents disabled. Running in simulation mode.', 'info');
+  },
+
+  // AI Task Execution
+  aiWorkOnTask: async (taskId: string) => {
+    const state = get();
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const assignee = state.employees.find(e => e.id === task.assigneeId);
+    if (!assignee) return;
+
+    get().addNotification(`🤖 ${assignee.name} is using AI to work on "${task.title}"...`, 'info');
+
+    try {
+      if (assignee.role === 'engineer') {
+        const result = await aiService.engineerWorkOnTask(
+          task,
+          state.project?.idea || 'A startup project'
+        );
+
+        // Update task with generated code
+        const updatedTasks = state.tasks.map(t =>
+          t.id === taskId
+            ? {
+                ...t,
+                codeGenerated: result.code,
+                filesCreated: result.files.map(f => f.path),
+                progressTicks: t.estimatedTicks, // Complete immediately
+                status: 'review' as TaskStatus,
+              }
+            : t
+        );
+
+        set({
+          tasks: updatedTasks,
+          stats: {
+            ...state.stats,
+            linesOfCodeGenerated: state.stats.linesOfCodeGenerated + result.code.split('\n').length,
+            commitsCreated: state.stats.commitsCreated + 1,
+          },
+        });
+
+        get().addNotification(`✨ ${assignee.name} completed "${task.title}" with AI!`, 'success');
+      } else if (assignee.role === 'pm') {
+        // PM uses AI to generate more tasks
+        const newTasks = await aiService.pmGenerateTasks(
+          state.project?.idea || 'A startup project',
+          state.tasks.map(t => t.title),
+          {
+            engineers: state.employees.filter(e => e.role === 'engineer').length,
+            designers: state.employees.filter(e => e.role === 'designer').length,
+            marketers: state.employees.filter(e => e.role === 'marketer').length,
+          }
+        );
+
+        for (const newTask of newTasks) {
+          get().createTask({
+            title: newTask.title,
+            description: newTask.description,
+            type: newTask.type,
+            priority: newTask.priority,
+            status: 'backlog',
+            assigneeId: null,
+            estimatedTicks: newTask.estimatedTicks,
+          });
+        }
+
+        get().addNotification(`📊 ${assignee.name} created ${newTasks.length} new tasks with AI!`, 'success');
+      } else if (assignee.role === 'designer') {
+        const result = await aiService.designerCreateSpec(
+          task.title,
+          task.description
+        );
+
+        const updatedTasks = state.tasks.map(t =>
+          t.id === taskId
+            ? {
+                ...t,
+                codeGenerated: result.css,
+                progressTicks: t.estimatedTicks,
+                status: 'review' as TaskStatus,
+              }
+            : t
+        );
+
+        set({ tasks: updatedTasks });
+        get().addNotification(`🎨 ${assignee.name} completed design for "${task.title}"!`, 'success');
+      } else if (assignee.role === 'marketer') {
+        const result = await aiService.marketerCreateContent(
+          state.project?.name || 'Product',
+          state.project?.idea || '',
+          'landing-page'
+        );
+
+        const updatedTasks = state.tasks.map(t =>
+          t.id === taskId
+            ? {
+                ...t,
+                codeGenerated: `${result.headline}\n\n${result.content}\n\nCTA: ${result.cta}`,
+                progressTicks: t.estimatedTicks,
+                status: 'review' as TaskStatus,
+              }
+            : t
+        );
+
+        set({ tasks: updatedTasks });
+        get().addNotification(`📢 ${assignee.name} created marketing content!`, 'success');
+      }
+    } catch (error) {
+      console.error('AI work error:', error);
+      get().addNotification(`⚠️ AI encountered an error. Falling back to simulation.`, 'warning');
+    }
   },
 }));
 

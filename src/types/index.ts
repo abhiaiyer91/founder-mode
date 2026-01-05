@@ -79,6 +79,13 @@ export interface GameStats {
   featuresShipped: number;
 }
 
+export interface AISettings {
+  enabled: boolean;
+  apiKey: string | null;
+  provider: 'openai' | 'anthropic';
+  model: string;
+}
+
 export interface GameState {
   // Meta
   screen: GameScreen;
@@ -97,6 +104,9 @@ export interface GameState {
   
   // Stats
   stats: GameStats;
+  
+  // AI Settings
+  aiSettings: AISettings;
   
   // UI State
   selectedEmployeeId: string | null;
@@ -220,6 +230,11 @@ export interface GameActions {
   
   // PM Actions
   pmGenerateTask: () => void;
+  
+  // AI
+  configureAI: (apiKey: string) => void;
+  disableAI: () => void;
+  aiWorkOnTask: (taskId: string) => Promise<void>;
 }
 
 // Employee Templates for Hiring
