@@ -5,6 +5,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { agents, allTools } from './mastra';
 import gameRoutes from './routes/game';
+import integrationRoutes from './routes/integrations';
 import { checkDatabaseConnection } from './db';
 import type { AgentRole } from './mastra';
 
@@ -23,6 +24,9 @@ app.all('/api/auth/*', toNodeHandler(auth));
 
 // Game state API - mount at /api/game
 app.use('/api/game', gameRoutes);
+
+// Integrations API - mount at /api/integrations
+app.use('/api/integrations', integrationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

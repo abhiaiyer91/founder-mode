@@ -665,6 +665,16 @@
   color: var(--color-accent);
 }
 
+.cmd-btn.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--terminal-bg);
+}
+
+.cmd-btn.primary:hover {
+  filter: brightness(1.1);
+}
+
 .speed-btn {
   width: 36px;
   height: 28px;

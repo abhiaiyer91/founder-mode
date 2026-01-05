@@ -14,6 +14,7 @@ import type {
   TaskType,
   TaskPriority,
   ActivityLogEntry,
+  QueuedTaskItem,
 } from '../types';
 import {
   EMPLOYEE_TEMPLATES,
@@ -92,6 +93,17 @@ const initialState: GameState = {
   selectedEmployeeIds: [],
   isPaused: false,
   showCommandPalette: false,
+  
+  // Task Queue
+  taskQueue: {
+    items: [],
+    autoAssignEnabled: true,
+    lastProcessedAt: 0,
+  },
+  integrations: {
+    github: { enabled: false, repo: null },
+    linear: { enabled: false, teamId: null },
+  },
 };
 
 // Create the store with persistence
@@ -791,6 +803,309 @@ export const useGameStore = create<GameState & GameActions>()(
       get().addNotification(`⚠️ AI encountered an error. Falling back to simulation.`, 'warning');
     }
   },
+
+  // ============================================
+  // Task Queue - RTS-style continuous execution
+  // ============================================
+  
+  addToQueue: (item) => {
+    const state = get();
+    const newItem: QueuedTaskItem = {
+      ...item,
+      id: uuidv4(),
+      queuePosition: state.taskQueue.items.length,
+      addedAt: Date.now(),
+      status: 'queued',
+    };
+    
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        items: [...state.taskQueue.items, newItem],
+      },
+    });
+    
+    get().logActivity({
+      tick: state.tick,
+      message: `Added to queue: "${item.title}"`,
+      type: 'task',
+    });
+  },
+  
+  removeFromQueue: (id) => {
+    const state = get();
+    const updatedItems = state.taskQueue.items
+      .filter(item => item.id !== id)
+      .map((item, index) => ({ ...item, queuePosition: index }));
+    
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        items: updatedItems,
+      },
+    });
+  },
+  
+  reorderQueue: (id, newPosition) => {
+    const state = get();
+    const items = [...state.taskQueue.items];
+    const currentIndex = items.findIndex(item => item.id === id);
+    
+    if (currentIndex === -1) return;
+    
+    const [movedItem] = items.splice(currentIndex, 1);
+    items.splice(newPosition, 0, movedItem);
+    
+    const reorderedItems = items.map((item, index) => ({
+      ...item,
+      queuePosition: index,
+    }));
+    
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        items: reorderedItems,
+      },
+    });
+  },
+  
+  processQueue: () => {
+    const state = get();
+    if (!state.taskQueue.autoAssignEnabled) return;
+    
+    // Find idle employees
+    const idleEmployees = state.employees.filter(e => e.status === 'idle');
+    if (idleEmployees.length === 0) return;
+    
+    // Find queued items ready for processing
+    const queuedItems = state.taskQueue.items.filter(item => item.status === 'queued');
+    if (queuedItems.length === 0) return;
+    
+    // Process queue items
+    let updatedItems = [...state.taskQueue.items];
+    const tasksToCreate: Array<{
+      title: string;
+      description: string;
+      type: TaskType;
+      priority: TaskPriority;
+      status: TaskStatus;
+      assigneeId: string | null;
+      estimatedTicks: number;
+    }> = [];
+    const employeesToUpdate: Array<{ id: string; status: 'working'; currentTaskId: string }> = [];
+    
+    for (const item of queuedItems) {
+      // Find suitable idle employee
+      const preferredRole = item.preferredRole || (
+        item.type === 'feature' || item.type === 'bug' || item.type === 'infrastructure' ? 'engineer' :
+        item.type === 'design' ? 'designer' :
+        item.type === 'marketing' ? 'marketer' : 'engineer'
+      );
+      
+      const employee = idleEmployees.find(e => e.role === preferredRole) || idleEmployees[0];
+      
+      if (employee && item.autoAssign) {
+        // Create task from queue item
+        const taskId = uuidv4();
+        const estimatedTicks = item.priority === 'critical' ? 40 :
+                               item.priority === 'high' ? 60 :
+                               item.priority === 'medium' ? 80 : 100;
+        
+        tasksToCreate.push({
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          priority: item.priority,
+          status: 'in_progress',
+          assigneeId: employee.id,
+          estimatedTicks,
+        });
+        
+        employeesToUpdate.push({
+          id: employee.id,
+          status: 'working',
+          currentTaskId: taskId,
+        });
+        
+        // Update queue item status
+        updatedItems = updatedItems.map(i => 
+          i.id === item.id 
+            ? { ...i, status: 'assigned' as const, taskId }
+            : i
+        );
+        
+        // Remove from available employees
+        idleEmployees.splice(idleEmployees.indexOf(employee), 1);
+        
+        get().logActivity({
+          tick: state.tick,
+          message: `Queue: Auto-assigned "${item.title}" to ${employee.name}`,
+          type: 'task',
+          employeeId: employee.id,
+        });
+        
+        if (idleEmployees.length === 0) break;
+      }
+    }
+    
+    // Apply updates
+    if (tasksToCreate.length > 0) {
+      const newTasks = tasksToCreate.map(t => ({
+        id: uuidv4(),
+        ...t,
+        progressTicks: 0,
+        createdAt: state.tick,
+        completedAt: null,
+        codeGenerated: null,
+        filesCreated: [],
+      }));
+      
+      const updatedEmployees = state.employees.map(emp => {
+        const update = employeesToUpdate.find(u => u.id === emp.id);
+        return update ? { ...emp, ...update } : emp;
+      });
+      
+      set({
+        tasks: [...state.tasks, ...newTasks],
+        employees: updatedEmployees,
+        taskQueue: {
+          ...state.taskQueue,
+          items: updatedItems,
+          lastProcessedAt: Date.now(),
+        },
+      });
+    }
+  },
+  
+  toggleAutoAssign: () => {
+    const state = get();
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        autoAssignEnabled: !state.taskQueue.autoAssignEnabled,
+      },
+    });
+    get().addNotification(
+      state.taskQueue.autoAssignEnabled 
+        ? '⏸️ Auto-assign paused' 
+        : '▶️ Auto-assign enabled',
+      'info'
+    );
+  },
+  
+  importFromGitHub: (issues) => {
+    const state = get();
+    
+    const items: QueuedTaskItem[] = issues.map((issue, index) => {
+      // Determine type from labels
+      const labels = issue.labels.map(l => l.name.toLowerCase());
+      const type: TaskType = 
+        labels.includes('bug') ? 'bug' :
+        labels.includes('design') ? 'design' :
+        labels.includes('marketing') ? 'marketing' :
+        labels.includes('infrastructure') || labels.includes('infra') ? 'infrastructure' :
+        'feature';
+      
+      // Determine priority from labels
+      const priority: TaskPriority =
+        labels.includes('critical') || labels.includes('urgent') ? 'critical' :
+        labels.includes('high') || labels.includes('priority') ? 'high' :
+        labels.includes('low') ? 'low' :
+        'medium';
+      
+      return {
+        id: uuidv4(),
+        externalId: `github-${issue.number}`,
+        source: 'github' as const,
+        sourceUrl: `https://github.com/${state.integrations.github.repo}/issues/${issue.number}`,
+        title: issue.title,
+        description: issue.body || '',
+        type,
+        priority,
+        labels: issue.labels.map(l => l.name),
+        queuePosition: state.taskQueue.items.length + index,
+        autoAssign: true,
+        addedAt: Date.now(),
+        status: 'queued' as const,
+      };
+    });
+    
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        items: [...state.taskQueue.items, ...items],
+      },
+    });
+    
+    get().addNotification(`📥 Imported ${items.length} issues from GitHub`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `Imported ${items.length} issues from GitHub`,
+      type: 'system',
+    });
+  },
+  
+  importFromLinear: (issues) => {
+    const state = get();
+    
+    const items: QueuedTaskItem[] = issues.map((issue, index) => {
+      // Determine type from labels
+      const labels = issue.labels.map(l => l.name.toLowerCase());
+      const type: TaskType = 
+        labels.includes('bug') ? 'bug' :
+        labels.includes('design') ? 'design' :
+        labels.includes('marketing') ? 'marketing' :
+        labels.includes('infrastructure') ? 'infrastructure' :
+        'feature';
+      
+      // Priority: 0 = none, 1 = urgent, 2 = high, 3 = normal, 4 = low
+      const priority: TaskPriority =
+        issue.priority === 1 ? 'critical' :
+        issue.priority === 2 ? 'high' :
+        issue.priority === 4 ? 'low' :
+        'medium';
+      
+      return {
+        id: uuidv4(),
+        externalId: `linear-${issue.id}`,
+        source: 'linear' as const,
+        sourceUrl: `https://linear.app/issue/${issue.identifier}`,
+        title: `${issue.identifier}: ${issue.title}`,
+        description: issue.description || '',
+        type,
+        priority,
+        labels: issue.labels.map(l => l.name),
+        queuePosition: state.taskQueue.items.length + index,
+        autoAssign: true,
+        addedAt: Date.now(),
+        status: 'queued' as const,
+      };
+    });
+    
+    set({
+      taskQueue: {
+        ...state.taskQueue,
+        items: [...state.taskQueue.items, ...items],
+      },
+    });
+    
+    get().addNotification(`📥 Imported ${items.length} issues from Linear`, 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: `Imported ${items.length} issues from Linear`,
+      type: 'system',
+    });
+  },
+  
+  clearQueue: () => {
+    set(state => ({
+      taskQueue: {
+        ...state.taskQueue,
+        items: state.taskQueue.items.filter(i => i.status === 'assigned'),
+      },
+    }));
+    get().addNotification('🗑️ Queue cleared', 'info');
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -808,7 +1123,9 @@ export const useGameStore = create<GameState & GameActions>()(
           ...state.aiSettings,
           apiKey: null, // Don't persist API key in localStorage
         },
-        activityLog: state.activityLog.slice(0, 50), // Keep last 50 entries
+        activityLog: state.activityLog.slice(0, 50),
+        taskQueue: state.taskQueue,
+        integrations: state.integrations,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {

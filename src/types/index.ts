@@ -2,6 +2,34 @@
 // FOUNDER MODE - Core Type Definitions
 // ============================================
 
+// Re-export integration types
+export * from './integrations';
+
+// Task Queue for RTS-style continuous execution
+export interface TaskQueue {
+  items: QueuedTaskItem[];
+  autoAssignEnabled: boolean;
+  lastProcessedAt: number;
+}
+
+export interface QueuedTaskItem {
+  id: string;
+  taskId?: string; // If already created as a Task
+  externalId?: string;
+  source: 'github' | 'linear' | 'manual';
+  sourceUrl?: string;
+  title: string;
+  description: string;
+  type: 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  labels: string[];
+  queuePosition: number;
+  autoAssign: boolean;
+  preferredRole?: 'engineer' | 'designer' | 'pm' | 'marketer';
+  addedAt: number;
+  status: 'queued' | 'ready' | 'assigned' | 'completed';
+}
+
 // RTS Activity Log Entry
 export interface ActivityLogEntry {
   id: string;
@@ -73,6 +101,7 @@ export type GameScreen =
   | 'auth'     // Login/signup
   | 'start' 
   | 'command'  // RTS-style main view
+  | 'queue'    // Task queue / import view
   | 'office' 
   | 'team' 
   | 'hire' 
@@ -131,6 +160,19 @@ export interface GameState {
   selectedEmployeeIds: string[]; // Multi-select for RTS
   isPaused: boolean;
   showCommandPalette: boolean;
+  
+  // Task Queue
+  taskQueue: TaskQueue;
+  integrations: {
+    github: {
+      enabled: boolean;
+      repo: string | null;
+    };
+    linear: {
+      enabled: boolean;
+      teamId: string | null;
+    };
+  };
 }
 
 export interface GameNotification {
@@ -271,6 +313,16 @@ export interface GameActions {
   configureAI: (apiKey: string) => void;
   disableAI: () => void;
   aiWorkOnTask: (taskId: string) => Promise<void>;
+  
+  // Task Queue
+  addToQueue: (item: Omit<QueuedTaskItem, 'id' | 'queuePosition' | 'addedAt' | 'status'>) => void;
+  removeFromQueue: (id: string) => void;
+  reorderQueue: (id: string, newPosition: number) => void;
+  processQueue: () => void;
+  toggleAutoAssign: () => void;
+  importFromGitHub: (issues: Array<{ number: number; title: string; body: string | null; labels: Array<{ name: string }> }>) => void;
+  importFromLinear: (issues: Array<{ id: string; identifier: string; title: string; description: string | null; priority: number; labels: Array<{ name: string }> }>) => void;
+  clearQueue: () => void;
 }
 
 // Employee Templates for Hiring

@@ -4,6 +4,7 @@ import {
   AuthScreen,
   StartScreen, 
   CommandCenter,
+  TaskQueueScreen,
   OfficeScreen, 
   HireScreen, 
   TasksScreen,
@@ -23,6 +24,7 @@ function App() {
     setScreen, 
     setGameSpeed,
     gameTick,
+    processQueue,
     triggerRandomEvent,
     tick,
     project
@@ -47,10 +49,11 @@ function App() {
 
     const interval = setInterval(() => {
       gameTick();
+      processQueue(); // Process task queue every tick
     }, speeds[gameSpeed as keyof typeof speeds] || 1000);
 
     return () => clearInterval(interval);
-  }, [gameSpeed, gameTick]);
+  }, [gameSpeed, gameTick, processQueue]);
 
   // Random events (every ~5 minutes of game time / 300 ticks)
   useEffect(() => {
@@ -102,14 +105,15 @@ function App() {
         return;
       }
 
-      // Screen shortcuts (when in office)
-      if (screen === 'office') {
+      // Screen shortcuts (when in command or office)
+      if (screen === 'command' || screen === 'office') {
         const screenMap: Record<string, GameScreen> = {
           'h': 'hire',
           't': 'tasks',
           'e': 'team',
           'c': 'code',
           's': 'settings',
+          'q': 'queue', // Task queue
         };
         if (screenMap[e.key.toLowerCase()]) {
           e.preventDefault();
@@ -161,6 +165,8 @@ function App() {
         return <StartScreen />;
       case 'command':
         return <CommandCenter />;
+      case 'queue':
+        return <TaskQueueScreen />;
       case 'office':
         return <OfficeScreen />;
       case 'hire':
@@ -178,8 +184,8 @@ function App() {
     }
   };
 
-  // Command Center has its own status bar built-in
-  const showStatusBar = project && screen !== 'command';
+  // Command Center and Queue have their own status bar built-in
+  const showStatusBar = project && screen !== 'command' && screen !== 'queue';
 
   return (
     <div className="app">

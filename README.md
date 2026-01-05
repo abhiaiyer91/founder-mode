@@ -47,9 +47,16 @@ The **Command Center** is your main headquarters showing everything at once:
 |-----|--------|
 | `Space` | Pause/Resume |
 | `1/2/3` | Game speed |
+| `Q` | Task queue |
 | `I` | Select idle |
 | `H` | Hire screen |
 | `Esc` | Deselect |
+
+**Task Queue** (RTS-style import):
+- Press `Q` or click "📥 Queue" to open the Task Queue
+- Import issues from **GitHub** or **Linear**
+- Tasks auto-assign to idle employees
+- Queue executes continuously like RTS command queuing
 
 ---
 
@@ -226,8 +233,31 @@ server/
 │   │   ├── design.ts   # createDesignSystem, createComponentStyles
 │   │   └── marketing.ts # createLandingPageCopy, createSocialPost
 │   └── index.ts        # Mastra configuration
+├── routes/
+│   ├── game.ts         # Game persistence API
+│   └── integrations.ts # GitHub & Linear import API
 └── index.ts            # Express server with endpoints
 ```
+
+### External Integrations
+
+**GitHub Issues Import:**
+```bash
+GET /api/integrations/github/issues?repo=owner/repo&state=open
+# Optional: X-GitHub-Token header for private repos
+```
+
+**Linear Issues Import:**
+```bash
+GET /api/integrations/linear/issues?teamId=xxx
+# Required: X-Linear-API-Key header
+```
+
+Auto-detection maps labels to task types:
+- `bug` → 🐛 Bug fix task
+- `design` → 🎨 Design task
+- `urgent`/`critical` → 🔴 Critical priority
+- `high`/`priority` → 🟠 High priority
 
 ---
 
@@ -318,6 +348,13 @@ Or configure it in the game's Settings screen.
 - [x] Real code generation
 - [x] 12+ AI tools
 - [x] Fallback modes (Server → API → Simulation)
+
+### Phase 3.5: External Integrations ✅
+- [x] Task Queue with continuous execution
+- [x] GitHub Issues import
+- [x] Linear Issues import
+- [x] Auto-assign to idle employees
+- [x] Priority and type auto-detection
 
 ### Phase 4: Advanced Features
 - [ ] Multiple project types (web, mobile, API)

@@ -2,6 +2,7 @@
 export { AuthScreen } from './AuthScreen';
 export { StartScreen } from './StartScreen';
 export { CommandCenter } from './CommandCenter';
+export { TaskQueueScreen } from './TaskQueueScreen';
 export { OfficeScreen } from './OfficeScreen';
 export { HireScreen } from './HireScreen';
 export { TasksScreen } from './TasksScreen';

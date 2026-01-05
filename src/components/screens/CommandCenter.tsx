@@ -231,6 +231,9 @@ function CommandBar() {
             {selectedEmployeeIds.length} selected
           </span>
         )}
+        <button className="cmd-btn primary" onClick={() => setScreen('queue')} title="Task queue [Q]">
+          📥 Queue
+        </button>
         <button className="cmd-btn" onClick={selectAllIdle} title="Select all idle [I]">
           Select Idle
         </button>
