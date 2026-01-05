@@ -8,6 +8,7 @@ import gameRoutes from './routes/game';
 import integrationRoutes from './routes/integrations';
 import githubRoutes from './routes/github';
 import oauthRoutes from './routes/oauth';
+import missionRoutes from './routes/missions';
 import { checkDatabaseConnection } from './db';
 import type { AgentRole } from './mastra';
 
@@ -35,6 +36,9 @@ app.use('/api/github', githubRoutes);
 
 // OAuth routes - mount at /api/oauth
 app.use('/api/oauth', oauthRoutes);
+
+// Mission routes - git worktree management
+app.use('/api/missions', missionRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

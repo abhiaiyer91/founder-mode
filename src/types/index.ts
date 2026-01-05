@@ -5,6 +5,20 @@
 // Re-export integration types
 export * from './integrations';
 
+// Re-export mission types (import first for use in this file)
+import type { 
+  Mission as MissionType,
+  MissionStatus as MissionStatusType,
+  MissionPriority as MissionPriorityType,
+  MissionCommit as MissionCommitType,
+} from './missions';
+
+export type Mission = MissionType;
+export type MissionStatus = MissionStatusType;
+export type MissionPriority = MissionPriorityType;
+export type MissionCommit = MissionCommitType;
+export { MISSION_TEMPLATES } from './missions';
+
 // Import and re-export achievement types
 import type { 
   Achievement as AchievementType,
@@ -85,7 +99,7 @@ export interface ActivityLogEntry {
   tick: number;
   timestamp: number;
   message: string;
-  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system';
+  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system' | 'project';
   employeeId?: string;
   taskId?: string;
 }
@@ -153,6 +167,7 @@ export type GameScreen =
   | 'dashboard'    // Clean split-view
   | 'command'      // TUI-style command center
   | 'queue'        // Task queue / import view
+  | 'missions'     // PM missions (git worktrees)
   | 'tech'         // Tech tree / upgrades
   | 'achievements' // Trophy room
   | 'office' 
@@ -244,6 +259,10 @@ export interface GameState {
   focusMode: boolean; // Hide distractions, auto-dismiss events
   autopilot: boolean; // Full autonomous operation
   eventsEnabled: boolean; // Toggle random events
+  
+  // Missions (PM-created feature branches)
+  missions: Mission[];
+  activeMissionId: string | null;
 }
 
 export interface GameNotification {
@@ -416,6 +435,18 @@ export interface GameActions {
   toggleAutopilot: () => void;
   toggleEvents: () => void;
   runAutopilot: () => void; // Called each tick in autopilot mode
+  
+  // Missions (PM-created feature branches as git worktrees)
+  createMission: (name: string, description: string, priority: MissionPriority) => string;
+  startMission: (missionId: string) => void;
+  setActiveMission: (missionId: string | null) => void;
+  addTaskToMission: (missionId: string, taskId: string) => void;
+  removeTaskFromMission: (missionId: string, taskId: string) => void;
+  updateMissionStatus: (missionId: string, status: MissionStatus) => void;
+  addMissionCommit: (missionId: string, commit: MissionCommit) => void;
+  setMissionPR: (missionId: string, prUrl: string, prNumber: number) => void;
+  abandonMission: (missionId: string) => void;
+  completeMission: (missionId: string) => void;
 }
 
 // Employee Templates for Hiring

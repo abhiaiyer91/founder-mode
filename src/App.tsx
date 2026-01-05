@@ -7,6 +7,7 @@ import {
   DashboardScreen,
   CommandCenter,
   TaskQueueScreen,
+  MissionsScreen,
   TechTreeScreen,
   AchievementsScreen,
   OfficeScreen, 
@@ -180,6 +181,7 @@ function App() {
           't': 'tasks',
           'e': 'team',
           'q': 'queue',
+          'm': 'missions',   // PM missions (git worktrees)
           'u': 'tech', // Upgrades/tech tree
           'a': 'achievements', // Trophy room
           's': 'settings',
@@ -240,6 +242,8 @@ function App() {
         return <CommandCenter />;
       case 'queue':
         return <TaskQueueScreen />;
+      case 'missions':
+        return <MissionsScreen />;
       case 'tech':
         return <TechTreeScreen />;
       case 'achievements':
@@ -262,7 +266,7 @@ function App() {
   };
 
   // Screens with built-in status bars
-  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'tech', 'achievements'];
+  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game

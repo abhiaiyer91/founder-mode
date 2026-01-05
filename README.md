@@ -117,6 +117,24 @@ The **Command Center** is your main headquarters showing everything at once:
 - Upgrades unlock other upgrades in a tree structure
 - Categories: Engineering, Culture, Tools, Processes
 
+**Missions** (PM-created feature branches):
+- Press `M` to open Missions
+- Create missions for larger features (like epics)
+- Each mission gets its own **git worktree** (separate branch)
+- Tasks within a mission are grouped together
+- Push to GitHub, create PRs, and merge directly from the game!
+
+```
+Mission: User Authentication
+├── Branch: mission/user-authentication
+├── Tasks:
+│   ├── ✅ Create auth schema
+│   ├── 🔨 Build login form (in progress)
+│   └── 📋 Add password reset (todo)
+├── Commits: 3
+└── Status: Active → Ready for PR → Merged! 🎉
+```
+
 ---
 
 ## 🎯 The Vision

@@ -48,6 +48,7 @@ export function RTSTopBar() {
     { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
     { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
     { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
+    { id: 'missions', label: 'Missions', icon: '🎯', hotkey: 'M' }, // Git worktrees
     { id: 'tasks', label: 'Tasks', icon: '📋', hotkey: 'T' },
     { id: 'team', label: 'Team', icon: '👥', hotkey: 'E' },
     { id: 'hire', label: 'Hire', icon: '👋', hotkey: 'H' },
@@ -56,7 +57,7 @@ export function RTSTopBar() {
   ];
 
   // Only show in game screens
-  const gameScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
+  const gameScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
   if (!gameScreens.includes(screen)) return null;
 
   return (

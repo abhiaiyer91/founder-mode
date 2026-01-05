@@ -15,6 +15,10 @@ import type {
   TaskPriority,
   ActivityLogEntry,
   QueuedTaskItem,
+  Mission,
+  MissionStatus,
+  MissionPriority,
+  MissionCommit,
 } from '../types';
 import type { RallyPoint, MinimapEvent } from '../types/rts';
 import type { ActiveEvent } from '../types/events';
@@ -134,6 +138,10 @@ const initialState: GameState = {
   focusMode: false,
   autopilot: false,
   eventsEnabled: true, // Can be disabled if distracting
+  
+  // Missions (PM-created feature branches as git worktrees)
+  missions: [],
+  activeMissionId: null,
 };
 
 // Create the store with persistence
@@ -1672,6 +1680,185 @@ export const useGameStore = create<GameState & GameActions>()(
       get().boostMorale();
     }
   },
+
+  // ============================================
+  // Missions (PM-created feature branches)
+  // ============================================
+
+  createMission: (name: string, description: string, priority: MissionPriority) => {
+    const id = uuidv4();
+    const branchName = `mission/${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}`;
+    
+    const mission: Mission = {
+      id,
+      name,
+      description,
+      priority,
+      status: 'planning',
+      branchName,
+      worktreePath: null,
+      baseBranch: 'main',
+      taskIds: [],
+      createdAt: get().tick,
+      startedAt: null,
+      completedAt: null,
+      commits: [],
+      pullRequestUrl: null,
+      pullRequestNumber: null,
+    };
+    
+    set(state => ({
+      missions: [...state.missions, mission],
+    }));
+    
+    get().logActivity({
+      tick: get().tick,
+      type: 'project',
+      message: `📋 New mission created: ${name}`,
+    });
+    
+    get().addNotification(`🎯 Mission "${name}" created`, 'success');
+    
+    return id;
+  },
+
+  startMission: (missionId: string) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, status: 'active' as MissionStatus, startedAt: state.tick }
+          : m
+      ),
+      activeMissionId: missionId,
+    }));
+    
+    const mission = get().missions.find(m => m.id === missionId);
+    if (mission) {
+      get().logActivity({
+        tick: get().tick,
+        type: 'project',
+        message: `🚀 Mission started: ${mission.name}`,
+      });
+    }
+  },
+
+  setActiveMission: (missionId: string | null) => {
+    set({ activeMissionId: missionId });
+  },
+
+  addTaskToMission: (missionId: string, taskId: string) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, taskIds: [...m.taskIds, taskId] }
+          : m
+      ),
+    }));
+  },
+
+  removeTaskFromMission: (missionId: string, taskId: string) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, taskIds: m.taskIds.filter((id: string) => id !== taskId) }
+          : m
+      ),
+    }));
+  },
+
+  updateMissionStatus: (missionId: string, status: MissionStatus) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId ? { ...m, status } : m
+      ),
+    }));
+    
+    const mission = get().missions.find(m => m.id === missionId);
+    if (mission) {
+      const statusEmoji: Record<MissionStatus, string> = {
+        planning: '📋',
+        active: '🚀',
+        review: '👀',
+        merging: '🔀',
+        completed: '✅',
+        abandoned: '🚫',
+      };
+      get().logActivity({
+        tick: get().tick,
+        type: 'project',
+        message: `${statusEmoji[status]} Mission "${mission.name}" is now ${status}`,
+      });
+    }
+  },
+
+  addMissionCommit: (missionId: string, commit: MissionCommit) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, commits: [...m.commits, commit] }
+          : m
+      ),
+      stats: {
+        ...state.stats,
+        commitsCreated: state.stats.commitsCreated + 1,
+      },
+    }));
+  },
+
+  setMissionPR: (missionId: string, prUrl: string, prNumber: number) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, pullRequestUrl: prUrl, pullRequestNumber: prNumber, status: 'review' as MissionStatus }
+          : m
+      ),
+    }));
+    
+    get().addNotification(`🔗 Pull request created for mission`, 'success');
+  },
+
+  abandonMission: (missionId: string) => {
+    set(state => ({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, status: 'abandoned' as MissionStatus }
+          : m
+      ),
+      activeMissionId: state.activeMissionId === missionId ? null : state.activeMissionId,
+    }));
+    
+    const mission = get().missions.find(m => m.id === missionId);
+    if (mission) {
+      get().addNotification(`🚫 Mission "${mission.name}" abandoned`, 'warning');
+    }
+  },
+
+  completeMission: (missionId: string) => {
+    const state = get();
+    const mission = state.missions.find(m => m.id === missionId);
+    
+    set({
+      missions: state.missions.map(m =>
+        m.id === missionId
+          ? { ...m, status: 'completed' as MissionStatus, completedAt: state.tick }
+          : m
+      ),
+      activeMissionId: state.activeMissionId === missionId ? null : state.activeMissionId,
+      stats: {
+        ...state.stats,
+        featuresShipped: state.stats.featuresShipped + 1,
+      },
+    });
+    
+    if (mission) {
+      get().logActivity({
+        tick: get().tick,
+        type: 'project',
+        message: `✅ Mission completed and merged: ${mission.name}`,
+      });
+      get().addNotification(`🎉 Mission "${mission.name}" completed and merged!`, 'success');
+    }
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -1700,6 +1887,8 @@ export const useGameStore = create<GameState & GameActions>()(
         focusMode: state.focusMode,
         autopilot: state.autopilot,
         eventsEnabled: state.eventsEnabled,
+        missions: state.missions,
+        activeMissionId: state.activeMissionId,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {
