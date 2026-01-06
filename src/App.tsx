@@ -8,6 +8,7 @@ import {
   CommandCenter,
   TaskQueueScreen,
   MissionsScreen,
+  ArtifactsScreen,
   TechTreeScreen,
   AchievementsScreen,
   OfficeScreen, 
@@ -60,7 +61,7 @@ function App() {
   const needsAuth = !session && !isGuest && !authLoading;
   
   // Get configureAI for restoring saved key
-  const { configureAI, aiSettings } = useGameStore();
+  const { configureAI, aiSettings, processAIWorkQueue, aiWorkQueue } = useGameStore();
 
   // Restore saved API key on mount
   useEffect(() => {
@@ -92,6 +93,18 @@ function App() {
 
     return () => clearInterval(interval);
   }, [gameSpeed, gameTick, processQueue, autopilot, runAutopilot]);
+
+  // AI Work Queue processor (runs independently of game speed)
+  useEffect(() => {
+    if (!aiSettings.enabled || aiWorkQueue.length === 0) return;
+    
+    // Process AI work every 2 seconds (don't block on game tick)
+    const interval = setInterval(() => {
+      processAIWorkQueue();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [aiSettings.enabled, aiWorkQueue.length, processAIWorkQueue]);
 
   // Random events (every ~5 minutes of game time / 300 ticks)
   // Skip if events disabled or in focus mode
@@ -209,8 +222,9 @@ function App() {
           'e': 'team',
           'q': 'queue',
           'm': 'missions',   // PM missions (git worktrees)
+          'a': 'artifacts',  // AI-generated content
           'u': 'tech', // Upgrades/tech tree
-          'a': 'achievements', // Trophy room
+          'y': 'achievements', // Trophy room
           's': 'settings',
         };
         if (screenMap[e.key.toLowerCase()]) {
@@ -271,6 +285,8 @@ function App() {
         return <TaskQueueScreen />;
       case 'missions':
         return <MissionsScreen />;
+      case 'artifacts':
+        return <ArtifactsScreen />;
       case 'tech':
         return <TechTreeScreen />;
       case 'achievements':
@@ -293,7 +309,7 @@ function App() {
   };
 
   // Screens with built-in status bars
-  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'tech', 'achievements'];
+  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game

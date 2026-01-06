@@ -14,3 +14,4 @@ export { TeamScreen } from './TeamScreen';
 export { CodeScreen } from './CodeScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { MissionsScreen } from './MissionsScreen';
+export { ArtifactsScreen } from './ArtifactsScreen';

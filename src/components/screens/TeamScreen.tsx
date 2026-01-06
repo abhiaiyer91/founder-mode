@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Terminal, Box, ProgressBar } from '../tui';
 import { useGameStore } from '../../store/gameStore';
+import { EmployeeMemory } from '../EmployeeMemory';
 import type { Employee } from '../../types';
 import './TeamScreen.css';
 
@@ -83,6 +84,8 @@ function EmployeeDetail({ employee, onClose }: { employee: Employee; onClose: ()
           </div>
         </div>
       )}
+
+      <EmployeeMemory employee={employee} />
 
       <div className="detail-actions">
         <button className="action-btn close" onClick={onClose}>

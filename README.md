@@ -522,6 +522,25 @@ Or configure it in the game's Settings screen.
   - One-click Focus Mode toggle
 - [x] **Events are optional** - Can be disabled entirely
 
+### Phase 5.5: Real AI Execution ✅
+- [x] **AI Work Queue** - Background AI task execution
+  - Tasks queued automatically when assigned
+  - Processes asynchronously without blocking game
+  - Retry logic for failed tasks
+- [x] **Artifacts System** - Store all AI-generated content
+  - Code, designs, copy, documents, analysis
+  - View all artifacts in dedicated Artifacts screen (A key)
+  - Filter by type, sort by recency
+- [x] **Agent Memory** - Employees remember past work
+  - Memories stored per employee
+  - Specializations learned from completed tasks
+  - Experience and context for future work
+  - View in Team → Employee Details
+- [x] **Live AI Status** - See AI work in progress
+  - Status banner shows current task
+  - Queue size indicator
+  - Model info display
+
 ### Phase 6: Advanced Features
 - [ ] Multiple project types (web, mobile, API)
 - [ ] Company events and challenges

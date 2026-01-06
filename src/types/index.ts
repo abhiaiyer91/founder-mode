@@ -119,7 +119,7 @@ export interface ActivityLogEntry {
   tick: number;
   timestamp: number;
   message: string;
-  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system' | 'project';
+  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system' | 'project' | 'ai';
   employeeId?: string;
   taskId?: string;
 }
@@ -130,6 +130,17 @@ export type EmployeeRole = 'engineer' | 'designer' | 'pm' | 'marketer';
 export type EmployeeStatus = 'idle' | 'working' | 'blocked' | 'on_break';
 
 export type EmployeeSkillLevel = 'junior' | 'mid' | 'senior' | 'lead';
+
+// Memory entry for agent recall
+export interface AgentMemory {
+  id: string;
+  type: 'task' | 'learning' | 'preference' | 'context';
+  content: string;
+  importance: number; // 0-1 for retrieval ranking
+  createdAt: number;
+  taskId?: string; // Associated task if any
+  tags: string[];
+}
 
 export interface Employee {
   id: string;
@@ -146,6 +157,10 @@ export interface Employee {
   // AI Model configuration (null = use global default)
   aiModel: string | null;
   aiProvider: AIProvider | null;
+  // Agent memory - remembers past work
+  memory: AgentMemory[];
+  tasksCompleted: number;
+  specializations: string[]; // Areas they've worked on most
 }
 
 // Task Types
@@ -154,6 +169,19 @@ export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
 export type TaskType = 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
+
+// AI-generated artifacts from task work
+export interface TaskArtifact {
+  id: string;
+  type: 'code' | 'design' | 'copy' | 'document' | 'analysis';
+  title: string;
+  content: string;
+  language?: string; // For code: 'typescript', 'css', etc.
+  filePath?: string; // Suggested file path
+  createdAt: number;
+  createdBy: string; // Employee ID
+  modelUsed?: string; // AI model that generated this
+}
 
 export interface Task {
   id: string;
@@ -167,8 +195,12 @@ export interface Task {
   progressTicks: number; // Current progress
   createdAt: number; // Game tick when created
   completedAt: number | null;
-  codeGenerated: string | null; // Generated code snippet
-  filesCreated: string[]; // File paths created/modified
+  // AI-generated content
+  codeGenerated: string | null; // Legacy: Generated code snippet
+  filesCreated: string[]; // Legacy: File paths created/modified
+  artifacts: TaskArtifact[]; // New: All generated artifacts
+  aiWorkStarted: boolean; // Has AI started working?
+  aiWorkCompleted: boolean; // Has AI finished?
 }
 
 // Project Types
@@ -191,6 +223,7 @@ export type GameScreen =
   | 'command'      // TUI-style command center
   | 'queue'        // Task queue / import view
   | 'missions'     // PM missions (git worktrees)
+  | 'artifacts'    // AI-generated code/content viewer
   | 'tech'         // Tech tree / upgrades
   | 'achievements' // Trophy room
   | 'office' 
@@ -338,6 +371,20 @@ export interface GameState {
   
   // PM Brain (continuous product thinking)
   pmBrain: PMBrainState;
+  
+  // AI Work Queue (tasks pending AI execution)
+  aiWorkQueue: AIWorkItem[];
+  aiWorkInProgress: string | null; // Task ID currently being processed
+}
+
+export interface AIWorkItem {
+  id: string;
+  taskId: string;
+  employeeId: string;
+  priority: number; // Lower = higher priority
+  addedAt: number;
+  status: 'queued' | 'in_progress' | 'completed' | 'failed';
+  retries: number;
 }
 
 export interface GameNotification {
@@ -440,7 +487,7 @@ export interface GameActions {
   fireEmployee: (id: string) => void;
   
   // Tasks
-  createTask: (task: Omit<Task, 'id' | 'createdAt' | 'progressTicks' | 'completedAt' | 'codeGenerated' | 'filesCreated'>) => void;
+  createTask: (task: Omit<Task, 'id' | 'createdAt' | 'progressTicks' | 'completedAt' | 'codeGenerated' | 'filesCreated' | 'artifacts' | 'aiWorkStarted' | 'aiWorkCompleted'>) => void;
   assignTask: (taskId: string, employeeId: string) => void;
   unassignTask: (taskId: string) => void;
   updateTaskStatus: (taskId: string, status: TaskStatus) => void;
@@ -481,6 +528,16 @@ export interface GameActions {
   setEmployeeModel: (employeeId: string, modelId: string | null, provider?: AIProvider | null) => void;
   disableAI: () => void;
   aiWorkOnTask: (taskId: string) => Promise<void>;
+  
+  // AI Work Queue
+  queueAIWork: (taskId: string, employeeId: string) => void;
+  processAIWorkQueue: () => Promise<void>;
+  addTaskArtifact: (taskId: string, artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => void;
+  
+  // Agent Memory
+  addEmployeeMemory: (employeeId: string, memory: Omit<AgentMemory, 'id' | 'createdAt'>) => void;
+  getEmployeeContext: (employeeId: string, taskTitle?: string) => string;
+  updateEmployeeSpecializations: (employeeId: string) => void;
   
   // Task Queue
   addToQueue: (item: Omit<QueuedTaskItem, 'id' | 'queuePosition' | 'addedAt' | 'status'>) => void;

@@ -50,6 +50,7 @@ export function RTSTopBar() {
     { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
     { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
     { id: 'missions', label: 'Missions', icon: '🎯', hotkey: 'M' }, // Git worktrees
+    { id: 'artifacts', label: 'Artifacts', icon: '📦', hotkey: 'A' },
     { id: 'tasks', label: 'Tasks', icon: '📋', hotkey: 'T' },
     { id: 'team', label: 'Team', icon: '👥', hotkey: 'E' },
     { id: 'hire', label: 'Hire', icon: '👋', hotkey: 'H' },

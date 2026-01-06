@@ -13,6 +13,7 @@ import type {
   TaskStatus,
   TaskType,
   TaskPriority,
+  TaskArtifact,
   ActivityLogEntry,
   QueuedTaskItem,
   Mission,
@@ -25,6 +26,8 @@ import type {
   PMThought,
   PMBrainState,
   PMProposal,
+  AIWorkItem,
+  AgentMemory,
 } from '../types';
 import { 
   analyzeProductState, 
@@ -167,6 +170,10 @@ const initialState: GameState = {
     lastEvaluation: 0,
     evaluationInterval: 120, // Evaluate every 2 minutes of game time
   } as PMBrainState,
+  
+  // AI Work Queue
+  aiWorkQueue: [],
+  aiWorkInProgress: null,
 };
 
 // Create the store with persistence
@@ -301,6 +308,9 @@ export const useGameStore = create<GameState & GameActions>()(
       hiredAt: state.tick,
       aiModel: null, // Uses global default
       aiProvider: null,
+      memory: [],
+      tasksCompleted: 0,
+      specializations: [],
     };
 
     set({
@@ -349,6 +359,9 @@ export const useGameStore = create<GameState & GameActions>()(
       completedAt: null,
       codeGenerated: null,
       filesCreated: [],
+      artifacts: [],
+      aiWorkStarted: false,
+      aiWorkCompleted: false,
     };
 
     set({ tasks: [...state.tasks, newTask] });
@@ -382,6 +395,12 @@ export const useGameStore = create<GameState & GameActions>()(
     });
 
     get().addNotification(`✅ Assigned "${task.title}" to ${employee.name}`, 'success');
+    
+    // Queue AI work if AI is enabled
+    if (state.aiSettings.enabled) {
+      get().queueAIWork(taskId, employeeId);
+    }
+    
     get().logActivity({
       tick: state.tick,
       message: `${employee.name} started working on "${task.title}"`,
@@ -829,15 +848,33 @@ export const useGameStore = create<GameState & GameActions>()(
           state.project?.idea || 'A startup project'
         );
 
-        // Update task with generated code
+        // Create artifacts for each generated file
+        const newArtifacts: TaskArtifact[] = result.files.map((file, index) => ({
+          id: uuidv4(),
+          type: 'code' as const,
+          title: file.path.split('/').pop() || `File ${index + 1}`,
+          content: file.content,
+          language: file.path.endsWith('.tsx') ? 'typescript' : 
+                    file.path.endsWith('.ts') ? 'typescript' :
+                    file.path.endsWith('.css') ? 'css' :
+                    file.path.endsWith('.json') ? 'json' : 'text',
+          filePath: file.path,
+          createdAt: state.tick,
+          createdBy: assignee.id,
+          modelUsed: assignee.aiModel || state.aiSettings.model,
+        }));
+
+        // Update task with generated code and artifacts
         const updatedTasks = state.tasks.map(t =>
           t.id === taskId
             ? {
                 ...t,
                 codeGenerated: result.code,
                 filesCreated: result.files.map(f => f.path),
+                artifacts: [...t.artifacts, ...newArtifacts],
                 progressTicks: t.estimatedTicks, // Complete immediately
                 status: 'review' as TaskStatus,
+                aiWorkCompleted: true,
               }
             : t
         );
@@ -850,6 +887,37 @@ export const useGameStore = create<GameState & GameActions>()(
             commitsCreated: state.stats.commitsCreated + 1,
           },
         });
+
+        get().logActivity({
+          tick: state.tick,
+          message: `📦 ${assignee.name} generated ${newArtifacts.length} file(s) for "${task.title}"`,
+          type: 'ai',
+          employeeId: assignee.id,
+          taskId,
+        });
+
+        // Add memory for the employee
+        const tags = [
+          task.type,
+          ...result.files.map(f => f.path.split('/').pop()?.split('.')[0] || '').filter(Boolean),
+        ];
+        get().addEmployeeMemory(assignee.id, {
+          type: 'task',
+          content: `Completed ${task.type} task: "${task.title}" - Created ${result.files.length} files (${result.files.map(f => f.path).join(', ')})`,
+          importance: task.priority === 'critical' ? 1 : task.priority === 'high' ? 0.8 : 0.5,
+          taskId,
+          tags,
+        });
+        
+        // Update task count and specializations
+        set(state => ({
+          employees: state.employees.map(e =>
+            e.id === assignee.id
+              ? { ...e, tasksCompleted: e.tasksCompleted + 1 }
+              : e
+          ),
+        }));
+        get().updateEmployeeSpecializations(assignee.id);
 
         get().addNotification(`✨ ${assignee.name} completed "${task.title}" with AI!`, 'success');
       } else if (assignee.role === 'pm') {
@@ -883,18 +951,57 @@ export const useGameStore = create<GameState & GameActions>()(
           task.description
         );
 
+        // Create design artifacts
+        const designArtifact: TaskArtifact = {
+          id: uuidv4(),
+          type: 'design',
+          title: `Design: ${task.title}`,
+          content: `## Design Spec\n\n${result.description}\n\n## CSS\n\n\`\`\`css\n${result.css}\n\`\`\``,
+          createdAt: state.tick,
+          createdBy: assignee.id,
+          modelUsed: assignee.aiModel || state.aiSettings.model,
+        };
+
         const updatedTasks = state.tasks.map(t =>
           t.id === taskId
             ? {
                 ...t,
                 codeGenerated: result.css,
+                artifacts: [...t.artifacts, designArtifact],
                 progressTicks: t.estimatedTicks,
                 status: 'review' as TaskStatus,
+                aiWorkCompleted: true,
               }
             : t
         );
 
         set({ tasks: updatedTasks });
+
+        get().logActivity({
+          tick: state.tick,
+          message: `🎨 ${assignee.name} created design for "${task.title}"`,
+          type: 'ai',
+          employeeId: assignee.id,
+          taskId,
+        });
+
+        // Add memory
+        get().addEmployeeMemory(assignee.id, {
+          type: 'task',
+          content: `Designed: "${task.title}" - ${result.description.slice(0, 100)}`,
+          importance: task.priority === 'critical' ? 1 : task.priority === 'high' ? 0.8 : 0.5,
+          taskId,
+          tags: ['design', task.type, 'css', 'ui'],
+        });
+        set(state => ({
+          employees: state.employees.map(e =>
+            e.id === assignee.id
+              ? { ...e, tasksCompleted: e.tasksCompleted + 1 }
+              : e
+          ),
+        }));
+        get().updateEmployeeSpecializations(assignee.id);
+
         get().addNotification(`🎨 ${assignee.name} completed design for "${task.title}"!`, 'success');
       } else if (assignee.role === 'marketer') {
         const result = await aiService.marketerCreateContent(
@@ -903,24 +1010,267 @@ export const useGameStore = create<GameState & GameActions>()(
           'landing-page'
         );
 
+        const fullContent = `# ${result.headline}\n\n${result.content}\n\n**CTA:** ${result.cta}`;
+
+        // Create marketing artifacts
+        const copyArtifact: TaskArtifact = {
+          id: uuidv4(),
+          type: 'copy',
+          title: `Marketing: ${task.title}`,
+          content: fullContent,
+          createdAt: state.tick,
+          createdBy: assignee.id,
+          modelUsed: assignee.aiModel || state.aiSettings.model,
+        };
+
         const updatedTasks = state.tasks.map(t =>
           t.id === taskId
             ? {
                 ...t,
-                codeGenerated: `${result.headline}\n\n${result.content}\n\nCTA: ${result.cta}`,
+                codeGenerated: fullContent,
+                artifacts: [...t.artifacts, copyArtifact],
                 progressTicks: t.estimatedTicks,
                 status: 'review' as TaskStatus,
+                aiWorkCompleted: true,
               }
             : t
         );
 
         set({ tasks: updatedTasks });
+
+        get().logActivity({
+          tick: state.tick,
+          message: `📝 ${assignee.name} created marketing content for "${task.title}"`,
+          type: 'ai',
+          employeeId: assignee.id,
+          taskId,
+        });
+
+        // Add memory
+        get().addEmployeeMemory(assignee.id, {
+          type: 'task',
+          content: `Created marketing: "${task.title}" - Headline: "${result.headline}"`,
+          importance: task.priority === 'critical' ? 1 : task.priority === 'high' ? 0.8 : 0.5,
+          taskId,
+          tags: ['marketing', 'copy', 'content', task.type],
+        });
+        set(state => ({
+          employees: state.employees.map(e =>
+            e.id === assignee.id
+              ? { ...e, tasksCompleted: e.tasksCompleted + 1 }
+              : e
+          ),
+        }));
+        get().updateEmployeeSpecializations(assignee.id);
+
         get().addNotification(`📢 ${assignee.name} created marketing content!`, 'success');
       }
     } catch (error) {
       console.error('AI work error:', error);
       get().addNotification(`⚠️ AI encountered an error. Falling back to simulation.`, 'warning');
     }
+  },
+
+  // ============================================
+  // AI Work Queue - Background AI execution
+  // ============================================
+
+  queueAIWork: (taskId: string, employeeId: string) => {
+    const state = get();
+    const task = state.tasks.find(t => t.id === taskId);
+    
+    // Don't queue if already queued or AI work already done
+    if (!task || task.aiWorkStarted) return;
+    
+    // Check if already in queue
+    if (state.aiWorkQueue.some(w => w.taskId === taskId)) return;
+    
+    const workItem: AIWorkItem = {
+      id: uuidv4(),
+      taskId,
+      employeeId,
+      priority: task.priority === 'critical' ? 1 : task.priority === 'high' ? 2 : task.priority === 'medium' ? 3 : 4,
+      addedAt: Date.now(),
+      status: 'queued',
+      retries: 0,
+    };
+    
+    set({
+      aiWorkQueue: [...state.aiWorkQueue, workItem].sort((a, b) => a.priority - b.priority),
+      tasks: state.tasks.map(t =>
+        t.id === taskId ? { ...t, aiWorkStarted: true } : t
+      ),
+    });
+    
+    get().logActivity({
+      tick: state.tick,
+      message: `🤖 Queued AI work for "${task.title}"`,
+      type: 'ai',
+      taskId,
+    });
+  },
+
+  processAIWorkQueue: async () => {
+    const state = get();
+    
+    // Skip if already processing or queue is empty or AI is disabled
+    if (state.aiWorkInProgress || state.aiWorkQueue.length === 0 || !state.aiSettings.enabled) {
+      return;
+    }
+    
+    // Get next item
+    const nextItem = state.aiWorkQueue.find(w => w.status === 'queued');
+    if (!nextItem) return;
+    
+    // Mark as in progress
+    set({
+      aiWorkInProgress: nextItem.taskId,
+      aiWorkQueue: state.aiWorkQueue.map(w =>
+        w.id === nextItem.id ? { ...w, status: 'in_progress' as const } : w
+      ),
+    });
+    
+    try {
+      // Execute AI work
+      await get().aiWorkOnTask(nextItem.taskId);
+      
+      // Mark as completed
+      set(state => ({
+        aiWorkInProgress: null,
+        aiWorkQueue: state.aiWorkQueue.filter(w => w.id !== nextItem.id),
+        tasks: state.tasks.map(t =>
+          t.id === nextItem.taskId ? { ...t, aiWorkCompleted: true } : t
+        ),
+      }));
+      
+    } catch (error) {
+      console.error('AI work queue error:', error);
+      
+      // Retry or fail
+      set(state => {
+        const item = state.aiWorkQueue.find(w => w.id === nextItem.id);
+        if (item && item.retries < 2) {
+          return {
+            aiWorkInProgress: null,
+            aiWorkQueue: state.aiWorkQueue.map(w =>
+              w.id === nextItem.id ? { ...w, status: 'queued' as const, retries: w.retries + 1 } : w
+            ),
+          };
+        }
+        return {
+          aiWorkInProgress: null,
+          aiWorkQueue: state.aiWorkQueue.filter(w => w.id !== nextItem.id),
+        };
+      });
+    }
+  },
+
+  addTaskArtifact: (taskId: string, artifact: Omit<TaskArtifact, 'id' | 'createdAt'>) => {
+    const state = get();
+    const newArtifact: TaskArtifact = {
+      ...artifact,
+      id: uuidv4(),
+      createdAt: state.tick,
+    };
+    
+    set({
+      tasks: state.tasks.map(t =>
+        t.id === taskId
+          ? { ...t, artifacts: [...t.artifacts, newArtifact] }
+          : t
+      ),
+    });
+    
+    get().logActivity({
+      tick: state.tick,
+      message: `📦 Generated ${artifact.type}: ${artifact.title}`,
+      type: 'ai',
+      taskId,
+    });
+  },
+
+  // ============================================
+  // Agent Memory - Employees remember past work
+  // ============================================
+
+  addEmployeeMemory: (employeeId: string, memory: Omit<AgentMemory, 'id' | 'createdAt'>) => {
+    const state = get();
+    const newMemory: AgentMemory = {
+      ...memory,
+      id: uuidv4(),
+      createdAt: state.tick,
+    };
+    
+    set({
+      employees: state.employees.map(e =>
+        e.id === employeeId
+          ? { 
+              ...e, 
+              memory: [...e.memory, newMemory].slice(-50), // Keep last 50 memories
+            }
+          : e
+      ),
+    });
+  },
+
+  getEmployeeContext: (employeeId: string, taskTitle?: string) => {
+    const state = get();
+    const employee = state.employees.find(e => e.id === employeeId);
+    if (!employee) return '';
+    
+    // Build context from memories
+    const relevantMemories = employee.memory
+      .filter(m => {
+        if (!taskTitle) return true;
+        // Prioritize memories with matching tags
+        const lowerTitle = taskTitle.toLowerCase();
+        return m.tags.some(tag => lowerTitle.includes(tag.toLowerCase())) ||
+               m.content.toLowerCase().includes(lowerTitle);
+      })
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, 10);
+    
+    if (relevantMemories.length === 0) return '';
+    
+    const context = [
+      `## ${employee.name}'s Experience`,
+      '',
+      `**Tasks Completed:** ${employee.tasksCompleted}`,
+      `**Specializations:** ${employee.specializations.join(', ') || 'Generalist'}`,
+      '',
+      '### Recent Experience:',
+      ...relevantMemories.map(m => `- ${m.content}`),
+    ].join('\n');
+    
+    return context;
+  },
+
+  updateEmployeeSpecializations: (employeeId: string) => {
+    const state = get();
+    const employee = state.employees.find(e => e.id === employeeId);
+    if (!employee) return;
+    
+    // Count tags from memories to determine specializations
+    const tagCounts: Record<string, number> = {};
+    employee.memory.forEach(m => {
+      m.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+    
+    // Top 5 most common tags become specializations
+    const specializations = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([tag]) => tag);
+    
+    set({
+      employees: state.employees.map(e =>
+        e.id === employeeId
+          ? { ...e, specializations }
+          : e
+      ),
+    });
   },
 
   // ============================================
@@ -1069,7 +1419,7 @@ export const useGameStore = create<GameState & GameActions>()(
     
     // Apply updates
     if (tasksToCreate.length > 0) {
-      const newTasks = tasksToCreate.map(t => ({
+      const newTasks: Task[] = tasksToCreate.map(t => ({
         id: uuidv4(),
         ...t,
         progressTicks: 0,
@@ -1077,6 +1427,9 @@ export const useGameStore = create<GameState & GameActions>()(
         completedAt: null,
         codeGenerated: null,
         filesCreated: [],
+        artifacts: [],
+        aiWorkStarted: false,
+        aiWorkCompleted: false,
       }));
       
       const updatedEmployees = state.employees.map(emp => {
@@ -1967,6 +2320,9 @@ export const useGameStore = create<GameState & GameActions>()(
         completedAt: null,
         codeGenerated: null,
         filesCreated: [],
+        artifacts: [],
+        aiWorkStarted: false,
+        aiWorkCompleted: false,
       };
       
       set(state => ({
@@ -2318,6 +2674,9 @@ export const useGameStore = create<GameState & GameActions>()(
           ...state.pmBrain,
           thoughts: state.pmBrain.thoughts.slice(0, 10), // Keep only recent thoughts
         },
+        // Don't persist in-progress AI work (will be requeued)
+        aiWorkQueue: state.aiWorkQueue.filter(w => w.status === 'queued').slice(0, 10),
+        aiWorkInProgress: null,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {
