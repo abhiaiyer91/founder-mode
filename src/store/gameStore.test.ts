@@ -81,6 +81,14 @@ function resetStore() {
     },
     aiWorkQueue: [],
     aiWorkInProgress: null,
+    gitRepo: null,
+    gitHubConnection: {
+      connected: false,
+      username: null,
+      repoName: null,
+      repoUrl: null,
+      lastPush: null,
+    },
   });
 }
 
@@ -1268,5 +1276,274 @@ describe('Agent Memory', () => {
     const store = useGameStore.getState();
     const context = store.getEmployeeContext('non-existent-id');
     expect(context).toBe('');
+  });
+});
+
+describe('Git Integration', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('should create git repo when starting a project', () => {
+    const store = useGameStore.getState();
+    store.startProject('Build a todo app');
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    expect(gitRepo).not.toBeNull();
+    expect(gitRepo?.name).toBeTruthy();
+    expect(gitRepo?.defaultBranch).toBe('main');
+    expect(gitRepo?.commits.length).toBeGreaterThan(0);
+  });
+
+  it('should have initial commit after project creation', () => {
+    const store = useGameStore.getState();
+    store.startProject('My awesome app');
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    expect(gitRepo?.commits[0].message).toContain('Initial commit');
+    expect(gitRepo?.commits[0].author).toBe('Founder Mode');
+  });
+
+  it('should initialize gitHubConnection as disconnected', () => {
+    const { gitHubConnection } = useGameStore.getState();
+    
+    expect(gitHubConnection.connected).toBe(false);
+    expect(gitHubConnection.username).toBeNull();
+    expect(gitHubConnection.repoName).toBeNull();
+  });
+
+  it('should not create git repo without project', () => {
+    const store = useGameStore.getState();
+    
+    // No project yet
+    expect(useGameStore.getState().gitRepo).toBeNull();
+    
+    store.initGitRepo();
+    
+    // Should still be null since no project
+    expect(useGameStore.getState().gitRepo).toBeNull();
+  });
+
+  it('should initialize git repo on demand when project exists', () => {
+    const store = useGameStore.getState();
+    
+    // Set a project without using startProject (which auto-creates git repo)
+    useGameStore.setState({
+      project: {
+        name: 'Test Project',
+        description: 'A test project',
+        startedAt: Date.now(),
+        techStack: ['TypeScript'],
+        projectType: 'frontend',
+      },
+      gitRepo: null, // Explicitly null
+    });
+    
+    expect(useGameStore.getState().gitRepo).toBeNull();
+    
+    store.initGitRepo();
+    
+    const { gitRepo } = useGameStore.getState();
+    expect(gitRepo).not.toBeNull();
+    expect(gitRepo?.name).toBe('Test Project');
+    expect(gitRepo?.defaultBranch).toBe('main');
+  });
+
+  it('should commit artifact to git', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    const initialCommits = useGameStore.getState().gitRepo?.commits.length || 0;
+    
+    // Create a task
+    store.createTask({
+      title: 'Build feature',
+      description: 'Add new feature',
+      type: 'feature',
+      priority: 'medium',
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    // Add an artifact to the task
+    store.addTaskArtifact(task.id, {
+      type: 'code',
+      title: 'Feature Component',
+      content: 'export function Feature() { return <div>Feature</div>; }',
+      language: 'typescript',
+      filePath: 'src/Feature.tsx',
+      createdBy: employee.id,
+    });
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    // Should have one more commit
+    expect(gitRepo?.commits.length).toBeGreaterThan(initialCommits);
+    
+    // Latest commit should reference the artifact
+    const latestCommit = gitRepo?.commits[gitRepo.commits.length - 1];
+    expect(latestCommit?.message).toContain('Feature Component');
+  });
+
+  it('should have main branch after git repo creation', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    expect(gitRepo?.branches.length).toBe(1);
+    expect(gitRepo?.branches[0].name).toBe('main');
+    expect(gitRepo?.branches[0].isDefault).toBe(true);
+  });
+
+  it('should create new git branch', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    
+    store.createGitBranch('feature/new-feature');
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    expect(gitRepo?.branches.length).toBe(2);
+    expect(gitRepo?.branches.find(b => b.name === 'feature/new-feature')).toBeDefined();
+    // The new branch should exist and not be default
+    const newBranch = gitRepo?.branches.find(b => b.name === 'feature/new-feature');
+    expect(newBranch?.isDefault).toBe(false);
+  });
+
+  it('should update stats when committing', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    const initialStats = { ...useGameStore.getState().gitRepo?.stats };
+    
+    store.createTask({
+      title: 'Build feature',
+      description: 'Add new feature',
+      type: 'feature',
+      priority: 'medium',
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    store.addTaskArtifact(task.id, {
+      type: 'code',
+      title: 'Component',
+      content: 'line1\nline2\nline3\nline4\nline5',
+      language: 'typescript',
+      filePath: 'src/Component.tsx',
+      createdBy: employee.id,
+    });
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    expect(gitRepo?.stats.totalCommits).toBeGreaterThan(initialStats.totalCommits || 0);
+    expect(gitRepo?.stats.totalFiles).toBeGreaterThanOrEqual(initialStats.totalFiles || 0);
+  });
+
+  it('should disconnect from GitHub', () => {
+    const store = useGameStore.getState();
+    
+    // First, manually set connected state
+    useGameStore.setState({
+      gitHubConnection: {
+        connected: true,
+        username: 'testuser',
+        repoName: 'test-repo',
+        repoUrl: 'https://github.com/testuser/test-repo',
+        lastPush: Date.now(),
+      },
+    });
+    
+    store.disconnectGitHub();
+    
+    const { gitHubConnection } = useGameStore.getState();
+    
+    expect(gitHubConnection.connected).toBe(false);
+    expect(gitHubConnection.username).toBeNull();
+    expect(gitHubConnection.repoName).toBeNull();
+  });
+
+  it('should fail push when not connected', async () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    
+    const result = await store.pushToGitHub();
+    
+    expect(result).toBe(false);
+  });
+
+  it('should not commit non-code artifacts', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    const initialCommits = useGameStore.getState().gitRepo?.commits.length || 0;
+    
+    store.createTask({
+      title: 'Write copy',
+      description: 'Marketing copy',
+      type: 'feature',
+      priority: 'medium',
+      estimatedTicks: 5,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    // Add a non-code artifact (copy)
+    store.addTaskArtifact(task.id, {
+      type: 'copy',
+      title: 'Marketing Copy',
+      content: 'Welcome to our product!',
+      createdBy: employee.id,
+    });
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    // Should NOT have a new commit for copy artifacts
+    expect(gitRepo?.commits.length).toBe(initialCommits);
+  });
+
+  it('should commit design artifacts', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test project');
+    store.hireEmployee('designer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    const initialCommits = useGameStore.getState().gitRepo?.commits.length || 0;
+    
+    store.createTask({
+      title: 'Create styles',
+      description: 'Add CSS',
+      type: 'feature',
+      priority: 'medium',
+      estimatedTicks: 5,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    // Add a design artifact (CSS)
+    store.addTaskArtifact(task.id, {
+      type: 'design',
+      title: 'App Styles',
+      content: '.app { padding: 20px; }',
+      language: 'css',
+      filePath: 'src/App.css',
+      createdBy: employee.id,
+    });
+    
+    const { gitRepo } = useGameStore.getState();
+    
+    // Should have a new commit for design artifacts
+    expect(gitRepo?.commits.length).toBeGreaterThan(initialCommits);
   });
 });
