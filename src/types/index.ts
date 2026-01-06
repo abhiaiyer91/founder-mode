@@ -141,6 +141,9 @@ export interface Employee {
   morale: number; // 0-100
   currentTaskId: string | null;
   hiredAt: number; // Game tick when hired
+  // AI Model configuration (null = use global default)
+  aiModel: string | null;
+  aiProvider: AIProvider | null;
 }
 
 // Task Types
@@ -207,11 +210,60 @@ export interface GameStats {
   featuresShipped: number;
 }
 
+// AI Model Configuration
+export type AIProvider = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama';
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: AIProvider;
+  contextWindow: number;
+  costPer1kTokens: number; // in cents
+  capabilities: ('code' | 'design' | 'marketing' | 'pm' | 'fast' | 'vision')[];
+  description: string;
+}
+
+export const AI_MODELS: AIModel[] = [
+  // OpenAI Models
+  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.5, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Most capable, best for complex tasks' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.015, capabilities: ['code', 'design', 'marketing', 'pm', 'fast'], description: 'Fast and cheap, good for most tasks' },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', contextWindow: 128000, costPer1kTokens: 1.0, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Previous flagship, still very capable' },
+  { id: 'o1-preview', name: 'o1 Preview', provider: 'openai', contextWindow: 128000, costPer1kTokens: 1.5, capabilities: ['code', 'pm'], description: 'Advanced reasoning for complex problems' },
+  { id: 'o1-mini', name: 'o1 Mini', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.3, capabilities: ['code', 'fast'], description: 'Fast reasoning model' },
+  
+  // Anthropic Models
+  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.3, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Excellent for coding and analysis' },
+  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.3, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Great balance of speed and capability' },
+  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.025, capabilities: ['code', 'fast'], description: 'Fastest Claude, great for simple tasks' },
+  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 1.5, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Most capable Claude for complex tasks' },
+  
+  // Google Models
+  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', contextWindow: 1000000, costPer1kTokens: 0.01, capabilities: ['code', 'design', 'marketing', 'pm', 'fast', 'vision'], description: 'Fast multimodal with huge context' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'google', contextWindow: 2000000, costPer1kTokens: 0.125, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Massive 2M context window' },
+  
+  // Groq Models (Fast inference)
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', provider: 'groq', contextWindow: 128000, costPer1kTokens: 0.059, capabilities: ['code', 'marketing', 'fast'], description: 'Fast open-source model via Groq' },
+  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', provider: 'groq', contextWindow: 32768, costPer1kTokens: 0.024, capabilities: ['code', 'fast'], description: 'Very fast mixture of experts' },
+  
+  // Local Models (Ollama)
+  { id: 'llama3.2', name: 'Llama 3.2 (Local)', provider: 'ollama', contextWindow: 128000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Run locally with Ollama - FREE' },
+  { id: 'codellama', name: 'Code Llama (Local)', provider: 'ollama', contextWindow: 16000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Specialized for code - FREE' },
+  { id: 'deepseek-coder', name: 'DeepSeek Coder (Local)', provider: 'ollama', contextWindow: 16000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Great for coding - FREE' },
+];
+
 export interface AISettings {
   enabled: boolean;
   apiKey: string | null;
-  provider: 'openai' | 'anthropic';
-  model: string;
+  provider: AIProvider;
+  model: string; // Global default model
+  // Provider-specific API keys
+  providerKeys: {
+    openai?: string;
+    anthropic?: string;
+    google?: string;
+    groq?: string;
+    ollamaUrl?: string; // e.g., http://localhost:11434
+  };
 }
 
 export interface GameState {
@@ -421,7 +473,10 @@ export interface GameActions {
   pmGenerateTask: () => void;
   
   // AI
-  configureAI: (apiKey: string) => void;
+  configureAI: (apiKey: string, provider?: AIProvider) => void;
+  configureProviderKey: (provider: AIProvider, apiKey: string) => void;
+  setGlobalModel: (modelId: string) => void;
+  setEmployeeModel: (employeeId: string, modelId: string | null, provider?: AIProvider | null) => void;
   disableAI: () => void;
   aiWorkOnTask: (taskId: string) => Promise<void>;
   

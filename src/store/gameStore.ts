@@ -105,6 +105,7 @@ const initialState: GameState = {
     apiKey: null,
     provider: 'openai',
     model: 'gpt-4o-mini',
+    providerKeys: {},
   },
   selectedEmployeeId: null,
   selectedTaskId: null,
@@ -729,16 +730,70 @@ export const useGameStore = create<GameState & GameActions>()(
   },
 
   // AI Configuration
-  configureAI: (apiKey: string) => {
+  configureAI: (apiKey: string, provider?: AIProvider) => {
+    const currentProvider = provider || get().aiSettings.provider;
     aiService.configure(apiKey);
     set({
       aiSettings: {
         ...get().aiSettings,
         enabled: true,
         apiKey,
+        provider: currentProvider,
+        providerKeys: {
+          ...get().aiSettings.providerKeys,
+          [currentProvider]: apiKey,
+        },
       },
     });
-    get().addNotification('🤖 AI agents activated! Your team is now powered by AI.', 'success');
+    get().addNotification(`🤖 AI agents activated with ${currentProvider.toUpperCase()}!`, 'success');
+  },
+
+  configureProviderKey: (provider: AIProvider, apiKey: string) => {
+    set({
+      aiSettings: {
+        ...get().aiSettings,
+        providerKeys: {
+          ...get().aiSettings.providerKeys,
+          [provider]: apiKey,
+        },
+      },
+    });
+    get().addNotification(`🔑 ${provider.toUpperCase()} API key saved.`, 'info');
+  },
+
+  setGlobalModel: (modelId: string) => {
+    // Find the model to get its provider
+    const model = AI_MODELS.find(m => m.id === modelId);
+    if (model) {
+      set({
+        aiSettings: {
+          ...get().aiSettings,
+          model: modelId,
+          provider: model.provider,
+        },
+      });
+      get().addNotification(`🧠 Default model set to ${model.name}`, 'info');
+    }
+  },
+
+  setEmployeeModel: (employeeId: string, modelId: string | null, provider?: AIProvider | null) => {
+    set({
+      employees: get().employees.map(e => 
+        e.id === employeeId 
+          ? { ...e, aiModel: modelId, aiProvider: provider ?? null }
+          : e
+      ),
+    });
+    
+    const employee = get().employees.find(e => e.id === employeeId);
+    if (employee) {
+      if (modelId) {
+        const model = AI_MODELS.find(m => m.id === modelId);
+        get().addNotification(`🤖 ${employee.name} now uses ${model?.name || modelId}`, 'info');
+      } else {
+        get().addNotification(`🤖 ${employee.name} now uses global default model`, 'info');
+      }
+    }
   },
 
   disableAI: () => {
