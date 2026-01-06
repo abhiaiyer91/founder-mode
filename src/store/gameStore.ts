@@ -50,7 +50,6 @@ import {
   EMPLOYEE_TEMPLATES,
   FIRST_NAMES,
   LAST_NAMES,
-  EVENT_DEFINITIONS,
   AI_MODELS,
 } from '../types';
 import type { AIProvider } from '../types';
@@ -709,59 +708,18 @@ export const useGameStore = create<GameState & GameActions>()(
     const state = get();
     if (state.employees.length === 0) return;
 
-    const eventDef = EVENT_DEFINITIONS[Math.floor(Math.random() * EVENT_DEFINITIONS.length)];
+    // Pick a random event from DEFAULT_EVENTS
+    const eventDef = DEFAULT_EVENTS[Math.floor(Math.random() * DEFAULT_EVENTS.length)];
     
-    // Apply event effects
-    switch (eventDef.type) {
-      case 'morale_boost':
-      case 'team_lunch':
-      case 'viral_moment': {
-        // These events now just show a notification
-        break;
+    // Apply money effects directly
+    for (const effect of eventDef.effects) {
+      if (effect.type === 'money') {
+        set({ money: state.money + effect.value });
       }
-      case 'morale_drop':
-      case 'coffee_machine_broken': {
-        // These events now just show a notification
-        break;
-      }
-      case 'productivity_boost':
-      case 'competitor_launch': {
-        // These events now just show a notification
-        break;
-      }
-      case 'investor_interest': {
-        const bonus = 10000 + Math.floor(Math.random() * 15000);
-        set({ money: state.money + bonus });
-        get().addNotification(`💰 Received ${bonus.toLocaleString()} in bonus funding!`, 'success');
-        break;
-      }
-      case 'bug_discovered': {
-        get().createTask({
-          title: 'Critical: Fix production bug',
-          description: 'Users are reporting issues. High priority fix needed.',
-          type: 'bug',
-          priority: 'critical',
-          status: 'todo',
-          assigneeId: null,
-          estimatedTicks: 50,
-        });
-        break;
-      }
-      case 'server_outage': {
-        get().createTask({
-          title: 'Infrastructure: Server stability',
-          description: 'Improve server reliability and monitoring.',
-          type: 'infrastructure',
-          priority: 'high',
-          status: 'todo',
-          assigneeId: null,
-          estimatedTicks: 80,
-        });
-        break;
-      }
+      // Morale and productivity effects are ignored since we removed those metrics
     }
 
-    get().addNotification(`${eventDef.title}: ${eventDef.description}`, 'info');
+    get().addNotification(`${eventDef.name}: ${eventDef.description}`, 'info');
   },
 
   // PM Task Generation
