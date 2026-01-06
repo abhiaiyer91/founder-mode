@@ -387,6 +387,66 @@ export interface GameState {
   // AI Work Queue (tasks pending AI execution)
   aiWorkQueue: AIWorkItem[];
   aiWorkInProgress: string | null; // Task ID currently being processed
+  
+  // Git Repository (real-time code tracking)
+  gitRepo: GitRepo | null;
+  gitHubConnection: GitHubConnection;
+}
+
+// Git Types (virtual git repo that tracks all code)
+export interface GitCommit {
+  id: string;
+  hash: string;
+  message: string;
+  author: string;
+  authorAvatar: string;
+  timestamp: number;
+  files: GitFile[];
+  branch: string;
+  taskId?: string;
+  artifactId?: string;
+}
+
+export interface GitFile {
+  path: string;
+  content: string;
+  language: string;
+  action: 'added' | 'modified' | 'deleted';
+  additions: number;
+  deletions: number;
+}
+
+export interface GitBranch {
+  name: string;
+  isDefault: boolean;
+  commits: number;
+  lastCommit: GitCommit | null;
+  missionId?: string;
+}
+
+export interface GitRepo {
+  name: string;
+  description: string;
+  defaultBranch: string;
+  branches: GitBranch[];
+  commits: GitCommit[];
+  files: Map<string, string>;
+  remoteUrl: string | null;
+  isConnected: boolean;
+  stats: {
+    totalCommits: number;
+    totalFiles: number;
+    totalLines: number;
+    contributors: string[];
+  };
+}
+
+export interface GitHubConnection {
+  connected: boolean;
+  username: string | null;
+  repoName: string | null;
+  repoUrl: string | null;
+  lastPush: number | null;
 }
 
 export interface AIWorkItem {
@@ -614,6 +674,14 @@ export interface GameActions {
   rejectProposal: (proposalId: string) => void;
   dismissProposal: (proposalId: string) => void;
   getPendingProposals: () => PMProposal[];
+  
+  // Git Integration (real-time code tracking)
+  initGitRepo: () => void;
+  commitArtifact: (taskId: string, artifactId: string) => void;
+  createGitBranch: (name: string, missionId?: string) => void;
+  connectGitHub: (token: string, repoName: string) => Promise<boolean>;
+  pushToGitHub: () => Promise<boolean>;
+  disconnectGitHub: () => void;
 }
 
 // Employee Templates for Hiring

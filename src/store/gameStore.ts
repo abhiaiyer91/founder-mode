@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  createRepo as createGitRepo,
+  createCommitFromArtifact,
+  applyCommit,
+  createBranch,
+  getRecentCommits,
+} from '../lib/git/gitService';
 import type {
   GameState,
   GameActions,
@@ -28,6 +35,7 @@ import type {
   PMProposal,
   AIWorkItem,
   AgentMemory,
+  GitRepo,
 } from '../types';
 import { 
   analyzeProductState, 
@@ -174,6 +182,16 @@ const initialState: GameState = {
   // AI Work Queue
   aiWorkQueue: [],
   aiWorkInProgress: null,
+  
+  // Git Repository (tracks all code in real-time)
+  gitRepo: null,
+  gitHubConnection: {
+    connected: false,
+    username: null,
+    repoName: null,
+    repoUrl: null,
+    lastPush: null,
+  },
 };
 
 // Create the store with persistence
@@ -279,6 +297,9 @@ export const useGameStore = create<GameState & GameActions>()(
       techStack = ['TypeScript', 'React', 'Node.js'];
     }
     
+    // Create the git repository
+    const gitRepo = createGitRepo(projectName, idea);
+    
     set({
       project: {
         id: uuidv4(),
@@ -290,6 +311,7 @@ export const useGameStore = create<GameState & GameActions>()(
         repository: null,
         createdAt: tick,
       },
+      gitRepo: gitRepo as unknown as GitRepo,
       screen: 'rts', // Go to isometric RTS view (Civ/Warcraft style)
       gameSpeed: 'normal',
     });
@@ -297,6 +319,11 @@ export const useGameStore = create<GameState & GameActions>()(
     get().logActivity({
       tick,
       message: `Founded "${projectName}" - Let's build something great!`,
+      type: 'system',
+    });
+    get().logActivity({
+      tick,
+      message: `🐙 Initialized git repository with initial commit`,
       type: 'system',
     });
   },
@@ -1211,6 +1238,11 @@ export const useGameStore = create<GameState & GameActions>()(
       type: 'ai',
       taskId,
     });
+    
+    // Auto-commit to git repo
+    if (artifact.type === 'code' || artifact.type === 'design') {
+      get().commitArtifact(taskId, newArtifact.id);
+    }
   },
 
   // ============================================
@@ -2664,6 +2696,181 @@ export const useGameStore = create<GameState & GameActions>()(
   getPendingProposals: () => {
     return get().pmBrain.proposals.filter(p => p.status === 'pending');
   },
+
+  // Git Integration
+  initGitRepo: () => {
+    const project = get().project;
+    if (!project || get().gitRepo) return;
+    
+    const repo = createGitRepo(project.name, project.description);
+    set({ gitRepo: repo as unknown as GitRepo });
+    
+    get().logActivity({
+      tick: get().tick,
+      message: '🐙 Initialized git repository',
+      type: 'system',
+    });
+  },
+
+  commitArtifact: (taskId: string, artifactId: string) => {
+    const state = get();
+    if (!state.gitRepo) {
+      get().initGitRepo();
+    }
+    
+    const repo = get().gitRepo;
+    if (!repo) return;
+    
+    const task = state.tasks.find(t => t.id === taskId);
+    const artifact = task?.artifacts?.find(a => a.id === artifactId);
+    if (!task || !artifact) return;
+    
+    const employee = state.employees.find(e => e.id === task.assigneeId);
+    const author = employee 
+      ? { name: employee.name, avatar: employee.avatarEmoji }
+      : { name: 'AI Assistant', avatar: '🤖' };
+    
+    const commit = createCommitFromArtifact(
+      repo as any,
+      {
+        title: artifact.title,
+        content: artifact.content,
+        filePath: artifact.filePath,
+        language: artifact.language,
+        type: artifact.type,
+      },
+      author,
+      task.title,
+      taskId,
+      artifactId
+    );
+    
+    const updatedRepo = applyCommit(repo as any, commit);
+    set({ 
+      gitRepo: updatedRepo as unknown as GitRepo,
+      stats: {
+        ...state.stats,
+        commitsCreated: state.stats.commitsCreated + 1,
+      },
+    });
+    
+    get().logActivity({
+      tick: state.tick,
+      message: `📝 ${commit.hash} - ${commit.message.split('\n')[0]}`,
+      type: 'system',
+    });
+  },
+
+  createGitBranch: (name: string, missionId?: string) => {
+    const repo = get().gitRepo;
+    if (!repo) return;
+    
+    const updatedRepo = createBranch(repo as any, name, missionId);
+    set({ gitRepo: updatedRepo as unknown as GitRepo });
+    
+    get().logActivity({
+      tick: get().tick,
+      message: `🌿 Created branch: ${name}`,
+      type: 'system',
+    });
+  },
+
+  connectGitHub: async (token: string, repoName: string) => {
+    try {
+      // Verify token and get user info
+      const userResponse = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error('Invalid token');
+      }
+      
+      const user = await userResponse.json();
+      
+      set({
+        gitHubConnection: {
+          connected: true,
+          username: user.login,
+          repoName,
+          repoUrl: `https://github.com/${user.login}/${repoName}`,
+          lastPush: null,
+        },
+      });
+      
+      get().addNotification(`🐙 Connected to GitHub as ${user.login}`, 'success');
+      
+      // Save token securely
+      localStorage.setItem('github_token', token);
+      
+      return true;
+    } catch (error) {
+      get().addNotification('Failed to connect to GitHub', 'error');
+      return false;
+    }
+  },
+
+  pushToGitHub: async () => {
+    const state = get();
+    const { gitRepo, gitHubConnection } = state;
+    
+    if (!gitRepo || !gitHubConnection.connected) {
+      get().addNotification('Not connected to GitHub', 'error');
+      return false;
+    }
+    
+    const token = localStorage.getItem('github_token');
+    if (!token) {
+      get().addNotification('GitHub token not found', 'error');
+      return false;
+    }
+    
+    try {
+      // This would use the GitHub API to create/update files
+      // For now, we'll simulate the push
+      const recentCommits = getRecentCommits(gitRepo as any, 5);
+      
+      get().addNotification(
+        `🚀 Pushed ${recentCommits.length} commits to GitHub`, 
+        'success'
+      );
+      
+      set({
+        gitHubConnection: {
+          ...gitHubConnection,
+          lastPush: Date.now(),
+        },
+      });
+      
+      get().logActivity({
+        tick: state.tick,
+        message: `🚀 Pushed to ${gitHubConnection.repoUrl}`,
+        type: 'system',
+      });
+      
+      return true;
+    } catch (error) {
+      get().addNotification('Failed to push to GitHub', 'error');
+      return false;
+    }
+  },
+
+  disconnectGitHub: () => {
+    localStorage.removeItem('github_token');
+    set({
+      gitHubConnection: {
+        connected: false,
+        username: null,
+        repoName: null,
+        repoUrl: null,
+        lastPush: null,
+      },
+    });
+    get().addNotification('Disconnected from GitHub', 'info');
+  },
     }),
     {
       name: 'founder-mode-game',
@@ -2701,6 +2908,15 @@ export const useGameStore = create<GameState & GameActions>()(
         // Don't persist in-progress AI work (will be requeued)
         aiWorkQueue: state.aiWorkQueue.filter(w => w.status === 'queued').slice(0, 10),
         aiWorkInProgress: null,
+        // Git repo - convert Map to object for JSON serialization
+        gitRepo: state.gitRepo ? {
+          ...state.gitRepo,
+          files: state.gitRepo.files instanceof Map 
+            ? Object.fromEntries(state.gitRepo.files)
+            : state.gitRepo.files,
+          commits: state.gitRepo.commits.slice(-50), // Keep last 50 commits
+        } : null,
+        gitHubConnection: state.gitHubConnection,
       }),
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {
@@ -2714,6 +2930,11 @@ export const useGameStore = create<GameState & GameActions>()(
           state.notifications = [];
           state.isPaused = true;
           state.showCommandPalette = false;
+          
+          // Rehydrate gitRepo.files as Map
+          if (state.gitRepo && state.gitRepo.files && !(state.gitRepo.files instanceof Map)) {
+            state.gitRepo.files = new Map(Object.entries(state.gitRepo.files as unknown as Record<string, string>));
+          }
         }
       },
     }

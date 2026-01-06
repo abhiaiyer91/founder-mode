@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Terminal } from '../tui';
 import { useGameStore } from '../../store/gameStore';
 import { PMAdvisor } from '../PMAdvisor';
+import { GitTimeline } from '../GitTimeline';
 import './DashboardScreen.css';
 
 // Format game time
@@ -376,6 +377,11 @@ export function DashboardScreen() {
             {/* PM Advisor - Human in the Loop */}
             <div className="panel advisor-panel">
               <PMAdvisor />
+            </div>
+            
+            {/* Git Timeline - Real-time commits */}
+            <div className="panel git-panel">
+              <GitTimeline compact maxCommits={5} />
             </div>
           </div>
         </div>
