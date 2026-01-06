@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../../store/gameStore';
-import { calculateProductivity } from '../../types';
+import { calculateProductivity, ROLE_BASE_PROMPTS } from '../../types';
 import type { Employee } from '../../types';
 import './TeamScreen.css';
 
@@ -31,8 +31,11 @@ function PromptEditorModal({
   onClose: () => void;
 }) {
   const { updateEmployeePrompt } = useGameStore();
-  const [systemPrompt, setSystemPrompt] = useState(employee.systemPrompt);
-  const [customPrompt, setCustomPrompt] = useState(employee.customPrompt);
+  // Fallback to ROLE_BASE_PROMPTS for legacy employees without systemPrompt
+  const [systemPrompt, setSystemPrompt] = useState(
+    employee.systemPrompt || ROLE_BASE_PROMPTS[employee.role]
+  );
+  const [customPrompt, setCustomPrompt] = useState(employee.customPrompt || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleSystemPromptChange = (value: string) => {

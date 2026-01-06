@@ -364,12 +364,18 @@ export function HireScreen() {
   
   const handleConfirmHire = (provider: AIProvider, model: string, customPrompt: string) => {
     if (pendingHire) {
+      // Track employee count before hiring to verify success
+      const employeeCountBefore = useGameStore.getState().employees.length;
+      
       // Hire the employee
       hireEmployee(pendingHire.role, provider, model);
       
-      // If custom prompt was provided, update the newly hired employee
-      if (customPrompt) {
-        const state = useGameStore.getState();
+      // Verify hire succeeded by checking if a new employee was added
+      const state = useGameStore.getState();
+      const employeeCountAfter = state.employees.length;
+      
+      // Only apply custom prompt if hire actually succeeded
+      if (customPrompt && employeeCountAfter > employeeCountBefore) {
         const newEmployee = state.employees[state.employees.length - 1];
         if (newEmployee) {
           updateEmployeePrompt(newEmployee.id, undefined, customPrompt);

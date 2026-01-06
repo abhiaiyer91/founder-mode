@@ -990,8 +990,9 @@ export const useGameStore = create<GameState & GameActions>()(
           {
             engineers: state.employees.filter(e => e.role === 'engineer').length,
             designers: state.employees.filter(e => e.role === 'designer').length,
-            marketers: state.employees.filter(e => e.role === 'marketer').length,
-          }
+            marketers: 0, // Marketers removed from simplified role structure
+          },
+          assignee // Pass employee for custom prompts
         );
 
         for (const newTask of newTasks) {
