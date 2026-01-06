@@ -1,0 +1,974 @@
+/* Missions Screen - Git worktree management */
+
+.missions-screen {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.missions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.header-left p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.mission-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.mission-stats .stat {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mission-stats .stat.active {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.mission-stats .stat.review {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.mission-stats .stat.completed {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.create-mission-btn {
+  padding: 10px 20px;
+  background: var(--color-accent);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.create-mission-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* GitHub Warning */
+.github-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+/* Filters */
+.missions-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.missions-filters button {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--terminal-border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.missions-filters button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.missions-filters button.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #000;
+}
+
+/* Grid */
+.missions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+/* Empty State */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed var(--terminal-border);
+  border-radius: 12px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.empty-state button {
+  padding: 12px 24px;
+  background: var(--color-accent);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Mission Card */
+.mission-card {
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mission-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.mission-card.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+}
+
+.mission-card.status-completed {
+  opacity: 0.7;
+}
+
+.mission-card.status-abandoned {
+  opacity: 0.5;
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.mission-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #000;
+}
+
+.mission-priority {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mission-priority[data-priority="low"] { color: #6b7280; }
+.mission-priority[data-priority="medium"] { color: #60a5fa; }
+.mission-priority[data-priority="high"] { color: #f59e0b; }
+.mission-priority[data-priority="critical"] { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+.mission-name {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.mission-description {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mission-branch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.branch-icon {
+  font-size: 14px;
+}
+
+.mission-branch code {
+  font-size: 12px;
+  color: #4ade80;
+  font-family: var(--font-mono);
+}
+
+.mission-progress {
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  transition: width 0.3s;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.mission-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mission-stats a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.mission-stats a:hover {
+  text-decoration: underline;
+}
+
+.mission-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mission-actions button {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mission-actions button:hover {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.mission-actions button.danger {
+  padding: 6px 10px;
+}
+
+.mission-actions button.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: var(--terminal-box-bg);
+  border: 2px solid var(--color-accent);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.close-btn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.template-toggle {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed var(--terminal-border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.template-toggle:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.template-item {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--terminal-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.template-item:hover {
+  border-color: var(--color-accent);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.template-item h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.template-item p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.template-item .task-count {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--color-accent);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.priority-options {
+  display: flex;
+  gap: 8px;
+}
+
+.priority-btn {
+  flex: 1;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--terminal-border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.priority-btn:hover {
+  border-color: var(--text-secondary);
+}
+
+.priority-btn.active[data-priority="low"] {
+  background: rgba(107, 114, 128, 0.2);
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
+.priority-btn.active[data-priority="medium"] {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
+
+.priority-btn.active[data-priority="high"] {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.priority-btn.active[data-priority="critical"] {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn:hover {
+  border-color: var(--text-muted);
+}
+
+.create-btn {
+  padding: 10px 24px;
+  background: var(--color-accent);
+  border: none;
+  color: #000;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.create-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.create-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .missions-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .header-right {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  .mission-stats {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .create-mission-btn {
+    width: 100%;
+  }
+  
+  .missions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   Mission Detail Panel
+   ============================================ */
+
+.missions-layout {
+  display: flex;
+  gap: 24px;
+}
+
+.missions-layout .missions-grid {
+  flex: 1;
+  min-width: 0;
+}
+
+.missions-layout.with-detail .missions-grid {
+  max-width: 60%;
+}
+
+.mission-detail-panel {
+  flex: 0 0 40%;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--terminal-header-bg);
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.status-badge.status-planning { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+.status-badge.status-active { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+.status-badge.status-review { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+.status-badge.status-merging { background: rgba(167, 139, 250, 0.2); color: #a78bfa; }
+.status-badge.status-completed { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.status-badge.status-abandoned { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+
+.detail-header .close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.detail-header .close-btn:hover {
+  color: var(--text-primary);
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.meta-label {
+  color: var(--text-muted);
+}
+
+.meta-item code {
+  padding: 2px 6px;
+  background: var(--terminal-bg);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--color-accent);
+}
+
+.meta-item a {
+  color: var(--color-info);
+  text-decoration: none;
+}
+
+.meta-item a:hover {
+  text-decoration: underline;
+}
+
+.detail-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.detail-tabs button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.detail-tabs button:hover {
+  background: var(--terminal-hover-bg);
+  color: var(--text-primary);
+}
+
+.detail-tabs button.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Commits List */
+.commits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commit-item {
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.commit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.commit-header:hover {
+  background: var(--terminal-hover-bg);
+}
+
+.commit-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.commit-sha {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.commit-message {
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commit-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.expand-icon {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.commit-diff-panel {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid var(--terminal-border);
+}
+
+.empty-commits {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.empty-commits span {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.empty-commits p {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.empty-commits small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Tasks List in Detail */
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+}
+
+.task-item.status-done {
+  opacity: 0.7;
+}
+
+.task-status {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.task-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.task-priority {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.task-priority.priority-low { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+.task-priority.priority-medium { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+.task-priority.priority-high { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+.task-priority.priority-critical { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+
+/* Files Overview */
+.files-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.files-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 4px;
+}
+
+.file-icon {
+  font-size: 14px;
+}
+
+.file-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-info);
+}
+
+.empty-files {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.files-changed h4 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Responsive detail panel */
+@media (max-width: 1024px) {
+  .missions-layout {
+    flex-direction: column;
+  }
+  
+  .missions-layout.with-detail .missions-grid {
+    max-width: 100%;
+  }
+  
+  .mission-detail-panel {
+    flex: none;
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .mission-detail-panel {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 70px;
+    border-radius: 0;
+    max-height: none;
+    z-index: 100;
+  }
+  
+  .detail-tabs button {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+  
+  .commit-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .commit-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

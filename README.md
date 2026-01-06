@@ -1,69 +1,403 @@
-# React + TypeScript + Vite
+# 🎮 Founder Mode
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> *Build a real startup. Ship real code. Play the game.*
 
-Currently, two official plugins are available:
+**Founder Mode** is a real-time strategy game where you manage a startup and your AI team builds actual software. Think *Civilization* meets *Y Combinator* — select your engineers, assign them to tasks, and watch real code get generated.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![Founder Mode](https://img.shields.io/badge/status-alpha-orange) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![React](https://img.shields.io/badge/React-19-cyan) ![Tests](https://img.shields.io/badge/tests-270%20passing-green)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🚀 Quick Start
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Option 1: Frontend Only (Fastest)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+Play immediately with simulated AI:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Clone the repository
+git clone https://github.com/your-username/founder-mode.git
+cd founder-mode
+
+# Install dependencies
+pnpm install
+
+# Start the game
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:5173](http://localhost:5173) and start playing!
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Option 2: Full Stack (Recommended)
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Enable real AI code generation and persistence:
+
+```bash
+# 1. Install dependencies
+pnpm install
+
+# 2. Copy environment file
+cp .env.example .env
+
+# 3. Add your OpenAI API key to .env
+# OPENAI_API_KEY=sk-your-key-here
+
+# 4. Start PostgreSQL (optional, for cloud saves)
+docker compose up -d
+
+# 5. Push database schema
+pnpm db:push
+
+# 6. Start everything
+pnpm dev:all
 ```
+
+This starts:
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **API Server**: [http://localhost:3001](http://localhost:3001)
+- **Database Studio**: `pnpm db:studio`
+
+---
+
+## 📋 Requirements
+
+| Tool | Version | Required | Notes |
+|------|---------|----------|-------|
+| Node.js | 18+ | Yes | 20+ recommended |
+| pnpm | 8+ | Yes | `npm install -g pnpm` |
+| Docker | 20+ | No | Only for PostgreSQL |
+| OpenAI API Key | - | No | For real AI code generation |
+
+---
+
+## 🔧 Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Database (PostgreSQL) - Optional for local dev
+DATABASE_URL=postgres://founder:founder123@localhost:5432/founder_mode
+
+# AI (OpenAI) - Optional, can be set in-game Settings
+OPENAI_API_KEY=sk-your-key-here
+
+# Server
+PORT=3001
+NODE_ENV=development
+VITE_API_URL=http://localhost:3001
+
+# GitHub OAuth - Optional, for pushing code to GitHub
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
+FRONTEND_URL=http://localhost:5173
+```
+
+---
+
+## 📜 Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start frontend only (port 5173) |
+| `pnpm dev:server` | Start API server only (port 3001) |
+| `pnpm dev:all` | Start both frontend and server |
+| `pnpm build` | Build for production |
+| `pnpm preview` | Preview production build |
+| `pnpm test` | Run all tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm lint` | Lint the codebase |
+| `pnpm db:push` | Push schema to database |
+| `pnpm db:studio` | Open Drizzle Studio (database GUI) |
+
+---
+
+## 🏗️ Project Structure
+
+```
+founder-mode/
+├── src/                    # Frontend (React + Vite)
+│   ├── components/         # UI components
+│   │   ├── screens/        # Full-page screens (Dashboard, RTS, etc.)
+│   │   └── tui/            # Terminal-style UI components
+│   ├── game/               # Game systems
+│   │   └── campus/         # Isometric campus view (Phaser 3)
+│   ├── lib/                # Utilities
+│   │   ├── ai/             # AI integration layer
+│   │   ├── git/            # Virtual git system
+│   │   └── pm/             # PM brain (autonomous planning)
+│   ├── store/              # Zustand state management
+│   └── types/              # TypeScript definitions
+│
+├── server/                 # Backend (Express + Mastra)
+│   ├── mastra/             # AI agent framework
+│   │   ├── agents/         # Agent definitions (engineer, pm, etc.)
+│   │   └── tools/          # AI tools (code gen, design, etc.)
+│   ├── routes/             # API endpoints
+│   └── db/                 # Database schema (Drizzle)
+│
+├── public/                 # Static assets
+├── docker-compose.yml      # PostgreSQL setup
+├── drizzle.config.ts       # Database config
+└── vite.config.ts          # Vite config
+```
+
+---
+
+## 🎮 Game Views
+
+| View | Hotkey | Description |
+|------|--------|-------------|
+| RTS | `R` | Isometric office view (default) |
+| Campus | `V` | 3D campus visualization (Phaser) |
+| Dashboard | `D` | Split-panel overview |
+| Command | `C` | Terminal-style command center |
+| Queue | `Q` | Task import queue |
+| Missions | `M` | Git-based feature branches |
+| Artifacts | `A` | AI-generated code viewer |
+| Preview | `P` | Live code preview (Sandpack) |
+| Tech | `U` | Upgrade tree |
+| Achievements | `Y` | Trophy room |
+
+---
+
+## 🚢 Deployment
+
+### Deploy to Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/founder-mode)
+
+1. Click the button or run `vercel` in the project root
+2. Configure environment variables in Vercel:
+   - `DATABASE_URL` - Use [Vercel Postgres](https://vercel.com/storage/postgres) or [Supabase](https://supabase.com)
+   - `OPENAI_API_KEY` - Optional (users can add their own in-game)
+   - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - For GitHub OAuth
+
+**Note**: The frontend works standalone with localStorage. Database and server are only needed for:
+- Cloud saves (sync across devices)
+- Real AI code generation
+- GitHub OAuth (pushing code)
+
+### Deploy to Railway
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+```
+
+Add environment variables in the Railway dashboard.
+
+### Deploy to Fly.io
+
+```bash
+# Install Fly CLI
+curl -L https://fly.io/install.sh | sh
+
+# Deploy
+fly auth login
+fly launch
+fly deploy
+```
+
+### Deploy Frontend Only (Static)
+
+For a static frontend (game saves locally, no AI):
+
+```bash
+# Build
+pnpm build
+
+# Deploy dist/ folder to any static host:
+# - Vercel
+# - Netlify
+# - GitHub Pages
+# - Cloudflare Pages
+# - AWS S3 + CloudFront
+```
+
+### Docker Deployment
+
+```dockerfile
+# Dockerfile
+FROM node:20-alpine
+WORKDIR /app
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+EXPOSE 5173
+CMD ["pnpm", "preview", "--host", "0.0.0.0"]
+```
+
+```bash
+docker build -t founder-mode .
+docker run -p 5173:5173 founder-mode
+```
+
+---
+
+## 🔑 Setting Up GitHub OAuth
+
+To enable "Push to GitHub" functionality:
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill in:
+   - **Application name**: Founder Mode
+   - **Homepage URL**: `http://localhost:5173` (dev) or your production URL
+   - **Authorization callback URL**: `http://localhost:3001/api/oauth/github/callback`
+4. Copy Client ID and Client Secret to `.env`
+
+```bash
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
+FRONTEND_URL=http://localhost:5173
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pnpm test
+
+# Watch mode (re-run on changes)
+pnpm test:watch
+
+# With coverage report
+pnpm test:coverage
+```
+
+**Current Coverage:**
+- 270 tests passing
+- gitService: 95% coverage
+- gameStore: 42% coverage
+- Campus types: fully tested
+
+---
+
+## 🏛️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  BROWSER (React 19 + Vite)                                  │
+│  ├── Zustand Store ──→ localStorage (instant, offline)     │
+│  ├── Phaser 3 ──→ Isometric campus view                    │
+│  ├── Sandpack ──→ Live code preview                        │
+│  └── Game API Client ──→ HTTP                              │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  SERVER (Express 5 + Mastra)                   :3001        │
+│  ├── /api/game/* ──→ Save/Load game state                  │
+│  ├── /api/agents/* ──→ AI agent execution                  │
+│  ├── /api/oauth/* ──→ GitHub OAuth flow                    │
+│  └── /api/integrations/* ──→ GitHub/Linear import          │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  DATABASE (PostgreSQL + Drizzle ORM)                        │
+│  └── Game saves, user sessions, AI logs                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🤖 AI Integration
+
+The game uses [Mastra](https://mastra.ai) for AI agents:
+
+| Agent | Role | Tools |
+|-------|------|-------|
+| Engineer | Write code | `generateComponent`, `fixBug`, `writeTests` |
+| PM | Plan work | `breakdownProject`, `prioritizeTasks` |
+| Designer | Create styles | `createDesignSystem`, `createStyles` |
+| Marketer | Write copy | `createLandingCopy`, `createSocialPost` |
+
+**AI Fallback Chain:**
+1. Mastra Server (full agent capabilities)
+2. Direct OpenAI API (simpler prompts)
+3. Simulation Mode (fake responses for testing)
+
+---
+
+## 🎯 Features
+
+### Core Gameplay
+- ✅ Hire employees (engineers, designers, PMs, marketers)
+- ✅ Create and assign tasks
+- ✅ AI generates real code, designs, and copy
+- ✅ Multiple game views (RTS, Dashboard, Command Center)
+- ✅ Hotkeys and control groups (like StarCraft)
+
+### AI Features
+- ✅ Real code generation with OpenAI
+- ✅ Agent memory (employees remember past work)
+- ✅ Task artifacts (view all AI output)
+- ✅ Live preview of generated code
+
+### Integrations
+- ✅ GitHub OAuth for pushing code
+- ✅ GitHub Issues import
+- ✅ Linear Issues import
+- ✅ Continuous git tracking
+
+### Polish
+- ✅ 25 achievements
+- ✅ Random events with choices
+- ✅ Autopilot mode
+- ✅ Focus mode
+- ✅ Mobile responsive
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Multiple AI providers (Anthropic, Google, Ollama)
+- [ ] Project templates (SaaS, mobile app, CLI tool)
+- [ ] Multiplayer co-founder mode
+- [ ] Deploy generated apps to Vercel/Netlify
+- [ ] Real git repositories (not just virtual)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+```bash
+# Fork and clone
+git clone https://github.com/your-username/founder-mode.git
+cd founder-mode
+
+# Install and start
+pnpm install
+pnpm dev
+
+# Make changes and test
+pnpm test
+pnpm lint
+
+# Submit a PR!
+```
+
+---
+
+## 📜 License
+
+MIT License - Build something awesome!
+
+---
+
+<p align="center">
+  <i>"Move fast and build things."</i>
+  <br><br>
+  Made with ☕ and questionable decisions
+</p>

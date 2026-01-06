@@ -1,0 +1,79 @@
+# ===========================================
+# Founder Mode - Production Docker Compose
+# ===========================================
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# This runs the full stack:
+#   - Frontend (React app)
+#   - API Server (Express + Mastra)
+#   - PostgreSQL database
+# ===========================================
+
+version: '3.8'
+
+services:
+  # Frontend - React app served statically
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - founder-network
+
+  # API Server - Express with Mastra AI agents
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgres://founder:founder123@postgres:5432/founder_mode
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - founder-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=founder
+      - POSTGRES_PASSWORD=founder123
+      - POSTGRES_DB=founder_mode
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U founder -d founder_mode"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - founder-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  founder-network:
+    driver: bridge

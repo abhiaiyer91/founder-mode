@@ -1,10 +1,384 @@
-* {
-  margin: 0;
-  padding: 0;
+/* ============================================
+   FOUNDER MODE - Global Styles
+   A TUI-inspired terminal aesthetic
+   ============================================ */
+
+/* CSS Variables - Dark Theme (Default) */
+:root {
+  /* Font */
+  --font-mono: 'IBM Plex Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+  
+  /* Base Colors */
+  --terminal-bg: #0a0e14;
+  --terminal-border: #1f2430;
+  --terminal-header-bg: #14191f;
+  --terminal-box-bg: #0d1117;
+  --terminal-input-bg: #161b22;
+  --terminal-shadow: rgba(0, 0, 0, 0.5);
+  --terminal-hover-bg: rgba(255, 255, 255, 0.05);
+  --terminal-selected-bg: rgba(0, 255, 136, 0.1);
+  
+  /* Text Colors */
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+  
+  /* Accent Colors */
+  --color-accent: #00ff88;
+  --color-accent-dim: #00cc6a;
+  --color-accent-bg: rgba(0, 255, 136, 0.1);
+  --color-accent-glow: rgba(0, 255, 136, 0.4);
+  
+  /* Status Colors */
+  --color-success: #3fb950;
+  --color-warning: #d29922;
+  --color-warning-bg: rgba(210, 153, 34, 0.1);
+  --color-error: #f85149;
+  --color-info: #58a6ff;
+  
+  /* Background Pattern */
+  --bg-pattern: 
+    radial-gradient(ellipse at top, #0a0e14 0%, #000 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 136, 0.03) 2px,
+      rgba(0, 255, 136, 0.03) 4px
+    );
+}
+
+/* Reset */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  background: var(--terminal-bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 0.5em;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+/* Links */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Code */
+pre, code {
+  font-family: var(--font-mono);
+}
+
+pre {
+  margin: 0;
+  overflow-x: auto;
+}
+
+/* Buttons Reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Focus States */
+:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--terminal-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--terminal-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--terminal-bg);
+}
+
+/* Keyboard Hints */
+kbd {
+  background: var(--terminal-header-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+/* Utility Classes */
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.text-accent { color: var(--color-accent); }
+.text-muted { color: var(--text-muted); }
+
+/* Animations */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* CRT Scanline Effect (optional) */
+.crt-effect::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: 9999;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Viewport meta handling */
+@viewport {
+  width: device-width;
+  zoom: 1.0;
+}
+
+/* Base mobile adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+  
+  body {
+    /* Account for mobile nav at bottom */
+    padding-bottom: 70px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Disable horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Better tap targets */
+  button, 
+  a, 
+  input, 
+  select,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Full-width terminals on mobile */
+  .terminal {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    margin: 0 !important;
+  }
+
+  /* Stack layouts vertically */
+  .command-center,
+  .dashboard-layout,
+  .task-board,
+  .settings-layout {
+    flex-direction: column !important;
+  }
+
+  /* Cards and boxes */
+  .box {
+    margin: 0.5rem 0;
+  }
+
+  /* Hide decorative elements on mobile */
+  .ascii-art,
+  .decorative-border,
+  kbd {
+    display: none !important;
+  }
+
+  /* Simplify animations for performance */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      animation-duration: 0.2s !important;
+      transition-duration: 0.2s !important;
+    }
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  
+  /* Extra compact on very small screens */
+  .box {
+    padding: 0.75rem;
+  }
+  
+  /* Stack everything */
+  .flex-row,
+  .inline-flex {
+    flex-direction: column !important;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  html {
+    font-size: 13px;
+  }
+  
+  /* Two column layout */
+  .command-center,
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover states that can cause sticky hover on touch */
+  .menu-item:hover,
+  .employee-card:hover,
+  .task-card:hover {
+    background: inherit;
+    transform: none;
+  }
+  
+  /* Show active states instead */
+  .menu-item:active,
+  .employee-card:active,
+  .task-card:active {
+    background: var(--terminal-hover-bg);
+    transform: scale(0.98);
+  }
+}
+
+/* Safe area for notch devices */
+@supports (padding: env(safe-area-inset-top)) {
+  .status-bar,
+  .rts-top-bar {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Landscape mode handling */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-nav {
+    height: 50px;
+    padding: 0.25rem 0;
+  }
+  
+  .mobile-nav-item .nav-label {
+    display: none;
+  }
+  
+  body {
+    padding-bottom: 55px;
+  }
+}
+
+/* Dark mode is default, but ensure system preference works */
+@media (prefers-color-scheme: light) {
+  :root.auto-theme {
+    --terminal-bg: #f6f8fa;
+    --terminal-border: #d0d7de;
+    --terminal-header-bg: #f6f8fa;
+    --terminal-box-bg: #ffffff;
+    --text-primary: #24292f;
+    --text-secondary: #57606a;
+    --text-muted: #8c959f;
+  }
+}
+
+/* Print styles for exporting */
+@media print {
+  .mobile-nav,
+  .status-bar,
+  .rts-top-bar,
+  button {
+    display: none !important;
+  }
+  
+  body {
+    padding: 0;
+    background: white;
+    color: black;
+  }
 }

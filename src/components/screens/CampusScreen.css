@@ -1,0 +1,13 @@
+/**
+ * CampusScreen styles
+ */
+
+.campus-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.campus-screen .campus-game {
+  flex: 1;
+}

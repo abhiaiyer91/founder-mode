@@ -1,0 +1,373 @@
+/* PM Advisor - Human in the Loop */
+
+.pm-advisor {
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.pm-advisor.disabled {
+  text-align: center;
+  padding: 20px;
+}
+
+.pm-advisor.disabled button {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.advisor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--terminal-border);
+}
+
+.advisor-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.pending-badge {
+  background: #f59e0b;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Proposals Section */
+.proposals-section {
+  margin-bottom: 20px;
+}
+
+.proposals-section h4,
+.thoughts-section h4,
+.product-state h4 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.proposals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Proposal Card */
+.proposal-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--terminal-border);
+  border-radius: 8px;
+  padding: 12px;
+  border-left: 3px solid var(--terminal-border);
+}
+
+.proposal-card.priority-critical {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.proposal-card.priority-high {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.proposal-card.priority-medium {
+  border-left-color: #60a5fa;
+}
+
+.proposal-card.priority-low {
+  border-left-color: #6b7280;
+}
+
+.proposal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.proposal-type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.type-icon {
+  font-size: 14px;
+}
+
+.type-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.proposal-priority {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.proposal-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.proposal-description {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.proposal-details {
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.proposal-details .reasoning {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.proposal-details .reasoning strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+
+.proposal-details .reasoning p {
+  margin: 0;
+  font-style: italic;
+}
+
+.tasks-preview {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.tasks-preview strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+}
+
+.tasks-preview ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--text-secondary);
+}
+
+.tasks-preview li {
+  margin-bottom: 2px;
+}
+
+.tasks-preview .more {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.proposal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.proposal-actions button {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reject-btn {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+
+.reject-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.approve-btn {
+  background: #4ade80;
+  border: none;
+  color: #000;
+}
+
+.approve-btn:hover {
+  background: #22c55e;
+}
+
+/* Thoughts Section */
+.thoughts-section {
+  margin-bottom: 20px;
+}
+
+.thoughts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thought-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.thought-bubble.type-observation {
+  border-left: 2px solid #60a5fa;
+}
+
+.thought-bubble.type-priority {
+  border-left: 2px solid #f59e0b;
+}
+
+.thought-bubble.type-decision {
+  border-left: 2px solid #a78bfa;
+}
+
+.thought-bubble.type-action {
+  border-left: 2px solid #4ade80;
+}
+
+.thought-icon {
+  font-size: 12px;
+}
+
+.thought-message {
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Product State */
+.product-state {
+  padding-top: 12px;
+  border-top: 1px solid var(--terminal-border);
+}
+
+.state-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.state-item {
+  text-align: center;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.state-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.state-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.state-value.bug-count {
+  color: #f59e0b;
+}
+
+.capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cap {
+  padding: 2px 8px;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 4px;
+  font-size: 10px;
+  color: #4ade80;
+}
+
+.cap.missing {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+/* PM Advisor Badge (for top bar) */
+.pm-advisor-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid #f59e0b;
+  border-radius: 20px;
+  color: #f59e0b;
+  font-size: 13px;
+  cursor: pointer;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px 2px rgba(251, 191, 36, 0.2);
+  }
+}
+
+.pm-advisor-badge:hover {
+  background: rgba(251, 191, 36, 0.3);
+}
+
+.badge-count {
+  background: #f59e0b;
+  color: #000;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .state-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

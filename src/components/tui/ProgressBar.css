@@ -1,0 +1,60 @@
+/* TUI Progress Bar */
+.tui-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+
+.progress-label {
+  color: var(--text-secondary);
+  min-width: 80px;
+}
+
+.progress-bar {
+  display: inline-flex;
+  letter-spacing: 0;
+}
+
+.progress-filled {
+  color: var(--text-primary);
+}
+
+.progress-empty {
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+/* Variants */
+.tui-progress.success .progress-filled {
+  color: var(--color-success);
+}
+
+.tui-progress.warning .progress-filled {
+  color: var(--color-warning);
+}
+
+.tui-progress.error .progress-filled {
+  color: var(--color-error);
+}
+
+.tui-progress.accent .progress-filled {
+  color: var(--color-accent);
+}
+
+.progress-value {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Animated variant */
+.tui-progress.animated .progress-filled {
+  animation: progress-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

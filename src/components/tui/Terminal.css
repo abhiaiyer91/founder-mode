@@ -1,0 +1,64 @@
+/* Terminal Container */
+.terminal {
+  background: var(--terminal-bg);
+  border: 2px solid var(--terminal-border);
+  border-radius: 4px;
+  box-shadow: 
+    0 0 0 1px var(--terminal-shadow),
+    0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  min-width: 600px;
+  max-width: 900px;
+  width: 100%;
+}
+
+.terminal-header {
+  background: var(--terminal-header-bg);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--terminal-border);
+  user-select: none;
+}
+
+.terminal-title {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-controls .control {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.terminal-controls .control:hover {
+  color: var(--text-primary);
+}
+
+.terminal-controls .minimize:hover { color: var(--color-warning); }
+.terminal-controls .maximize:hover { color: var(--color-success); }
+.terminal-controls .close:hover { color: var(--color-error); }
+
+.terminal-body {
+  padding: 16px;
+  min-height: 400px;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+}

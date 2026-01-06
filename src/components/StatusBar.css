@@ -1,0 +1,99 @@
+/* Status Bar */
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: var(--terminal-header-bg);
+  border-top: 1px solid var(--terminal-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  z-index: 100;
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.project-name {
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+.game-time {
+  color: var(--text-muted);
+}
+
+.status-center {
+  display: flex;
+  gap: 20px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-item .label {
+  opacity: 0.8;
+}
+
+.status-item .value {
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+.status-item.warning .value {
+  color: var(--color-warning);
+}
+
+.status-item.danger .value {
+  color: var(--color-error);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.status-right {
+  display: flex;
+  align-items: center;
+}
+
+.speed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--terminal-box-bg);
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.speed-toggle:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.speed-icon {
+  font-size: 14px;
+}
+
+.speed-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

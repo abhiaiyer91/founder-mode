@@ -1,0 +1,235 @@
+/* Sprite Components - Animated visual elements */
+
+/* Employee Sprite */
+.employee-sprite {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.employee-sprite.small .sprite-main { font-size: 20px; }
+.employee-sprite.medium .sprite-main { font-size: 32px; }
+.employee-sprite.large .sprite-main { font-size: 48px; }
+
+.sprite-main {
+  transition: transform 0.15s;
+}
+
+.employee-sprite.working .sprite-main {
+  animation: bob 0.6s ease-in-out infinite;
+}
+
+.employee-sprite.idle .sprite-main {
+  animation: idle-breathe 2s ease-in-out infinite;
+}
+
+.employee-sprite.blocked .sprite-main {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes idle-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Working indicator - typing dots */
+.working-indicator {
+  display: flex;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.typing-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  animation: typing 1s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Morale indicator */
+.morale-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 12px;
+  animation: pulse 1.5s infinite;
+}
+
+.employee-sprite.stressed .morale-indicator {
+  animation: shake 0.3s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Activity Indicator */
+.activity-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-emoji {
+  font-size: 24px;
+  animation: bounce 0.5s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Code Typing Animation */
+.code-typing {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--terminal-bg);
+  padding: 12px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0;
+}
+
+.code-typing code {
+  color: var(--color-accent);
+}
+
+.code-typing .cursor {
+  color: var(--color-accent);
+  animation: blink 0.5s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Progress Ring */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: bold;
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+/* Minimap */
+.minimap {
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.minimap-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.minimap-total {
+  color: var(--color-accent);
+}
+
+.minimap-bar {
+  display: flex;
+  height: 8px;
+  background: var(--terminal-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.minimap-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.minimap-segment.done { background: #22c55e; }
+.minimap-segment.review { background: #f59e0b; }
+.minimap-segment.in-progress { background: var(--color-accent); }
+.minimap-segment.todo { background: #64748b; }
+.minimap-segment.backlog { background: #334155; }
+
+.minimap-employees {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.minimap-employee {
+  width: 12px;
+  height: 12px;
+  background: var(--terminal-border);
+  border-radius: 50%;
+  position: relative;
+}
+
+.minimap-employee.working {
+  background: var(--color-accent);
+}
+
+.minimap-employee.idle {
+  background: #64748b;
+}
+
+.minimap-employee .pulse {
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  animation: ripple 1s infinite;
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.minimap-legend {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.minimap-legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.minimap-legend .dot.done { background: #22c55e; }
+.minimap-legend .dot.in-progress { background: var(--color-accent); }
+.minimap-legend .dot.todo { background: #64748b; }

@@ -1,0 +1,61 @@
+/* TUI Box */
+.tui-box {
+  border: 1px solid var(--terminal-border);
+  font-family: var(--font-mono);
+  background: var(--terminal-box-bg);
+}
+
+.box-title {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--terminal-border);
+  background: var(--terminal-header-bg);
+}
+
+.box-title-text {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.box-content {
+  padding: 12px;
+}
+
+/* Variants */
+.tui-box.accent {
+  border-color: var(--color-accent);
+}
+
+.tui-box.accent .box-title {
+  background: var(--color-accent-bg);
+}
+
+.tui-box.accent .box-title-text {
+  color: var(--color-accent);
+}
+
+.tui-box.success {
+  border-color: var(--color-success);
+}
+
+.tui-box.success .box-title-text {
+  color: var(--color-success);
+}
+
+.tui-box.warning {
+  border-color: var(--color-warning);
+}
+
+.tui-box.warning .box-title-text {
+  color: var(--color-warning);
+}
+
+.tui-box.error {
+  border-color: var(--color-error);
+}
+
+.tui-box.error .box-title-text {
+  color: var(--color-error);
+}
