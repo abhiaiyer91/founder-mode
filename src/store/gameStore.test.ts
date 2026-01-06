@@ -38,6 +38,7 @@ function resetStore() {
       apiKey: null,
       provider: 'openai',
       model: 'gpt-4o-mini',
+      providerKeys: {},
     },
     selectedEmployeeId: null,
     selectedTaskId: null,
@@ -78,6 +79,8 @@ function resetStore() {
       lastEvaluation: 0,
       evaluationInterval: 120,
     },
+    aiWorkQueue: [],
+    aiWorkInProgress: null,
   });
 }
 
@@ -852,5 +855,418 @@ describe('Epics', () => {
     const epic = useGameStore.getState().pmBrain.epics[0];
     expect(epic.status).toBe('completed');
     expect(epic.completedAt).not.toBeNull();
+  });
+});
+
+// ============================================
+// AI Work Queue Tests
+// ============================================
+
+describe('AI Work Queue', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('should queue AI work when task is assigned with AI enabled', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    store.hireEmployee('engineer', 'mid');
+    
+    // Enable AI
+    useGameStore.setState({
+      aiSettings: { ...useGameStore.getState().aiSettings, enabled: true },
+    });
+    
+    store.createTask({
+      title: 'Build feature',
+      description: 'A feature',
+      type: 'feature',
+      priority: 'high',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    const employee = useGameStore.getState().employees[0];
+    
+    store.assignTask(task.id, employee.id);
+    
+    const queue = useGameStore.getState().aiWorkQueue;
+    expect(queue).toHaveLength(1);
+    expect(queue[0].taskId).toBe(task.id);
+    expect(queue[0].employeeId).toBe(employee.id);
+    expect(queue[0].status).toBe('queued');
+  });
+
+  it('should not queue AI work when AI is disabled', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    store.hireEmployee('engineer', 'mid');
+    
+    // AI is disabled by default
+    store.createTask({
+      title: 'Build feature',
+      description: 'A feature',
+      type: 'feature',
+      priority: 'high',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    const employee = useGameStore.getState().employees[0];
+    
+    store.assignTask(task.id, employee.id);
+    
+    const queue = useGameStore.getState().aiWorkQueue;
+    expect(queue).toHaveLength(0);
+  });
+
+  it('should not queue duplicate AI work for same task', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    store.hireEmployee('engineer', 'mid');
+    
+    useGameStore.setState({
+      aiSettings: { ...useGameStore.getState().aiSettings, enabled: true },
+    });
+    
+    store.createTask({
+      title: 'Build feature',
+      description: 'A feature',
+      type: 'feature',
+      priority: 'high',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    const employee = useGameStore.getState().employees[0];
+    
+    // Queue work twice
+    store.queueAIWork(task.id, employee.id);
+    store.queueAIWork(task.id, employee.id);
+    
+    const queue = useGameStore.getState().aiWorkQueue;
+    expect(queue).toHaveLength(1);
+  });
+
+  it('should prioritize critical tasks in queue', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    store.hireEmployee('engineer', 'mid');
+    store.hireEmployee('engineer', 'senior');
+    
+    useGameStore.setState({
+      aiSettings: { ...useGameStore.getState().aiSettings, enabled: true },
+    });
+    
+    // Create low priority first
+    store.createTask({
+      title: 'Low priority task',
+      description: 'Low',
+      type: 'feature',
+      priority: 'low',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    // Then critical
+    store.createTask({
+      title: 'Critical task',
+      description: 'Critical',
+      type: 'bug',
+      priority: 'critical',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 5,
+    });
+    
+    const tasks = useGameStore.getState().tasks;
+    const employees = useGameStore.getState().employees;
+    
+    store.assignTask(tasks[0].id, employees[0].id);
+    store.assignTask(tasks[1].id, employees[1].id);
+    
+    const queue = useGameStore.getState().aiWorkQueue;
+    expect(queue).toHaveLength(2);
+    // Critical should be first (priority 1 vs 4)
+    expect(queue[0].taskId).toBe(tasks[1].id);
+  });
+});
+
+// ============================================
+// Task Artifacts Tests
+// ============================================
+
+describe('Task Artifacts', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('should add artifact to task', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    
+    store.createTask({
+      title: 'Build component',
+      description: 'A component',
+      type: 'feature',
+      priority: 'medium',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    store.addTaskArtifact(task.id, {
+      type: 'code',
+      title: 'Button.tsx',
+      content: 'export const Button = () => <button>Click</button>;',
+      language: 'typescript',
+      filePath: 'src/components/Button.tsx',
+      createdBy: 'test-employee',
+    });
+    
+    const updatedTask = useGameStore.getState().tasks[0];
+    expect(updatedTask.artifacts).toHaveLength(1);
+    expect(updatedTask.artifacts[0].type).toBe('code');
+    expect(updatedTask.artifacts[0].title).toBe('Button.tsx');
+    expect(updatedTask.artifacts[0].language).toBe('typescript');
+  });
+
+  it('should add multiple artifacts to task', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    
+    store.createTask({
+      title: 'Build feature',
+      description: 'Full feature',
+      type: 'feature',
+      priority: 'high',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 20,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    
+    store.addTaskArtifact(task.id, {
+      type: 'code',
+      title: 'Component.tsx',
+      content: 'const Component = () => {}',
+      createdBy: 'emp1',
+    });
+    
+    store.addTaskArtifact(task.id, {
+      type: 'code',
+      title: 'Component.css',
+      content: '.component { color: red; }',
+      language: 'css',
+      createdBy: 'emp1',
+    });
+    
+    store.addTaskArtifact(task.id, {
+      type: 'design',
+      title: 'Component Design',
+      content: 'Design spec for the component',
+      createdBy: 'emp2',
+    });
+    
+    const updatedTask = useGameStore.getState().tasks[0];
+    expect(updatedTask.artifacts).toHaveLength(3);
+  });
+
+  it('should initialize new tasks with empty artifacts', () => {
+    const store = useGameStore.getState();
+    store.startProject('Test app');
+    
+    store.createTask({
+      title: 'New task',
+      description: 'Description',
+      type: 'feature',
+      priority: 'medium',
+      status: 'backlog',
+      assigneeId: null,
+      estimatedTicks: 10,
+    });
+    
+    const task = useGameStore.getState().tasks[0];
+    expect(task.artifacts).toEqual([]);
+    expect(task.aiWorkStarted).toBe(false);
+    expect(task.aiWorkCompleted).toBe(false);
+  });
+});
+
+// ============================================
+// Agent Memory Tests
+// ============================================
+
+describe('Agent Memory', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  it('should add memory to employee', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Completed user authentication feature',
+      importance: 0.8,
+      taskId: 'task-123',
+      tags: ['auth', 'feature', 'security'],
+    });
+    
+    const updatedEmployee = useGameStore.getState().employees[0];
+    expect(updatedEmployee.memory).toHaveLength(1);
+    expect(updatedEmployee.memory[0].type).toBe('task');
+    expect(updatedEmployee.memory[0].importance).toBe(0.8);
+    expect(updatedEmployee.memory[0].tags).toContain('auth');
+  });
+
+  it('should limit memory to 50 entries', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('engineer', 'senior');
+    
+    const employee = useGameStore.getState().employees[0];
+    
+    // Add 55 memories
+    for (let i = 0; i < 55; i++) {
+      store.addEmployeeMemory(employee.id, {
+        type: 'task',
+        content: `Memory ${i}`,
+        importance: 0.5,
+        tags: ['test'],
+      });
+    }
+    
+    const updatedEmployee = useGameStore.getState().employees[0];
+    expect(updatedEmployee.memory).toHaveLength(50);
+    // Should keep the most recent
+    expect(updatedEmployee.memory[49].content).toBe('Memory 54');
+  });
+
+  it('should get employee context', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Built authentication system',
+      importance: 0.9,
+      tags: ['auth', 'security'],
+    });
+    
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Created dashboard UI',
+      importance: 0.7,
+      tags: ['ui', 'dashboard'],
+    });
+    
+    // Update task count manually for testing
+    useGameStore.setState({
+      employees: useGameStore.getState().employees.map(e => ({
+        ...e,
+        tasksCompleted: 5,
+        specializations: ['auth', 'security'],
+      })),
+    });
+    
+    const context = store.getEmployeeContext(employee.id);
+    
+    expect(context).toContain('Experience');
+    expect(context).toContain('Tasks Completed');
+    expect(context).toContain('Built authentication system');
+    expect(context).toContain('Created dashboard UI');
+  });
+
+  it('should filter context by task title', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Built authentication system',
+      importance: 0.9,
+      tags: ['auth', 'security'],
+    });
+    
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Created payment integration',
+      importance: 0.7,
+      tags: ['payment', 'stripe'],
+    });
+    
+    // Search for auth-related context
+    const context = store.getEmployeeContext(employee.id, 'user authentication');
+    
+    expect(context).toContain('Built authentication system');
+    // Payment may or may not be included based on relevance
+  });
+
+  it('should update employee specializations', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('engineer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    
+    // Add memories with various tags
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Auth work 1',
+      importance: 0.8,
+      tags: ['auth', 'security'],
+    });
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'Auth work 2',
+      importance: 0.8,
+      tags: ['auth', 'security'],
+    });
+    store.addEmployeeMemory(employee.id, {
+      type: 'task',
+      content: 'UI work',
+      importance: 0.7,
+      tags: ['ui'],
+    });
+    
+    store.updateEmployeeSpecializations(employee.id);
+    
+    const updatedEmployee = useGameStore.getState().employees[0];
+    expect(updatedEmployee.specializations).toContain('auth');
+    expect(updatedEmployee.specializations).toContain('security');
+    // auth and security should be first due to higher count
+    expect(updatedEmployee.specializations[0]).toBe('auth');
+  });
+
+  it('should initialize new employees with empty memory', () => {
+    const store = useGameStore.getState();
+    store.hireEmployee('designer', 'mid');
+    
+    const employee = useGameStore.getState().employees[0];
+    expect(employee.memory).toEqual([]);
+    expect(employee.tasksCompleted).toBe(0);
+    expect(employee.specializations).toEqual([]);
+  });
+
+  it('should return empty context for non-existent employee', () => {
+    const store = useGameStore.getState();
+    const context = store.getEmployeeContext('non-existent-id');
+    expect(context).toBe('');
   });
 });
