@@ -88,7 +88,7 @@ function generateRandomStat(base: number, variance: number): number {
 
 // Initial game state
 const initialState: GameState = {
-  screen: 'start',
+  screen: 'landing', // Start with landing page for new users
   gameSpeed: 'paused',
   tick: 0,
   startedAt: new Date(),
@@ -2682,7 +2682,7 @@ export const useGameStore = create<GameState & GameActions>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Reset UI state on load
-          state.screen = state.project ? 'rts' : 'start';
+          state.screen = state.project ? 'rts' : 'landing'; // Show landing for new users
           state.gameSpeed = 'paused';
           state.selectedEmployeeId = null;
           state.selectedEmployeeIds = [];

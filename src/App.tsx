@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useGameStore } from './store/gameStore';
 import { 
+  LandingPage,
   AuthScreen,
   StartScreen, 
   RTSView,
@@ -273,6 +274,8 @@ function App() {
     }
     
     switch (screen) {
+      case 'landing':
+        return <LandingPage />;
       case 'start':
         return <StartScreen />;
       case 'rts':
@@ -308,12 +311,12 @@ function App() {
     }
   };
 
-  // Screens with built-in status bars
-  const fullScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'tech', 'achievements'];
+  // Screens with built-in status bars (no extra chrome needed)
+  const fullScreens: GameScreen[] = ['landing', 'rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
-  // Show top bar when in game
-  const showTopBar = project && screen !== 'start';
+  // Show top bar when in game (not on landing or start)
+  const showTopBar = project && screen !== 'start' && screen !== 'landing';
 
   return (
     <div className="app">

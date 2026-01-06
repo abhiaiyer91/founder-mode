@@ -216,6 +216,7 @@ export interface Project {
 
 // Game State
 export type GameScreen = 
+  | 'landing'      // Landing page for new users
   | 'auth'         // Login/signup
   | 'start' 
   | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
