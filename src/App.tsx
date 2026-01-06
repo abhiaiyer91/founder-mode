@@ -5,6 +5,7 @@ import {
   AuthScreen,
   StartScreen, 
   RTSView,
+  CampusScreen,
   DashboardScreen,
   CommandCenter,
   TaskQueueScreen,
@@ -214,10 +215,11 @@ function App() {
       }
 
       // Screen shortcuts (when in main screens)
-      const mainScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'office'];
+      const mainScreens: GameScreen[] = ['rts', 'campus', 'dashboard', 'command', 'office'];
       if (mainScreens.includes(screen)) {
         const screenMap: Record<string, GameScreen> = {
           'r': 'rts',        // Isometric RTS view (new default)
+          'v': 'campus',     // Isometric campus view (Phaser)
           'd': 'dashboard',
           'c': 'command',
           'h': 'hire',
@@ -283,6 +285,8 @@ function App() {
         return <StartScreen />;
       case 'rts':
         return <RTSView />;
+      case 'campus':
+        return <CampusScreen />;
       case 'dashboard':
         return <DashboardScreen />;
       case 'command':
@@ -317,7 +321,7 @@ function App() {
   };
 
   // Screens with built-in status bars (no extra chrome needed)
-  const fullScreens: GameScreen[] = ['landing', 'rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'preview', 'tech', 'achievements'];
+  const fullScreens: GameScreen[] = ['landing', 'rts', 'campus', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'preview', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game (not on landing or start)

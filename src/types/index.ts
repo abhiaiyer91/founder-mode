@@ -230,6 +230,7 @@ export type GameScreen =
   | 'auth'         // Login/signup
   | 'start' 
   | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
+  | 'campus'       // Isometric campus view (Phaser 3) - Visual startup HQ
   | 'dashboard'    // Clean split-view
   | 'command'      // TUI-style command center
   | 'queue'        // Task queue / import view

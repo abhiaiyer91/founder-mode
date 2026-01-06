@@ -46,6 +46,7 @@ export function RTSTopBar() {
 
   const views: { id: GameScreen; label: string; icon: string; hotkey: string }[] = [
     { id: 'rts', label: 'RTS', icon: '🏰', hotkey: 'R' },      // Isometric view (Civ/Warcraft)
+    { id: 'campus', label: 'Campus', icon: '🏢', hotkey: 'V' }, // Isometric campus (Phaser)
     { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
     { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
     { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
@@ -60,7 +61,7 @@ export function RTSTopBar() {
   ];
 
   // Only show in game screens
-  const gameScreens: GameScreen[] = ['rts', 'dashboard', 'command', 'queue', 'missions', 'preview', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
+  const gameScreens: GameScreen[] = ['rts', 'campus', 'dashboard', 'command', 'queue', 'missions', 'preview', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
   if (!gameScreens.includes(screen)) return null;
 
   return (
