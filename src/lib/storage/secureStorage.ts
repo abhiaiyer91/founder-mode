@@ -7,9 +7,16 @@
 
 const STORAGE_KEY = 'founder_mode_credentials';
 
+// Supported AI providers
+export type AIProviderKey = 'openai' | 'anthropic' | 'google' | 'groq';
+export type CredentialKey = AIProviderKey | 'github';
+
 interface StoredCredentials {
+  // Legacy keys (kept for backwards compat)
   openaiKey?: string;
   githubToken?: string;
+  // Provider keys by name
+  providerKeys?: Record<string, string>;
   updatedAt: number;
 }
 
@@ -26,10 +33,17 @@ function deobfuscate(value: string): string {
   }
 }
 
-export function saveApiKey(key: 'openai' | 'github', value: string): void {
+export function saveApiKey(key: CredentialKey, value: string): void {
   try {
     const stored = getStoredCredentials();
     
+    // Store in provider keys
+    if (!stored.providerKeys) {
+      stored.providerKeys = {};
+    }
+    stored.providerKeys[key] = obfuscate(value);
+    
+    // Also store in legacy keys for backwards compat
     if (key === 'openai') {
       stored.openaiKey = obfuscate(value);
     } else if (key === 'github') {
@@ -43,10 +57,16 @@ export function saveApiKey(key: 'openai' | 'github', value: string): void {
   }
 }
 
-export function getApiKey(key: 'openai' | 'github'): string | null {
+export function getApiKey(key: CredentialKey): string | null {
   try {
     const stored = getStoredCredentials();
     
+    // First try new provider keys
+    if (stored.providerKeys && stored.providerKeys[key]) {
+      return deobfuscate(stored.providerKeys[key]);
+    }
+    
+    // Fall back to legacy keys
     if (key === 'openai' && stored.openaiKey) {
       return deobfuscate(stored.openaiKey);
     } else if (key === 'github' && stored.githubToken) {
@@ -59,10 +79,16 @@ export function getApiKey(key: 'openai' | 'github'): string | null {
   }
 }
 
-export function removeApiKey(key: 'openai' | 'github'): void {
+export function removeApiKey(key: CredentialKey): void {
   try {
     const stored = getStoredCredentials();
     
+    // Remove from provider keys
+    if (stored.providerKeys) {
+      delete stored.providerKeys[key];
+    }
+    
+    // Also remove legacy keys
     if (key === 'openai') {
       delete stored.openaiKey;
     } else if (key === 'github') {
@@ -96,6 +122,12 @@ function getStoredCredentials(): StoredCredentials {
   return { updatedAt: 0 };
 }
 
-export function hasStoredKey(key: 'openai' | 'github'): boolean {
+export function hasStoredKey(key: CredentialKey): boolean {
   return getApiKey(key) !== null;
+}
+
+/** Get all configured provider keys */
+export function getConfiguredProviders(): AIProviderKey[] {
+  const providers: AIProviderKey[] = ['openai', 'anthropic', 'google', 'groq'];
+  return providers.filter(p => hasStoredKey(p));
 }

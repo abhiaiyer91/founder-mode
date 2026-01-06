@@ -11,6 +11,7 @@
   min-width: 600px;
   max-width: 900px;
   width: 100%;
+  margin: 0 auto;
 }
 
 .terminal-header {
@@ -61,4 +62,12 @@
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .terminal {
+    min-width: unset;
+    max-width: 100%;
+  }
 }

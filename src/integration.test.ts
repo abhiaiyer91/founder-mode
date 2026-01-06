@@ -13,7 +13,6 @@ import type { TaskStatus } from './types';
 function resetStore() {
   useGameStore.setState({
     screen: 'start',
-    gameSpeed: 'normal', // Not paused for integration tests
     tick: 0,
     startedAt: new Date(),
     money: 100000,
@@ -311,8 +310,8 @@ describe('Integration: AI Work Queue', () => {
     store.startProject('AI-powered app');
     store.hireEmployee('engineer', 'mid');
     
-    // Enable AI
-    store.configureAI('sk-test-key', 'openai');
+    // Enable AI (simulates Mastra server being connected)
+    store.configureAI();
     
     // Create and assign task
     store.createTask({
@@ -348,7 +347,7 @@ describe('Integration: AI Work Queue', () => {
     store.hireEmployee('engineer', 'mid');
     store.hireEmployee('engineer', 'junior');
     
-    store.configureAI('sk-test-key', 'openai');
+    store.configureAI();
     
     // Create tasks with different priorities
     store.createTask({

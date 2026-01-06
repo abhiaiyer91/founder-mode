@@ -1,10 +1,7 @@
 /**
  * GitHub Import - Import existing GitHub projects into Founder Mode
  * 
- * Allows users to:
- * 1. Connect their GitHub account
- * 2. Browse their repositories
- * 3. Import a repo and start playing from there
+ * Uses OAuth to connect GitHub account (no PAT required)
  */
 
 import { useState, useEffect } from 'react';
@@ -31,6 +28,7 @@ interface ImportState {
   loading: boolean;
   error: string | null;
   analysis: RepoAnalysis | null;
+  githubUser: string | null;
 }
 
 interface RepoAnalysis {
@@ -57,23 +55,48 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
     loading: false,
     error: null,
     analysis: null,
+    githubUser: null,
   });
   
-  const [githubToken, setGithubToken] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'updated' | 'stars'>('updated');
 
-  // Check if user has GitHub token
+  // Check for GitHub OAuth token (from localStorage or URL fragment)
   useEffect(() => {
+    // First check URL fragment for fresh OAuth callback
+    const hash = window.location.hash;
+    if (hash.includes('github_token=')) {
+      const params = new URLSearchParams(hash.slice(1));
+      const token = params.get('github_token');
+      const user = params.get('github_user');
+      
+      if (token) {
+        localStorage.setItem('github_token', token);
+        if (user) {
+          localStorage.setItem('github_user', user);
+        }
+        // Clear the hash from URL
+        window.history.replaceState(null, '', window.location.pathname);
+        fetchRepos(token, user);
+        return;
+      }
+    }
+
+    // Check localStorage for existing token
     const savedToken = localStorage.getItem('github_token');
+    const savedUser = localStorage.getItem('github_user');
     if (savedToken) {
-      setGithubToken(savedToken);
-      fetchRepos(savedToken);
+      fetchRepos(savedToken, savedUser);
     }
   }, []);
 
-  const fetchRepos = async (token: string) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+  const fetchRepos = async (token: string, user: string | null) => {
+    setState(prev => ({ 
+      ...prev, 
+      loading: true, 
+      error: null,
+      githubUser: user,
+    }));
     
     try {
       const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
@@ -84,7 +107,13 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch repositories. Check your token.');
+        // Token might be expired, clear it
+        if (response.status === 401) {
+          localStorage.removeItem('github_token');
+          localStorage.removeItem('github_user');
+          throw new Error('GitHub session expired. Please reconnect.');
+        }
+        throw new Error('Failed to fetch repositories.');
       }
       
       const repos: GitHubRepo[] = await response.json();
@@ -95,8 +124,6 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
         repos,
         loading: false,
       }));
-      
-      localStorage.setItem('github_token', token);
     } catch (err) {
       setState(prev => ({
         ...prev,
@@ -106,12 +133,23 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleConnect = () => {
-    if (!githubToken.trim()) {
-      setState(prev => ({ ...prev, error: 'Please enter a GitHub token' }));
-      return;
-    }
-    fetchRepos(githubToken);
+  const handleConnectGitHub = () => {
+    // Start OAuth flow - redirect to backend OAuth endpoint
+    window.location.href = '/api/oauth/github?returnTo=/start';
+  };
+
+  const handleDisconnect = () => {
+    localStorage.removeItem('github_token');
+    localStorage.removeItem('github_user');
+    setState({
+      step: 'connect',
+      repos: [],
+      selectedRepo: null,
+      loading: false,
+      error: null,
+      analysis: null,
+      githubUser: null,
+    });
   };
 
   const handleSelectRepo = async (repo: GitHubRepo) => {
@@ -253,7 +291,7 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
     <div className="github-import-overlay" onClick={onClose}>
       <div className="github-import" onClick={e => e.stopPropagation()}>
         <div className="import-header">
-          <div className="header-icon">🐙</div>
+          <div className="header-icon">◉</div>
           <h2>Import from GitHub</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
@@ -262,25 +300,7 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
           <div className="import-step connect-step">
             <div className="step-intro">
               <p>Connect your GitHub account to import an existing project.</p>
-              <a 
-                href="https://github.com/settings/tokens/new?description=Founder%20Mode&scopes=repo" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="token-link"
-              >
-                Create a Personal Access Token →
-              </a>
-            </div>
-
-            <div className="token-input">
-              <label>GitHub Personal Access Token</label>
-              <input
-                type="password"
-                value={githubToken}
-                onChange={e => setGithubToken(e.target.value)}
-                placeholder="ghp_xxxxxxxxxxxx"
-              />
-              <span className="token-hint">Token is stored locally only</span>
+              <p className="oauth-note">We'll use OAuth to securely access your repositories.</p>
             </div>
 
             {state.error && (
@@ -290,11 +310,11 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
             <div className="step-actions">
               <button className="secondary-btn" onClick={onClose}>Cancel</button>
               <button 
-                className="primary-btn" 
-                onClick={handleConnect}
+                className="primary-btn github-oauth-btn" 
+                onClick={handleConnectGitHub}
                 disabled={state.loading}
               >
-                {state.loading ? 'Connecting...' : 'Connect'}
+                {state.loading ? 'Connecting...' : '◉ Connect with GitHub'}
               </button>
             </div>
           </div>
@@ -302,6 +322,11 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
 
         {state.step === 'browse' && (
           <div className="import-step browse-step">
+            <div className="connected-user">
+              <span className="user-badge">✓ Connected as {state.githubUser || 'GitHub User'}</span>
+              <button className="disconnect-btn" onClick={handleDisconnect}>Disconnect</button>
+            </div>
+
             <div className="repo-controls">
               <input
                 type="text"
@@ -356,8 +381,8 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="step-actions">
-              <button className="secondary-btn" onClick={() => setState(prev => ({ ...prev, step: 'connect' }))}>
-                ← Back
+              <button className="secondary-btn" onClick={handleDisconnect}>
+                ← Disconnect
               </button>
             </div>
           </div>
@@ -366,8 +391,8 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
         {state.step === 'analyze' && (
           <div className="import-step analyze-step">
             <div className="analyze-content">
-              <div className="analyze-spinner">🔍</div>
-              <h3>Analyzing {state.selectedRepo?.name}...</h3>
+              <div className="analyze-spinner">◎</div>
+              <h3>Analyzing {state.selectedRepo?.name}</h3>
               <p>Scanning code, issues, and documentation</p>
             </div>
           </div>
@@ -385,7 +410,7 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
 
             <div className="analysis-results">
               <div className="result-section">
-                <h4>🔧 Languages</h4>
+                <h4>Languages</h4>
                 <div className="languages">
                   {state.analysis.languages.map(lang => (
                     <div key={lang.name} className="lang-bar">
@@ -403,12 +428,12 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="result-section">
-                <h4>📋 Suggested Tasks ({state.analysis.suggestedTasks.length})</h4>
+                <h4>Suggested Tasks ({state.analysis.suggestedTasks.length})</h4>
                 <div className="task-preview">
                   {state.analysis.suggestedTasks.slice(0, 3).map((task, i) => (
                     <div key={i} className="preview-task">
                       <span className={`task-priority priority-${task.priority}`}>
-                        {task.priority === 'high' ? '🔴' : task.priority === 'medium' ? '🟡' : '🟢'}
+                        {task.priority === 'high' ? '●' : task.priority === 'medium' ? '◐' : '○'}
                       </span>
                       <span className="task-title">{task.title}</span>
                     </div>
@@ -417,17 +442,17 @@ export function GitHubImport({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="result-section">
-                <h4>👥 Recommended Team</h4>
+                <h4>Recommended Team</h4>
                 <p>{state.analysis.teamSize} employee{state.analysis.teamSize > 1 ? 's' : ''} to start</p>
               </div>
             </div>
 
             <div className="step-actions">
               <button className="secondary-btn" onClick={() => setState(prev => ({ ...prev, step: 'browse' }))}>
-                ← Choose Different
+                ← Back
               </button>
               <button className="primary-btn start-btn" onClick={handleStartGame}>
-                🚀 Start Building
+                Start Building →
               </button>
             </div>
           </div>

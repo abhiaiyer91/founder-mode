@@ -7,7 +7,7 @@ import postgres from 'postgres';
 import * as schema from './schema';
 
 // Load environment variables
-const DATABASE_URL = process.env.DATABASE_URL || 'postgres://founder:founder123@localhost:5432/founder_mode';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgres://founder:founder123@localhost:5433/founder_mode';
 
 // Create postgres connection
 const client = postgres(DATABASE_URL);

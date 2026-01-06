@@ -10,7 +10,7 @@ import { ROLE_BASE_PROMPTS } from '../../types';
 
 export interface AgentDefinition {
   name: string;
-  role: 'engineer' | 'designer' | 'pm' | 'marketer';
+  role: EmployeeRole;
   systemPrompt: string;
 }
 
@@ -33,17 +33,10 @@ export const designerAgent: AgentDefinition = {
   systemPrompt: ROLE_BASE_PROMPTS.designer,
 };
 
-export const marketerAgent: AgentDefinition = {
-  name: 'Marketer',
-  role: 'marketer',
-  systemPrompt: ROLE_BASE_PROMPTS.marketer,
-};
-
-export const agents = {
+export const agents: Record<EmployeeRole, AgentDefinition> = {
   engineer: engineerAgent,
   pm: pmAgent,
   designer: designerAgent,
-  marketer: marketerAgent,
 };
 
 /**

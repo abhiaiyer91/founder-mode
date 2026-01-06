@@ -31,7 +31,7 @@ function EmployeeCard({ employee }: { employee: Employee }) {
         <span className="employee-avatar">{employee.avatarEmoji}</span>
         <div className="employee-info">
           <span className="employee-name">{employee.name}</span>
-          <span className="employee-role">{employee.skillLevel} {employee.role}</span>
+          <span className="employee-role">{employee.role}</span>
         </div>
       </div>
       <div className="employee-status" style={{ color: statusColor }}>

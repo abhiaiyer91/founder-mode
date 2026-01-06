@@ -4,44 +4,77 @@
  * Defines all tables for Founder Mode game persistence.
  */
 
-import { pgTable, text, integer, timestamp, jsonb, uuid, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, jsonb, uuid, varchar, boolean } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ============================================
-// Users
+// Better Auth Tables (required by better-auth)
 // ============================================
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }).notNull(),
-  passwordHash: text('password_hash'),
-  imageUrl: text('image_url'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  image: text('image'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const session = pgTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at').notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+});
+
+export const account = pgTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at'),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const verification = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Relations for Better Auth tables
+export const userRelations = relations(user, ({ many }) => ({
+  sessions: many(session),
+  accounts: many(account),
   gameSaves: many(gameSaves),
-  sessions: many(sessions),
 }));
 
-// ============================================
-// Sessions (for better-auth)
-// ============================================
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
+  }),
+}));
 
-export const sessions = pgTable('sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  token: text('token').notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
   }),
 }));
 
@@ -51,7 +84,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const gameSaves = pgTable('game_saves', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   
   // Game state
@@ -80,9 +113,9 @@ export const gameSaves = pgTable('game_saves', {
 });
 
 export const gameSavesRelations = relations(gameSaves, ({ one, many }) => ({
-  user: one(users, {
+  user: one(user, {
     fields: [gameSaves.userId],
-    references: [users.id],
+    references: [user.id],
   }),
   employees: many(employees),
   tasks: many(tasks),
@@ -105,10 +138,10 @@ export const employees = pgTable('employees', {
   status: varchar('status', { length: 50 }).notNull().default('idle'), // idle, working, blocked, on_break
   avatarEmoji: varchar('avatar_emoji', { length: 10 }).notNull(),
   salary: integer('salary').notNull(),
-  productivity: integer('productivity').notNull().default(70),
-  morale: integer('morale').notNull().default(80),
   currentTaskId: varchar('current_task_id', { length: 36 }),
   hiredAt: integer('hired_at').notNull(), // Game tick
+  tasksCompleted: integer('tasks_completed').notNull().default(0),
+  totalTicksWorked: integer('total_ticks_worked').notNull().default(0),
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -181,8 +214,14 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 // Type exports
 // ============================================
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
+export type User = typeof user.$inferSelect;
+export type NewUser = typeof user.$inferInsert;
+
+export type Session = typeof session.$inferSelect;
+export type NewSession = typeof session.$inferInsert;
+
+export type Account = typeof account.$inferSelect;
+export type NewAccount = typeof account.$inferInsert;
 
 export type GameSave = typeof gameSaves.$inferSelect;
 export type NewGameSave = typeof gameSaves.$inferInsert;

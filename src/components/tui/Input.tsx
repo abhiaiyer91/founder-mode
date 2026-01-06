@@ -11,6 +11,7 @@ interface InputProps {
   autoFocus?: boolean;
   multiline?: boolean;
   maxLength?: number;
+  type?: 'text' | 'password';
 }
 
 export function Input({
@@ -21,23 +22,30 @@ export function Input({
   prompt = '>',
   autoFocus = true,
   multiline = false,
-  maxLength
+  maxLength,
+  type = 'text'
 }: InputProps) {
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-  // Blinking cursor effect
+  // Blinking cursor effect - only when focused
   useEffect(() => {
+    if (!isFocused) {
+      setCursorVisible(false);
+      return;
+    }
     const interval = setInterval(() => {
       setCursorVisible(v => !v);
     }, 530);
     return () => clearInterval(interval);
-  }, []);
+  }, [isFocused]);
 
   // Auto focus
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
+      setIsFocused(true);
     }
   }, [autoFocus]);
 
@@ -48,12 +56,13 @@ export function Input({
     }
   };
 
-  const displayValue = value || placeholder;
+  const maskedValue = type === 'password' ? '•'.repeat(value.length) : value;
+  const displayValue = maskedValue || placeholder;
   const isPlaceholder = !value && placeholder;
 
   if (multiline) {
     return (
-      <div className="tui-input multiline">
+      <div className={`tui-input multiline ${isFocused ? 'focused' : ''}`}>
         <span className="input-prompt">{prompt}</span>
         <div className="input-wrapper">
           <textarea
@@ -61,6 +70,8 @@ export function Input({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             className="input-field"
             placeholder={placeholder}
             maxLength={maxLength}
@@ -72,7 +83,7 @@ export function Input({
   }
 
   return (
-    <div className="tui-input">
+    <div className={`tui-input ${isFocused ? 'focused' : ''}`}>
       <span className="input-prompt">{prompt}</span>
       <div className="input-wrapper">
         <span className={`input-display ${isPlaceholder ? 'placeholder' : ''}`}>
@@ -85,6 +96,8 @@ export function Input({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           className="input-field"
           maxLength={maxLength}
         />

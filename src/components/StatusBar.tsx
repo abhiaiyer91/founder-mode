@@ -1,5 +1,4 @@
 import { useGameStore } from '../store/gameStore';
-import type { GameSpeed } from '../types';
 import './StatusBar.css';
 
 function formatMoney(amount: number): string {
@@ -27,8 +26,8 @@ export function StatusBar() {
     employees, 
     tasks, 
     tick, 
-    gameSpeed, 
-    setGameSpeed,
+    isPaused,
+    togglePause,
     project 
   } = useGameStore();
 
@@ -36,20 +35,6 @@ export function StatusBar() {
   const completedTasks = tasks.filter(t => t.status === 'done').length;
   const monthlyBurn = employees.reduce((sum, e) => sum + e.salary, 0);
   const runway = monthlyBurn > 0 ? Math.floor(money / monthlyBurn) : 99;
-
-  const speedIcons: Record<GameSpeed, string> = {
-    paused: '⏸',
-    normal: '▶',
-    fast: '⏩',
-    turbo: '⚡',
-  };
-
-  const cycleSpeed = () => {
-    const speeds: GameSpeed[] = ['paused', 'normal', 'fast', 'turbo'];
-    const currentIndex = speeds.indexOf(gameSpeed);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    setGameSpeed(speeds[nextIndex]);
-  };
 
   if (!project) return null;
 
@@ -84,9 +69,9 @@ export function StatusBar() {
       </div>
       
       <div className="status-right">
-        <button className="speed-toggle" onClick={cycleSpeed} title="Toggle game speed">
-          <span className="speed-icon">{speedIcons[gameSpeed]}</span>
-          <span className="speed-label">{gameSpeed}</span>
+        <button className="pause-toggle" onClick={togglePause} title="Toggle pause [Space]">
+          <span className="pause-icon">{isPaused ? '▶' : '❚❚'}</span>
+          <span className="pause-label">{isPaused ? 'Play' : 'Pause'}</span>
         </button>
       </div>
     </div>

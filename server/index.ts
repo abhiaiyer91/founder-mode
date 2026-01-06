@@ -4,6 +4,7 @@ import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { agents, allTools } from './mastra';
+import { PROVIDER_REGISTRY } from '@mastra/core/llm';
 import gameRoutes from './routes/game';
 import integrationRoutes from './routes/integrations';
 import githubRoutes from './routes/github';
@@ -23,7 +24,7 @@ app.use(cors({
 app.use(express.json());
 
 // Better Auth handler - mount at /api/auth
-app.all('/api/auth/*', toNodeHandler(auth));
+app.all('/api/auth/*splat', toNodeHandler(auth));
 
 // Game state API - mount at /api/game
 app.use('/api/game', gameRoutes);
@@ -43,6 +44,34 @@ app.use('/api/missions', missionRoutes);
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'founder-mode-mastra' });
+});
+
+// Get available AI models from Mastra's provider registry
+app.get('/api/models', (_req, res) => {
+  try {
+    // Filter to just the main providers we want to support
+    const supportedProviders = ['openai', 'anthropic', 'google', 'groq'] as const;
+    
+    const models = supportedProviders
+      .filter(id => PROVIDER_REGISTRY[id])
+      .map(id => {
+        const provider = PROVIDER_REGISTRY[id];
+        return {
+          id,
+          name: provider.name,
+          models: provider.models,
+          apiKeyEnvVar: provider.apiKeyEnvVar,
+        };
+      });
+    
+    res.json({ providers: models });
+  } catch (error) {
+    console.error('Failed to fetch models:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch models',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 });
 
 // List available agents

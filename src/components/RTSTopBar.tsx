@@ -1,19 +1,23 @@
+/**
+ * Game Top Bar - Clean, minimal design
+ */
+
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { SavePanel } from './SavePanel';
-import { PMAdvisorBadge } from './PMAdvisor';
 import type { GameScreen } from '../types';
 import './RTSTopBar.css';
 
-// Format game time
 function formatGameTime(ticks: number): string {
   const days = Math.floor(ticks / 480);
-  const weeks = Math.floor(days / 7);
-  const remainingDays = days % 7;
-  if (weeks > 0) {
-    return `W${weeks + 1}D${remainingDays + 1}`;
-  }
   return `Day ${days + 1}`;
+}
+
+function formatMoney(amount: number): string {
+  if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `$${Math.floor(amount / 1000)}K`;
+  return `$${amount}`;
 }
 
 export function RTSTopBar() {
@@ -23,155 +27,110 @@ export function RTSTopBar() {
     screen,
     tick,
     money,
-    runway,
     employees,
     tasks,
-    taskQueue,
-    gameSpeed,
-    alerts,
-    focusMode,
+    isPaused,
     autopilot,
+    project,
     setScreen,
-    setGameSpeed,
     togglePause,
-    toggleFocusMode,
     toggleAutopilot,
   } = useGameStore();
 
-  const queueCount = taskQueue.items.filter(i => i.status === 'queued').length;
   const activeCount = tasks.filter(t => t.status === 'in_progress').length;
-  const idleCount = employees.filter(e => e.status === 'idle').length;
-  const unreadAlerts = alerts.filter(a => !a.dismissed).length;
-  const completedWithCode = tasks.filter(t => t.status === 'done' && t.codeGenerated).length;
+  const doneCount = tasks.filter(t => t.status === 'done').length;
+  const teamCount = employees.length;
 
-  const views: { id: GameScreen; label: string; icon: string; hotkey: string }[] = [
-    { id: 'rts', label: 'RTS', icon: '🏰', hotkey: 'R' },      // Isometric view (Civ/Warcraft)
-    { id: 'campus', label: 'Campus', icon: '🏢', hotkey: 'V' }, // Isometric campus (Phaser)
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', hotkey: 'D' },
-    { id: 'command', label: 'Command', icon: '🎮', hotkey: 'C' },
-    { id: 'queue', label: 'Queue', icon: '📥', hotkey: 'Q' },
-    { id: 'missions', label: 'Missions', icon: '🎯', hotkey: 'M' }, // Git worktrees
-    { id: 'artifacts', label: 'Artifacts', icon: '📦', hotkey: 'A' },
-    { id: 'preview', label: 'Preview', icon: '👁️', hotkey: 'P' }, // Live app preview
-    { id: 'tasks', label: 'Tasks', icon: '📋', hotkey: 'T' },
-    { id: 'team', label: 'Team', icon: '👥', hotkey: 'E' },
-    { id: 'hire', label: 'Hire', icon: '👋', hotkey: 'H' },
-    { id: 'tech', label: 'Tech', icon: '🔬', hotkey: 'U' },
-    { id: 'achievements', label: 'Trophies', icon: '🏆', hotkey: 'Y' },
+  // Core navigation items
+  const navItems: { id: GameScreen; label: string; hotkey: string }[] = [
+    { id: 'rts', label: 'Build', hotkey: 'B' },
+    { id: 'tasks', label: 'Tasks', hotkey: 'T' },
+    { id: 'team', label: 'Team', hotkey: 'E' },
+    { id: 'artifacts', label: 'Code', hotkey: 'A' },
+    { id: 'preview', label: 'Preview', hotkey: 'P' },
   ];
 
-  // Only show in game screens
-  const gameScreens: GameScreen[] = ['rts', 'campus', 'dashboard', 'command', 'queue', 'missions', 'preview', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements'];
+  const gameScreens: GameScreen[] = ['rts', 'campus', 'dashboard', 'command', 'queue', 'missions', 'preview', 'tasks', 'team', 'hire', 'office', 'code', 'settings', 'tech', 'achievements', 'artifacts'];
   if (!gameScreens.includes(screen)) return null;
 
   return (
-    <div className="rts-topbar">
-      {/* Left: Resources */}
-      <div className="topbar-section resources">
-        <div className="resource money" title="Cash on hand">
-          <span className="resource-icon">💰</span>
-          <span className="resource-value">${money.toLocaleString()}</span>
-        </div>
-        <div className="resource runway" title="Months of runway">
-          <span className="resource-icon">📅</span>
-          <span className="resource-value">{runway}mo</span>
-        </div>
-        <div className="resource time" title="Game time">
-          <span className="resource-icon">⏱️</span>
-          <span className="resource-value">{formatGameTime(tick)}</span>
-        </div>
-        <PMAdvisorBadge />
-      </div>
-
-      {/* Center: View Switcher */}
-      <div className="topbar-section views">
-        {views.map(view => (
-          <button
-            key={view.id}
-            className={`view-btn ${screen === view.id ? 'active' : ''}`}
-            onClick={() => setScreen(view.id)}
-            title={`${view.label} [${view.hotkey}]`}
-            data-tutorial={view.id}
-          >
-            <span className="view-icon">{view.icon}</span>
-            <span className="view-label">{view.label}</span>
-            {view.id === 'queue' && queueCount > 0 && (
-              <span className="view-badge">{queueCount}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Right: Status & Speed */}
-      <div className="topbar-section status">
-        <div className="mode-toggles">
-          <button
-            className={`mode-btn ${autopilot ? 'active' : ''}`}
-            onClick={toggleAutopilot}
-            title="Autopilot - AI works autonomously"
-          >
-            🤖 {autopilot ? 'AUTO' : 'Manual'}
-          </button>
-          <button
-            className={`mode-btn ${focusMode ? 'active' : ''}`}
-            onClick={toggleFocusMode}
-            title="Focus Mode - Hide distractions"
-          >
-            🎯 {focusMode ? 'Focus' : 'Normal'}
-          </button>
+    <header className="game-header">
+      <div className="game-header-inner">
+        {/* Left: Logo + Project */}
+        <div className="header-left">
+          <Link to="/projects" className="header-logo" title="Back to projects">
+            <span className="logo-icon">⌘</span>
+          </Link>
+          <div className="project-info">
+            <span className="project-name">{project?.name || 'Untitled'}</span>
+            <span className="project-day">{formatGameTime(tick)}</span>
+          </div>
         </div>
 
-        <div className="status-indicators">
-          <span className="indicator" title="Active tasks">
-            🔨 {activeCount}
-          </span>
-          <span className="indicator idle" title="Idle employees">
-            💤 {idleCount}
-          </span>
-          {unreadAlerts > 0 && !focusMode && (
-            <span className="indicator alert" title="Alerts">
-              ⚠️ {unreadAlerts}
-            </span>
-          )}
-        </div>
+        {/* Center: Navigation */}
+        <nav className="header-nav">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              className={`nav-item ${screen === item.id ? 'active' : ''}`}
+              onClick={() => setScreen(item.id)}
+              title={`${item.label} [${item.hotkey}]`}
+            >
+              {item.label}
+            </button>
+          ))}
+          <button
+            className={`nav-item ${screen === 'hire' ? 'active' : ''}`}
+            onClick={() => setScreen('hire')}
+            title="Hire [H]"
+          >
+            + Hire
+          </button>
+        </nav>
 
-        <button
-          className={`save-btn ${completedWithCode > 0 ? 'has-code' : ''}`}
-          onClick={() => setShowSavePanel(true)}
-          title="Save to GitHub"
-        >
-          💾 {completedWithCode > 0 && <span className="code-count">{completedWithCode}</span>}
-        </button>
+        {/* Right: Stats + Controls */}
+        <div className="header-right">
+          {/* Quick Stats */}
+          <div className="header-stats">
+            <div className="stat" title="Funding">
+              <span className="stat-value">{formatMoney(money)}</span>
+            </div>
+            <div className="stat" title="Team size">
+              <span className="stat-label">Team</span>
+              <span className="stat-value">{teamCount}</span>
+            </div>
+            <div className="stat" title="Active / Completed tasks">
+              <span className="stat-label">Tasks</span>
+              <span className="stat-value">{activeCount}/{doneCount}</span>
+            </div>
+          </div>
 
-        <div className="speed-controls">
-          <button
-            className={`speed-btn ${gameSpeed === 'paused' ? 'active paused' : ''}`}
-            onClick={togglePause}
-            title="Pause [Space]"
-          >
-            {gameSpeed === 'paused' ? '▶' : '⏸'}
-          </button>
-          <button
-            className={`speed-btn ${gameSpeed === 'normal' ? 'active' : ''}`}
-            onClick={() => setGameSpeed('normal')}
-            title="Normal [1]"
-          >
-            1×
-          </button>
-          <button
-            className={`speed-btn ${gameSpeed === 'fast' ? 'active' : ''}`}
-            onClick={() => setGameSpeed('fast')}
-            title="Fast [2]"
-          >
-            2×
-          </button>
-          <button
-            className={`speed-btn ${gameSpeed === 'turbo' ? 'active' : ''}`}
-            onClick={() => setGameSpeed('turbo')}
-            title="Turbo [3]"
-          >
-            3×
-          </button>
+          {/* Controls */}
+          <div className="header-controls">
+            <button
+              className={`control-btn ${autopilot ? 'active' : ''}`}
+              onClick={toggleAutopilot}
+              title="Autopilot mode"
+            >
+              {autopilot ? 'Auto' : 'Manual'}
+            </button>
+
+            <button
+              className={`control-btn ${isPaused ? 'paused' : ''}`}
+              onClick={togglePause}
+              title="Pause [Space]"
+            >
+              {isPaused ? '▶ Play' : '❚❚ Pause'}
+            </button>
+
+            <button
+              className="save-btn"
+              onClick={() => setShowSavePanel(true)}
+              title="Push to GitHub"
+            >
+              Push
+            </button>
+          </div>
         </div>
       </div>
 
@@ -179,7 +138,7 @@ export function RTSTopBar() {
         isOpen={showSavePanel}
         onClose={() => setShowSavePanel(false)}
       />
-    </div>
+    </header>
   );
 }
 

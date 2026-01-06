@@ -28,6 +28,7 @@ export function EventPanel() {
             className={`event-alert ${alert.type}`}
           >
             <div className="alert-header">
+              <span className="alert-icon">◈</span>
               <span className="alert-title">{alert.title}</span>
               {!hasChoices && (
                 <button 
@@ -50,7 +51,6 @@ export function EventPanel() {
                     onClick={() => makeEventChoice(event.id, choice.id)}
                   >
                     <span className="choice-label">{choice.label}</span>
-                    <span className="choice-desc">{choice.description}</span>
                     {choice.cost && (
                       <span className="choice-cost">-${choice.cost.toLocaleString()}</span>
                     )}

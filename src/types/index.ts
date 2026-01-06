@@ -1,135 +1,132 @@
-// ============================================
-// FOUNDER MODE - Core Type Definitions
-// ============================================
+import type { RallyPoint, MinimapEvent, Upgrade } from './rts';
+import type { Achievement } from './achievements';
+import type { ActiveEvent } from './events';
 
-// Re-export integration types
-export * from './integrations';
+// Type definitions for Founder Mode game
 
-// Re-export mission types (import first for use in this file)
-import type { 
-  Mission as MissionType,
-  MissionStatus as MissionStatusType,
-  MissionPriority as MissionPriorityType,
-  MissionCommit as MissionCommitType,
-  FileDiff as FileDiffType,
-  Epic as EpicType,
-  EpicStatus as EpicStatusType,
-  ProductPhase as ProductPhaseType,
-  PMThought as PMThoughtType,
-  ProductState as ProductStateType,
-  PMBrainState as PMBrainStateType,
-  PMProposal as PMProposalType,
-  ProposalType as ProposalTypeType,
-  ProposalStatus as ProposalStatusType,
-} from './missions';
+// AI Provider Types
+export type AIProvider = 'openai' | 'anthropic' | 'google' | 'groq';
 
-export type Mission = MissionType;
-export type MissionStatus = MissionStatusType;
-export type MissionPriority = MissionPriorityType;
-export type MissionCommit = MissionCommitType;
-export type FileDiff = FileDiffType;
-export type Epic = EpicType;
-export type EpicStatus = EpicStatusType;
-export type ProductPhase = ProductPhaseType;
-export type PMThought = PMThoughtType;
-export type ProductState = ProductStateType;
-export type PMBrainState = PMBrainStateType;
-export type PMProposal = PMProposalType;
-export type ProposalType = ProposalTypeType;
-export type ProposalStatus = ProposalStatusType;
-export { MISSION_TEMPLATES } from './missions';
-
-// Import and re-export achievement types
-import type { 
-  Achievement as AchievementType,
-  AchievementCategory as AchievementCategoryType,
-  AchievementTrigger as AchievementTriggerType,
-} from './achievements';
-export type Achievement = AchievementType;
-export type AchievementCategory = AchievementCategoryType;
-export type AchievementTrigger = AchievementTriggerType;
-export { DEFAULT_ACHIEVEMENTS, RARITY_COLORS } from './achievements';
-
-// Import and re-export event types (using StoryEvent to avoid conflict with legacy GameEvent)
-import type {
-  GameEvent as StoryEventDef,
-  EventCategory as EventCategoryType,
-  EventEffect as EventEffectType,
-  EventChoice as EventChoiceType,
-  ActiveEvent as ActiveEventType,
-} from './events';
-export type StoryEvent = StoryEventDef;
-export type EventCategory = EventCategoryType;
-export type EventEffect = EventEffectType;
-export type EventChoice = EventChoiceType;
-export type ActiveEvent = ActiveEventType;
-export { DEFAULT_EVENTS } from './events';
-
-// Import and re-export RTS types
-import type { 
-  ControlGroup as ControlGroupType, 
-  RallyPoint as RallyPointType, 
-  Upgrade as UpgradeType, 
-  UpgradeCategory as UpgradeCategoryType,
-  UpgradeEffect as UpgradeEffectType,
-  ProductionStats as ProductionStatsType,
-  GameAlert as GameAlertType,
-  RTSState as RTSStateType,
-  MinimapEvent as MinimapEventType,
-} from './rts';
-export type ControlGroup = ControlGroupType;
-export type RallyPoint = RallyPointType;
-export type Upgrade = UpgradeType;
-export type UpgradeCategory = UpgradeCategoryType;
-export type UpgradeEffect = UpgradeEffectType;
-export type ProductionStats = ProductionStatsType;
-export type GameAlert = GameAlertType;
-export type RTSState = RTSStateType;
-export type MinimapEvent = MinimapEventType;
-export { DEFAULT_UPGRADES } from './rts';
-
-// Task Queue for RTS-style continuous execution
-export interface TaskQueue {
-  items: QueuedTaskItem[];
-  autoAssignEnabled: boolean;
-  lastProcessedAt: number;
+// AI Model metadata
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: AIProvider;
+  contextWindow: number;
+  costPer1kInput: number;
+  costPer1kOutput: number;
+  capabilities: string[];
 }
 
-export interface QueuedTaskItem {
-  id: string;
-  taskId?: string; // If already created as a Task
-  externalId?: string;
-  source: 'github' | 'linear' | 'manual';
-  sourceUrl?: string;
+// Available AI models
+export const AI_MODELS: AIModel[] = [
+  // OpenAI
+  {
+    id: 'gpt-4o',
+    name: 'GPT-4o',
+    provider: 'openai',
+    contextWindow: 128000,
+    costPer1kInput: 0.005,
+    costPer1kOutput: 0.015,
+    capabilities: ['coding', 'reasoning', 'vision'],
+  },
+  {
+    id: 'gpt-4o-mini',
+    name: 'GPT-4o Mini',
+    provider: 'openai',
+    contextWindow: 128000,
+    costPer1kInput: 0.00015,
+    costPer1kOutput: 0.0006,
+    capabilities: ['coding', 'fast'],
+  },
+  {
+    id: 'gpt-4-turbo',
+    name: 'GPT-4 Turbo',
+    provider: 'openai',
+    contextWindow: 128000,
+    costPer1kInput: 0.01,
+    costPer1kOutput: 0.03,
+    capabilities: ['coding', 'reasoning'],
+  },
+  // Anthropic
+  {
+    id: 'claude-sonnet-4-20250514',
+    name: 'Claude Sonnet 4',
+    provider: 'anthropic',
+    contextWindow: 200000,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
+    capabilities: ['coding', 'reasoning', 'long-context'],
+  },
+  {
+    id: 'claude-3-5-sonnet-20241022',
+    name: 'Claude 3.5 Sonnet',
+    provider: 'anthropic',
+    contextWindow: 200000,
+    costPer1kInput: 0.003,
+    costPer1kOutput: 0.015,
+    capabilities: ['coding', 'reasoning', 'long-context'],
+  },
+  {
+    id: 'claude-3-5-haiku-20241022',
+    name: 'Claude 3.5 Haiku',
+    provider: 'anthropic',
+    contextWindow: 200000,
+    costPer1kInput: 0.001,
+    costPer1kOutput: 0.005,
+    capabilities: ['fast', 'coding'],
+  },
+  // Google
+  {
+    id: 'gemini-2.0-flash',
+    name: 'Gemini 2.0 Flash',
+    provider: 'google',
+    contextWindow: 1000000,
+    costPer1kInput: 0.0001,
+    costPer1kOutput: 0.0004,
+    capabilities: ['fast', 'coding', 'long-context'],
+  },
+  {
+    id: 'gemini-1.5-pro',
+    name: 'Gemini 1.5 Pro',
+    provider: 'google',
+    contextWindow: 2000000,
+    costPer1kInput: 0.00125,
+    costPer1kOutput: 0.005,
+    capabilities: ['reasoning', 'long-context', 'vision'],
+  },
+  // Groq
+  {
+    id: 'llama-3.3-70b-versatile',
+    name: 'Llama 3.3 70B',
+    provider: 'groq',
+    contextWindow: 128000,
+    costPer1kInput: 0.00059,
+    costPer1kOutput: 0.00079,
+    capabilities: ['fast', 'coding'],
+  },
+  {
+    id: 'mixtral-8x7b-32768',
+    name: 'Mixtral 8x7B',
+    provider: 'groq',
+    contextWindow: 32768,
+    costPer1kInput: 0.00024,
+    costPer1kOutput: 0.00024,
+    capabilities: ['fast'],
+  },
+];
+
+// Founder info
+export interface Founder {
+  name: string;
   title: string;
-  description: string;
-  type: 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  labels: string[];
-  queuePosition: number;
-  autoAssign: boolean;
-  preferredRole?: 'engineer' | 'designer' | 'pm' | 'marketer';
-  addedAt: number;
-  status: 'queued' | 'ready' | 'assigned' | 'completed';
+  avatarEmoji: string;
 }
 
-// RTS Activity Log Entry
-export interface ActivityLogEntry {
-  id: string;
-  tick: number;
-  timestamp: number;
-  message: string;
-  type: 'work' | 'hire' | 'task' | 'event' | 'money' | 'complete' | 'system' | 'project' | 'ai';
-  employeeId?: string;
-  taskId?: string;
-}
-
-// Employee Types
-export type EmployeeRole = 'engineer' | 'designer' | 'pm' | 'marketer';
+// Employee Types (simplified: 3 core roles)
+export type EmployeeRole = 'engineer' | 'designer' | 'pm';
 
 export type EmployeeStatus = 'idle' | 'working' | 'blocked' | 'on_break';
-
-export type EmployeeSkillLevel = 'junior' | 'mid' | 'senior' | 'lead';
 
 // Memory entry for agent recall
 export interface AgentMemory {
@@ -146,24 +143,39 @@ export interface Employee {
   id: string;
   name: string;
   role: EmployeeRole;
-  skillLevel: EmployeeSkillLevel;
   status: EmployeeStatus;
   avatarEmoji: string;
   salary: number; // Monthly salary
-  productivity: number; // 0-100
-  morale: number; // 0-100
   currentTaskId: string | null;
   hiredAt: number; // Game tick when hired
-  // AI Model configuration (null = use global default)
+  // AI Model configuration
   aiModel: string | null;
   aiProvider: AIProvider | null;
   // Agent memory - remembers past work
   memory: AgentMemory[];
   tasksCompleted: number;
+  totalTicksWorked: number; // Total ticks spent working on tasks
   specializations: string[]; // Areas they've worked on most
   // System prompt configuration
   systemPrompt: string; // Base archetype prompt for this employee
   customPrompt: string; // User-added instructions (appended to system prompt)
+}
+
+/**
+ * Calculate employee productivity based on actual work done.
+ * Returns 0-100 representing tasks completed per time unit.
+ * New employees start at 0 and build up as they complete tasks.
+ */
+export function calculateProductivity(employee: Employee): number {
+  if (employee.tasksCompleted === 0) return 0;
+  if (employee.totalTicksWorked === 0) return 0;
+  
+  // Base calculation: tasks per 1000 ticks, scaled to 0-100
+  // Assuming ~100 ticks per task is "average", so 10 tasks per 1000 ticks = 100%
+  const tasksPerThousandTicks = (employee.tasksCompleted / employee.totalTicksWorked) * 1000;
+  const productivity = Math.min(100, Math.round(tasksPerThousandTicks * 10));
+  
+  return productivity;
 }
 
 // Task Types
@@ -171,7 +183,7 @@ export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export type TaskType = 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
+export type TaskType = 'feature' | 'bug' | 'design' | 'infrastructure';
 
 // AI-generated artifacts from task work
 export interface TaskArtifact {
@@ -229,380 +241,294 @@ export interface Project {
 
 // Game State
 export type GameScreen = 
-  | 'landing'      // Landing page for new users
-  | 'auth'         // Login/signup
-  | 'start' 
-  | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
-  | 'campus'       // Isometric campus view (Phaser 3) - Visual startup HQ
-  | 'dashboard'    // Clean split-view
-  | 'command'      // TUI-style command center
-  | 'queue'        // Task queue / import view
-  | 'missions'     // PM missions (git worktrees)
-  | 'artifacts'    // AI-generated code/content viewer
-  | 'preview'      // Live code preview - see your app running!
-  | 'tech'         // Tech tree / upgrades
-  | 'achievements' // Trophy room
+  | 'title' 
+  | 'onboarding'   // Initial project setup
   | 'office' 
-  | 'team' 
   | 'hire' 
+  | 'team' 
   | 'tasks' 
-  | 'code' 
-  | 'git' 
-  | 'settings';
+  | 'inbox' 
+  | 'settings'
+  | 'artifacts'    // View generated code/content
+  | 'work'         // Watch AI work in real-time
+  | 'git'          // Git history view
+  | 'mission-control';  // Mission management
 
-export type GameSpeed = 'paused' | 'normal' | 'fast' | 'turbo';
+export type GameSpeed = 'paused' | 'normal' | 'fast' | 'ultra';
 
-export interface GameStats {
-  totalRevenue: number;
-  totalExpenses: number;
-  tasksCompleted: number;
-  linesOfCodeGenerated: number;
-  commitsCreated: number;
-  featuresShipped: number;
-}
-
-// AI Model Configuration
-export type AIProvider = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama';
-
-export interface AIModel {
-  id: string;
-  name: string;
-  provider: AIProvider;
-  contextWindow: number;
-  costPer1kTokens: number; // in cents
-  capabilities: ('code' | 'design' | 'marketing' | 'pm' | 'fast' | 'vision')[];
-  description: string;
-}
-
-export const AI_MODELS: AIModel[] = [
-  // OpenAI Models
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.5, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Most capable, best for complex tasks' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.015, capabilities: ['code', 'design', 'marketing', 'pm', 'fast'], description: 'Fast and cheap, good for most tasks' },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', contextWindow: 128000, costPer1kTokens: 1.0, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Previous flagship, still very capable' },
-  { id: 'o1-preview', name: 'o1 Preview', provider: 'openai', contextWindow: 128000, costPer1kTokens: 1.5, capabilities: ['code', 'pm'], description: 'Advanced reasoning for complex problems' },
-  { id: 'o1-mini', name: 'o1 Mini', provider: 'openai', contextWindow: 128000, costPer1kTokens: 0.3, capabilities: ['code', 'fast'], description: 'Fast reasoning model' },
-  
-  // Anthropic Models
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.3, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Excellent for coding and analysis' },
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.3, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Great balance of speed and capability' },
-  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 0.025, capabilities: ['code', 'fast'], description: 'Fastest Claude, great for simple tasks' },
-  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'anthropic', contextWindow: 200000, costPer1kTokens: 1.5, capabilities: ['code', 'design', 'marketing', 'pm'], description: 'Most capable Claude for complex tasks' },
-  
-  // Google Models
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google', contextWindow: 1000000, costPer1kTokens: 0.01, capabilities: ['code', 'design', 'marketing', 'pm', 'fast', 'vision'], description: 'Fast multimodal with huge context' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'google', contextWindow: 2000000, costPer1kTokens: 0.125, capabilities: ['code', 'design', 'marketing', 'pm', 'vision'], description: 'Massive 2M context window' },
-  
-  // Groq Models (Fast inference)
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', provider: 'groq', contextWindow: 128000, costPer1kTokens: 0.059, capabilities: ['code', 'marketing', 'fast'], description: 'Fast open-source model via Groq' },
-  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', provider: 'groq', contextWindow: 32768, costPer1kTokens: 0.024, capabilities: ['code', 'fast'], description: 'Very fast mixture of experts' },
-  
-  // Local Models (Ollama)
-  { id: 'llama3.2', name: 'Llama 3.2 (Local)', provider: 'ollama', contextWindow: 128000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Run locally with Ollama - FREE' },
-  { id: 'codellama', name: 'Code Llama (Local)', provider: 'ollama', contextWindow: 16000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Specialized for code - FREE' },
-  { id: 'deepseek-coder', name: 'DeepSeek Coder (Local)', provider: 'ollama', contextWindow: 16000, costPer1kTokens: 0, capabilities: ['code', 'fast'], description: 'Great for coding - FREE' },
-];
-
-export interface AISettings {
-  enabled: boolean;
-  apiKey: string | null;
-  provider: AIProvider;
-  model: string; // Global default model
-  // Provider-specific API keys
-  providerKeys: {
-    openai?: string;
-    anthropic?: string;
-    google?: string;
-    groq?: string;
-    ollamaUrl?: string; // e.g., http://localhost:11434
-  };
-}
-
-export interface GameState {
-  // Meta
-  screen: GameScreen;
-  gameSpeed: GameSpeed;
-  tick: number; // Game time unit
-  startedAt: Date;
-  
-  // Resources
-  money: number;
-  runway: number; // Months of runway left
-  
-  // Entities
-  project: Project | null;
-  employees: Employee[];
-  tasks: Task[];
-  
-  // Stats
-  stats: GameStats;
-  
-  // AI Settings
-  aiSettings: AISettings;
-  
-  // UI State
-  selectedEmployeeId: string | null;
-  selectedTaskId: string | null;
-  notifications: GameNotification[];
-  
-  // RTS State
-  activityLog: ActivityLogEntry[];
-  selectedEmployeeIds: string[]; // Multi-select for RTS
-  isPaused: boolean;
-  showCommandPalette: boolean;
-  
-  // Task Queue
-  taskQueue: TaskQueue;
-  integrations: {
-    github: {
-      enabled: boolean;
-      repo: string | null;
-    };
-    linear: {
-      enabled: boolean;
-      teamId: string | null;
-    };
-  };
-  
-  // RTS Features
-  controlGroups: ControlGroup[];
-  rallyPoints: RallyPoint[];
-  upgrades: Upgrade[];
-  alerts: GameAlert[];
-  minimapActivity: MinimapEvent[];
-  
-  // Achievements & Events
-  achievements: Achievement[];
-  activeEvents: ActiveEvent[];
-  totalPlayTime: number; // in seconds
-  sessionStartTime: number;
-  
-  // Focus & Autopilot
-  focusMode: boolean; // Hide distractions, auto-dismiss events
-  autopilot: boolean; // Full autonomous operation
-  eventsEnabled: boolean; // Toggle random events
-  
-  // Missions (PM-created feature branches)
-  missions: Mission[];
-  activeMissionId: string | null;
-  
-  // PM Brain (continuous product thinking)
-  pmBrain: PMBrainState;
-  
-  // AI Work Queue (tasks pending AI execution)
-  aiWorkQueue: AIWorkItem[];
-  aiWorkInProgress: string | null; // Task ID currently being processed
-  
-  // Git Repository (real-time code tracking)
-  gitRepo: GitRepo | null;
-  gitHubConnection: GitHubConnection;
-}
-
-// Git Types (virtual git repo that tracks all code)
-export interface GitCommit {
-  id: string;
-  hash: string;
+// Activity Log for seeing what happened
+export interface ActivityLogEntry {
+  tick: number;
   message: string;
-  author: string;
-  authorAvatar: string;
-  timestamp: number;
-  files: GitFile[];
-  branch: string;
+  type: 'hire' | 'fire' | 'task' | 'task_complete' | 'money' | 'idea' | 'system' | 'ai' | 'git';
+  employeeId?: string;
   taskId?: string;
-  artifactId?: string;
 }
 
-export interface GitFile {
-  path: string;
-  content: string;
-  language: string;
-  action: 'added' | 'modified' | 'deleted';
-  additions: number;
-  deletions: number;
+// AI Settings
+export interface AISettings {
+  apiKey: string | null;
+  providerKeys: Partial<Record<AIProvider, string>>;
+  provider: AIProvider;
+  model: string;
+  enabled: boolean;
 }
 
-export interface GitBranch {
-  name: string;
-  isDefault: boolean;
-  commits: number;
-  lastCommit: GitCommit | null;
-  missionId?: string;
-}
-
-export interface GitRepo {
-  name: string;
-  description: string;
-  defaultBranch: string;
-  branches: GitBranch[];
-  commits: GitCommit[];
-  files: Map<string, string>;
-  remoteUrl: string | null;
-  isConnected: boolean;
-  stats: {
-    totalCommits: number;
-    totalFiles: number;
-    totalLines: number;
-    contributors: string[];
-  };
-}
-
-export interface GitHubConnection {
-  connected: boolean;
-  username: string | null;
-  repoName: string | null;
-  repoUrl: string | null;
-  lastPush: number | null;
-}
-
-export interface AIWorkItem {
-  id: string;
-  taskId: string;
-  employeeId: string;
-  priority: number; // Lower = higher priority
-  addedAt: number;
-  status: 'queued' | 'in_progress' | 'completed' | 'failed';
-  retries: number;
-}
-
+// Notification
 export interface GameNotification {
   id: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
   timestamp: number;
-  read: boolean;
 }
 
-// Random Events
-export type GameEventType = 
-  | 'morale_boost'
-  | 'morale_drop'
-  | 'productivity_boost'
-  | 'investor_interest'
-  | 'bug_discovered'
-  | 'team_lunch'
-  | 'coffee_machine_broken'
-  | 'competitor_launch'
-  | 'viral_moment'
-  | 'server_outage';
+// Game Statistics
+export interface GameStats {
+  tasksCompleted: number;
+  moneyEarned: number;
+  moneySpent: number;
+  employeesHired: number;
+  employeesFired: number;
+  linesOfCodeGenerated: number;
+  commitsCreated: number;
+}
 
-export interface GameEvent {
+// Task Queue - for backlog management
+export interface QueuedTaskItem {
   id: string;
-  type: GameEventType;
   title: string;
   description: string;
-  effect: () => void;
+  type: TaskType;
+  priority: TaskPriority;
+  estimatedTicks: number;
+  source: 'manual' | 'github' | 'linear' | 'ai';
+  sourceId?: string; // Original issue number/ID
+  queuePosition: number;
+  addedAt: number;
+  status: 'queued' | 'converting' | 'converted';
 }
 
-export const EVENT_DEFINITIONS: Omit<GameEvent, 'id' | 'effect'>[] = [
-  {
-    type: 'morale_boost',
-    title: '🎉 Team Celebration!',
-    description: 'The team had a great week! Morale increased for everyone.',
-  },
-  {
-    type: 'morale_drop',
-    title: '😔 Tough Week',
-    description: 'Long hours are taking a toll. Team morale decreased.',
-  },
-  {
-    type: 'productivity_boost',
-    title: '☕ Coffee Upgrade',
-    description: 'New espresso machine installed! Productivity boost for all.',
-  },
-  {
-    type: 'investor_interest',
-    title: '💰 Investor Interest',
-    description: 'A VC noticed your progress! Bonus funding received.',
-  },
-  {
-    type: 'bug_discovered',
-    title: '🐛 Critical Bug Found',
-    description: 'QA found a major bug. A new urgent task has been created.',
-  },
-  {
-    type: 'team_lunch',
-    title: '🍕 Team Lunch',
-    description: 'Pizza Friday! Team bonding improves morale.',
-  },
-  {
-    type: 'coffee_machine_broken',
-    title: '☕ Coffee Machine Broken',
-    description: 'The coffee machine is down! Productivity takes a small hit.',
-  },
-  {
-    type: 'competitor_launch',
-    title: '🚀 Competitor Launched',
-    description: 'A competitor shipped a similar feature. Time to move faster!',
-  },
-  {
-    type: 'viral_moment',
-    title: '📈 Viral Moment',
-    description: 'Your product got featured on social media! Excitement is high.',
-  },
-  {
-    type: 'server_outage',
-    title: '🔥 Server Issues',
-    description: 'Cloud provider having issues. Infrastructure task created.',
-  },
-];
+// Mission Types - for strategic goals
+export type MissionStatus = 'draft' | 'active' | 'blocked' | 'completed' | 'abandoned';
+export type MissionPriority = 'low' | 'medium' | 'high' | 'critical';
 
-// Actions
+export interface MissionCommit {
+  id: string;
+  hash: string;
+  message: string;
+  artifactId: string;
+  taskId: string;
+  createdAt: number;
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  status: MissionStatus;
+  priority: MissionPriority;
+  taskIds: string[];        // Tasks that belong to this mission
+  commits: MissionCommit[]; // Commits made for this mission
+  branchName: string | null; // Git branch for this mission
+  prUrl: string | null;     // GitHub PR URL
+  prNumber: number | null;  // GitHub PR number
+  createdAt: number;
+  startedAt: number | null;
+  completedAt: number | null;
+}
+
+// Epic Types - for long-term product phases
+export type EpicStatus = 'planning' | 'active' | 'completed' | 'on_hold';
+
+export interface Epic {
+  id: string;
+  name: string;
+  description: string;
+  phase: ProductPhase;
+  status: EpicStatus;
+  missionIds: string[];
+  createdAt: number;
+  targetCompletionTick: number | null;
+}
+
+// Product Phase - lifecycle stages
+export type ProductPhase = 'mvp' | 'beta' | 'launch' | 'growth' | 'scale';
+
+// PM Brain Types
+export interface PMThought {
+  id: string;
+  type: 'observation' | 'recommendation' | 'concern' | 'celebration';
+  content: string;
+  confidence: number; // 0-1
+  timestamp: number;
+  relatedTaskIds?: string[];
+  relatedMissionIds?: string[];
+}
+
+export interface PMBrainState {
+  enabled: boolean;
+  lastEvaluation: number | null;
+  evaluationInterval: number; // ticks between evaluations
+  currentFocus: string | null;
+  recentThoughts: PMThought[];
+}
+
+// PM Proposal - for human-in-the-loop decisions
+export interface PMProposal {
+  id: string;
+  type: 'new_mission' | 'priority_change' | 'task_suggestion' | 'concern';
+  title: string;
+  description: string;
+  confidence: number;
+  status: 'pending' | 'approved' | 'rejected' | 'dismissed';
+  createdAt: number;
+  payload: {
+    missionId?: string;
+    taskId?: string;
+    suggestedPriority?: MissionPriority;
+    suggestedTasks?: Array<{
+      title: string;
+      type: TaskType;
+      estimatedTicks: number;
+    }>;
+  };
+}
+
+// AI Work Queue - for real-time AI task tracking
+export interface AIWorkItem {
+  id: string;
+  taskId: string;
+  employeeId: string;
+  status: 'queued' | 'working' | 'completed' | 'failed';
+  startedAt: number | null;
+  completedAt: number | null;
+  error?: string;
+}
+
+// Git Repository (in-memory representation)
+export interface GitCommit {
+  hash: string;
+  message: string;
+  author: string;
+  timestamp: number;
+  files: string[];
+  taskId?: string;
+  artifactId?: string;
+}
+
+export interface GitBranch {
+  name: string;
+  headCommit: string;
+  missionId?: string;
+  createdAt: number;
+}
+
+export interface GitRepo {
+  initialized: boolean;
+  branches: GitBranch[];
+  commits: GitCommit[];
+  currentBranch: string;
+  // GitHub integration
+  remoteUrl: string | null;
+  githubToken: string | null;
+  lastPush: number | null;
+}
+
+// Main Game State
+export interface GameState {
+  // Core state
+  founder: Founder | null;
+  project: Project | null;
+  employees: Employee[];
+  tasks: Task[];
+  money: number;
+  tick: number;
+  
+  // UI State
+  screen: GameScreen;
+  speed: GameSpeed;
+  selectedEmployeeId: string | null;
+  selectedTaskId: string | null;
+  selectedMissionId: string | null;
+  
+  // Activity
+  activityLog: ActivityLogEntry[];
+  notifications: GameNotification[];
+  stats: GameStats;
+  
+  // AI Integration
+  aiSettings: AISettings;
+  aiWorkQueue: AIWorkItem[];
+  
+  // Task Queue
+  taskQueue: QueuedTaskItem[];
+  autoAssign: boolean;
+  
+  // Missions & Epics
+  missions: Mission[];
+  activeMissionId: string | null;
+  epics: Epic[];
+  
+  // PM Brain
+  pmBrain: PMBrainState;
+  pmProposals: PMProposal[];
+  
+  // Git
+  gitRepo: GitRepo | null;
+  
+  // RTS Features
+  controlGroups: Record<number, string[]>;
+  rallyPoints: RallyPoint[];
+  upgrades: Upgrade[];
+  minimapEvents: MinimapEvent[];
+  
+  // Achievements & Events
+  achievements: Achievement[];
+  activeEvents: ActiveEvent[];
+  eventHistory: string[];
+}
+
+// Game Actions
 export interface GameActions {
+  // Initialization
+  initializeGame: (founder: Founder, project: Project) => void;
+  resetGame: () => void;
+  importState: (state: Partial<GameState>) => void;
+  
   // Navigation
   setScreen: (screen: GameScreen) => void;
   
-  // Game Control
-  setGameSpeed: (speed: GameSpeed) => void;
-  gameTick: () => void;
-  togglePause: () => void;
+  // Time Management
+  setSpeed: (speed: GameSpeed) => void;
+  tick: () => void;
   
-  // Project
-  startProject: (idea: string) => void;
-  
-  // Team
-  hireEmployee: (role: EmployeeRole, skillLevel: EmployeeSkillLevel) => void;
+  // Employee Management
+  hireEmployee: (role: EmployeeRole, provider: AIProvider, model: string) => void;
   fireEmployee: (id: string) => void;
-  
-  // Tasks
-  createTask: (task: Omit<Task, 'id' | 'createdAt' | 'progressTicks' | 'completedAt' | 'codeGenerated' | 'filesCreated' | 'artifacts' | 'aiWorkStarted' | 'aiWorkCompleted'>) => void;
-  assignTask: (taskId: string, employeeId: string) => void;
-  unassignTask: (taskId: string) => void;
-  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
-  
-  // Selection (RTS-style)
   selectEmployee: (id: string | null) => void;
-  selectEmployees: (ids: string[]) => void;
-  addToSelection: (id: string) => void;
+  updateEmployeePrompt: (employeeId: string, systemPrompt?: string, customPrompt?: string) => void;
+  
+  // Task Management
+  createTask: (task: Omit<Task, 'id' | 'createdAt' | 'completedAt' | 'progressTicks' | 'codeGenerated' | 'filesCreated' | 'artifacts' | 'aiWorkStarted' | 'aiWorkCompleted'>) => void;
+  assignTask: (taskId: string, employeeId: string) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
   selectTask: (id: string | null) => void;
-  clearSelection: () => void;
-  selectAllIdle: () => void;
+  deleteTask: (taskId: string) => void;
   
-  // Quick Commands (RTS hotkeys)
-  quickAssignToTask: (taskId: string) => void;
-  quickHire: (role: EmployeeRole) => void;
-  boostMorale: () => void;
+  // Money
+  addMoney: (amount: number) => void;
+  spendMoney: (amount: number) => boolean;
   
-  // Notifications
-  addNotification: (message: string, type: GameNotification['type']) => void;
+  // Notifications & Logging
+  addNotification: (message: string, type: 'info' | 'success' | 'warning' | 'error') => void;
   dismissNotification: (id: string) => void;
+  logActivity: (entry: Omit<ActivityLogEntry, 'tick'> & { tick?: number }) => void;
   
-  // Activity Log
-  logActivity: (entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>) => void;
-  
-  // Command Palette
-  toggleCommandPalette: () => void;
-  
-  // Events
-  triggerRandomEvent: () => void;
-  
-  // PM Actions
-  pmGenerateTask: () => void;
-  
-  // AI
+  // AI Configuration
   configureAI: (apiKey: string, provider?: AIProvider) => void;
   configureProviderKey: (provider: AIProvider, apiKey: string) => void;
   setGlobalModel: (modelId: string) => void;
   setEmployeeModel: (employeeId: string, modelId: string | null, provider?: AIProvider | null) => void;
-  updateEmployeePrompt: (employeeId: string, systemPrompt?: string, customPrompt?: string) => void;
   disableAI: () => void;
   aiWorkOnTask: (taskId: string) => Promise<void>;
   
@@ -639,20 +565,11 @@ export interface GameActions {
   checkAchievements: () => void;
   triggerEvent: (eventId?: string) => void;
   makeEventChoice: (eventId: string, choiceId: string) => void;
-  updatePlayTime: () => void;
-  applyEventEffect: (effect: { type: string; value: number; target?: string; duration?: number }) => void;
   
-  // Focus & Autopilot
-  toggleFocusMode: () => void;
-  toggleAutopilot: () => void;
-  toggleEvents: () => void;
-  runAutopilot: () => void; // Called each tick in autopilot mode
-  
-  // Missions (PM-created feature branches as git worktrees)
-  createMission: (name: string, description: string, priority: MissionPriority) => string;
-  createMissionWithTasks: (
-    name: string, 
-    description: string, 
+  // Missions
+  createMission: (
+    title: string,
+    description: string,
     priority: MissionPriority,
     tasks: Array<{ title: string; type: TaskType; estimatedTicks: number }>
   ) => string;
@@ -689,13 +606,12 @@ export interface GameActions {
   disconnectGitHub: () => void;
 }
 
-// Employee Templates for Hiring
+// Employee Templates for Hiring (simplified: 3 roles, flat salaries)
 export interface EmployeeTemplate {
   role: EmployeeRole;
-  skillLevel: EmployeeSkillLevel;
   baseSalary: number;
-  emoji: string;
   title: string;
+  description: string;
   systemPrompt: string;
 }
 
@@ -751,65 +667,35 @@ Your responsibilities:
 When creating tasks, respond with a JSON array of tasks. Each task should have:
 - title: A clear, actionable title (start with a verb)
 - description: Brief context
-- type: One of "feature", "bug", "design", "marketing", "infrastructure"
+- type: One of "feature", "bug", "design", "infrastructure"
 - priority: One of "low", "medium", "high", "critical"
 - estimatedHours: A number
 
 Respond ONLY with the JSON array, no other text.`,
-
-  marketer: `You are a growth marketer at a startup. You craft compelling messages that resonate with users.
-
-Your responsibilities:
-- Write persuasive landing page copy
-- Create engaging social media content
-- Understand the target audience deeply
-
-Your writing principles:
-1. Lead with benefits, not features
-2. Be clear and concise
-3. Create urgency without being pushy
-4. Tell stories that connect emotionally
-5. Always include a clear call to action
-
-Respond with marketing copy including:
-- A compelling headline
-- Supporting subheadline
-- Body copy (2-3 paragraphs)
-- Call to action`,
 };
-
-// Skill level modifiers that get prepended to the base prompt
-export const SKILL_LEVEL_PROMPTS: Record<EmployeeSkillLevel, string> = {
-  junior: `You are early in your career, eager to learn and grow. You may ask clarifying questions and prefer straightforward tasks. You focus on getting things done correctly, even if it takes a bit longer.`,
-  
-  mid: `You are an experienced professional with solid fundamentals. You work independently and deliver consistent quality. You balance speed with quality and can handle moderately complex tasks.`,
-  
-  senior: `You are a highly experienced professional with deep expertise. You mentor others, anticipate problems before they occur, and make architectural decisions. You optimize for long-term maintainability and write exemplary code/work.`,
-  
-  lead: `You are a technical leader who sets the direction for the team. You think strategically about how work fits into the bigger picture, establish best practices, and ensure quality across the team. You balance immediate needs with long-term vision.`,
-};
-
-// Helper to generate full system prompt for a template
-export function generateEmployeeSystemPrompt(role: EmployeeRole, skillLevel: EmployeeSkillLevel): string {
-  const skillModifier = SKILL_LEVEL_PROMPTS[skillLevel];
-  const basePrompt = ROLE_BASE_PROMPTS[role];
-  return `${skillModifier}\n\n${basePrompt}`;
-}
 
 export const EMPLOYEE_TEMPLATES: EmployeeTemplate[] = [
-  { role: 'engineer', skillLevel: 'junior', baseSalary: 5000, emoji: '👨‍💻', title: 'Junior Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'junior') },
-  { role: 'engineer', skillLevel: 'mid', baseSalary: 8000, emoji: '👩‍💻', title: 'Software Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'mid') },
-  { role: 'engineer', skillLevel: 'senior', baseSalary: 12000, emoji: '🧑‍💻', title: 'Senior Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'senior') },
-  { role: 'engineer', skillLevel: 'lead', baseSalary: 15000, emoji: '👨‍🔬', title: 'Lead Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'lead') },
-  { role: 'designer', skillLevel: 'junior', baseSalary: 4000, emoji: '🎨', title: 'Junior Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'junior') },
-  { role: 'designer', skillLevel: 'mid', baseSalary: 6000, emoji: '🎨', title: 'Product Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'mid') },
-  { role: 'designer', skillLevel: 'senior', baseSalary: 9000, emoji: '🎨', title: 'Senior Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'senior') },
-  { role: 'pm', skillLevel: 'junior', baseSalary: 5000, emoji: '📊', title: 'Associate PM', systemPrompt: generateEmployeeSystemPrompt('pm', 'junior') },
-  { role: 'pm', skillLevel: 'mid', baseSalary: 7000, emoji: '📊', title: 'Product Manager', systemPrompt: generateEmployeeSystemPrompt('pm', 'mid') },
-  { role: 'pm', skillLevel: 'senior', baseSalary: 11000, emoji: '📊', title: 'Senior PM', systemPrompt: generateEmployeeSystemPrompt('pm', 'senior') },
-  { role: 'marketer', skillLevel: 'junior', baseSalary: 3500, emoji: '📢', title: 'Marketing Associate', systemPrompt: generateEmployeeSystemPrompt('marketer', 'junior') },
-  { role: 'marketer', skillLevel: 'mid', baseSalary: 5000, emoji: '📢', title: 'Growth Marketer', systemPrompt: generateEmployeeSystemPrompt('marketer', 'mid') },
-  { role: 'marketer', skillLevel: 'senior', baseSalary: 8000, emoji: '📢', title: 'Head of Marketing', systemPrompt: generateEmployeeSystemPrompt('marketer', 'senior') },
+  { 
+    role: 'pm', 
+    baseSalary: 8000, 
+    title: 'Product Manager',
+    description: 'Breaks down your idea into actionable tasks and manages priorities.',
+    systemPrompt: ROLE_BASE_PROMPTS.pm,
+  },
+  { 
+    role: 'designer', 
+    baseSalary: 7000, 
+    title: 'Designer',
+    description: 'Creates UI/UX designs and generates CSS for your product.',
+    systemPrompt: ROLE_BASE_PROMPTS.designer,
+  },
+  { 
+    role: 'engineer', 
+    baseSalary: 10000, 
+    title: 'Engineer',
+    description: 'Writes code, implements features, and fixes bugs.',
+    systemPrompt: ROLE_BASE_PROMPTS.engineer,
+  },
 ];
 
 // Name generator data

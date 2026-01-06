@@ -2,6 +2,7 @@
 export { LandingPage } from './LandingPage';
 export { AuthScreen } from './AuthScreen';
 export { StartScreen } from './StartScreen';
+export { ProjectsScreen } from './ProjectsScreen';
 export { RTSView } from './RTSView';          // Isometric RTS view - Civ/Warcraft style
 export { CampusScreen } from './CampusScreen'; // Isometric campus view - Phaser 3
 export { DashboardScreen } from './DashboardScreen';

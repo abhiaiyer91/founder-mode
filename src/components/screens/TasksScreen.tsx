@@ -1,9 +1,26 @@
+/**
+ * Tasks Screen - Clean Kanban board
+ */
+
 import { useState } from 'react';
-import { Terminal, Box, Input, Menu, ProgressBar } from '../tui';
-import type { MenuItem } from '../tui';
 import { useGameStore } from '../../store/gameStore';
 import type { Task, TaskStatus, TaskType, TaskPriority } from '../../types';
 import './TasksScreen.css';
+
+const typeIcons: Record<TaskType, string> = {
+  feature: '◇',
+  bug: '◈',
+  design: '○',
+  marketing: '◎',
+  infrastructure: '◆',
+};
+
+const priorityColors: Record<TaskPriority, string> = {
+  low: '#22c55e',
+  medium: '#f59e0b',
+  high: '#ef4444',
+  critical: '#dc2626',
+};
 
 function TaskCard({ 
   task, 
@@ -22,64 +39,42 @@ function TaskCard({
     state.employees.find(e => e.id === task.assigneeId)
   );
 
-  const priorityColors = {
-    low: 'var(--text-muted)',
-    medium: 'var(--color-accent)',
-    high: 'var(--color-warning)',
-    critical: 'var(--color-error)',
-  };
-
-  const typeIcons = {
-    feature: '✨',
-    bug: '🐛',
-    design: '🎨',
-    marketing: '📢',
-    infrastructure: '🔧',
-  };
+  const progress = Math.round((task.progressTicks / task.estimatedTicks) * 100);
 
   return (
-    <div className="task-card">
+    <div className="task-item">
       <div className="task-header">
         <span className="task-type">{typeIcons[task.type]}</span>
-        <span className="task-title">{task.title}</span>
         <span 
-          className="task-priority"
-          style={{ color: priorityColors[task.priority] }}
-        >
-          [{task.priority.toUpperCase()}]
-        </span>
+          className="task-priority-dot" 
+          style={{ background: priorityColors[task.priority] }}
+          title={task.priority}
+        />
       </div>
       
-      {task.description && (
-        <p className="task-description">{task.description}</p>
+      <h4 className="task-title">{task.title}</h4>
+      
+      {task.status === 'in_progress' && (
+        <div className="task-progress">
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="progress-text">{progress}%</span>
+        </div>
       )}
 
-      <div className="task-meta">
-        {task.status === 'in_progress' && (
-          <ProgressBar
-            value={task.progressTicks}
-            max={task.estimatedTicks}
-            width={10}
-            showLabel
-            variant="accent"
-            animated
-          />
-        )}
-        
+      <div className="task-footer">
         {assignee ? (
-          <div className="task-assignee-row">
-            <div className="task-assignee">
-              {assignee.avatarEmoji} {assignee.name}
-            </div>
-            {aiEnabled && task.status === 'in_progress' && (
-              <button className="ai-boost-button" onClick={onAIBoost}>
-                🤖 AI Boost
-              </button>
-            )}
-          </div>
-        ) : task.status !== 'done' && (
-          <button className="assign-button" onClick={onAssign}>
-            Assign →
+          <span className="task-assignee">{assignee.name.split(' ')[0]}</span>
+        ) : task.status !== 'done' ? (
+          <button className="assign-btn" onClick={onAssign}>
+            Assign
+          </button>
+        ) : null}
+        
+        {aiEnabled && task.status === 'in_progress' && (
+          <button className="boost-btn" onClick={onAIBoost}>
+            Boost
           </button>
         )}
       </div>
@@ -87,16 +82,16 @@ function TaskCard({
       {task.status === 'review' && (
         <div className="task-actions">
           <button 
-            className="action-button approve"
+            className="approve-btn"
             onClick={() => onUpdateStatus('done')}
           >
-            ✓ Approve
+            Approve
           </button>
           <button 
-            className="action-button reject"
+            className="reject-btn"
             onClick={() => onUpdateStatus('in_progress')}
           >
-            ✗ Request Changes
+            Reject
           </button>
         </div>
       )}
@@ -108,7 +103,6 @@ export function TasksScreen() {
   const { 
     tasks, 
     employees, 
-    setScreen, 
     createTask, 
     assignTask,
     updateTaskStatus,
@@ -127,11 +121,11 @@ export function TasksScreen() {
   };
 
   const columns: { status: TaskStatus; title: string }[] = [
-    { status: 'backlog', title: '📥 BACKLOG' },
-    { status: 'todo', title: '📋 TODO' },
-    { status: 'in_progress', title: '🔨 IN PROGRESS' },
-    { status: 'review', title: '👀 REVIEW' },
-    { status: 'done', title: '✅ DONE' },
+    { status: 'backlog', title: 'Backlog' },
+    { status: 'todo', title: 'To Do' },
+    { status: 'in_progress', title: 'In Progress' },
+    { status: 'review', title: 'Review' },
+    { status: 'done', title: 'Done' },
   ];
 
   const handleCreateTask = () => {
@@ -143,7 +137,7 @@ export function TasksScreen() {
         priority: newTaskPriority,
         status: 'backlog',
         assigneeId: null,
-        estimatedTicks: 100, // Default estimate
+        estimatedTicks: 100,
       });
       setNewTaskTitle('');
       setShowNewTask(false);
@@ -157,139 +151,146 @@ export function TasksScreen() {
 
   const availableEmployees = employees.filter(e => e.status === 'idle');
 
-  const typeOptions: MenuItem[] = [
-    { id: 'feature', label: '✨ Feature', shortcut: 'F' },
-    { id: 'bug', label: '🐛 Bug Fix', shortcut: 'B' },
-    { id: 'design', label: '🎨 Design', shortcut: 'D' },
-    { id: 'infrastructure', label: '🔧 Infra', shortcut: 'I' },
-  ];
-
-  const priorityOptions: MenuItem[] = [
-    { id: 'low', label: 'Low' },
-    { id: 'medium', label: 'Medium' },
-    { id: 'high', label: 'High' },
-    { id: 'critical', label: 'Critical' },
-  ];
-
   return (
     <div className="tasks-screen">
-      <Terminal title="TASK BOARD">
-        <div className="tasks-layout">
-          <div className="tasks-header">
-            <h2>Task Management</h2>
-            <div className="header-actions">
-              <button 
-                className="new-task-button"
-                onClick={() => setShowNewTask(true)}
-              >
-                + New Task
-              </button>
-              <button 
-                className="back-button"
-                onClick={() => setScreen('office')}
-              >
-                ← Office
-              </button>
-            </div>
-          </div>
+      <div className="tasks-container">
+        {/* Header */}
+        <header className="tasks-header">
+          <h1>Tasks</h1>
+          <button className="new-task-btn" onClick={() => setShowNewTask(true)}>
+            + New Task
+          </button>
+        </header>
 
-          {showNewTask && (
-            <Box title="CREATE NEW TASK" variant="accent" className="new-task-form">
-              <div className="form-row">
-                <Input
-                  value={newTaskTitle}
-                  onChange={setNewTaskTitle}
-                  onSubmit={handleCreateTask}
-                  placeholder="Task title..."
-                  prompt="Title:"
-                />
+        {/* New Task Modal */}
+        {showNewTask && (
+          <div className="modal-overlay" onClick={() => setShowNewTask(false)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>New Task</h2>
+                <button className="close-btn" onClick={() => setShowNewTask(false)}>×</button>
               </div>
-              <div className="form-row options">
-                <div className="option-group">
-                  <span className="option-label">Type:</span>
-                  <Menu
-                    items={typeOptions}
-                    onSelect={(item) => setNewTaskType(item.id as TaskType)}
-                    horizontal
-                    showShortcuts={false}
+              
+              <div className="modal-body">
+                <div className="form-field">
+                  <label>Title</label>
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={e => setNewTaskTitle(e.target.value)}
+                    placeholder="What needs to be done?"
+                    autoFocus
                   />
                 </div>
-                <div className="option-group">
-                  <span className="option-label">Priority:</span>
-                  <Menu
-                    items={priorityOptions}
-                    onSelect={(item) => setNewTaskPriority(item.id as TaskPriority)}
-                    horizontal
-                    showShortcuts={false}
-                  />
+
+                <div className="form-row">
+                  <div className="form-field">
+                    <label>Type</label>
+                    <div className="option-buttons">
+                      {(['feature', 'bug', 'design', 'infrastructure'] as TaskType[]).map(type => (
+                        <button
+                          key={type}
+                          className={`option-btn ${newTaskType === type ? 'active' : ''}`}
+                          onClick={() => setNewTaskType(type)}
+                        >
+                          {typeIcons[type]} {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label>Priority</label>
+                    <div className="option-buttons">
+                      {(['low', 'medium', 'high', 'critical'] as TaskPriority[]).map(priority => (
+                        <button
+                          key={priority}
+                          className={`option-btn ${newTaskPriority === priority ? 'active' : ''}`}
+                          onClick={() => setNewTaskPriority(priority)}
+                        >
+                          <span className="priority-dot" style={{ background: priorityColors[priority] }} />
+                          {priority}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="form-actions">
-                <button className="create-button" onClick={handleCreateTask}>
-                  Create Task
-                </button>
-                <button className="cancel-button" onClick={() => setShowNewTask(false)}>
+
+              <div className="modal-footer">
+                <button className="cancel-btn" onClick={() => setShowNewTask(false)}>
                   Cancel
                 </button>
+                <button className="create-btn" onClick={handleCreateTask} disabled={!newTaskTitle.trim()}>
+                  Create Task
+                </button>
               </div>
-            </Box>
-          )}
-
-          {assigningTaskId && (
-            <Box title="ASSIGN TASK" variant="accent" className="assign-modal">
-              <p>Select a team member:</p>
-              {availableEmployees.length === 0 ? (
-                <p className="warning">No available team members! Hire more or wait for current tasks to complete.</p>
-              ) : (
-                <div className="assignee-list">
-                  {availableEmployees.map(emp => (
-                    <button
-                      key={emp.id}
-                      className="assignee-option"
-                      onClick={() => handleAssign(assigningTaskId, emp.id)}
-                    >
-                      {emp.avatarEmoji} {emp.name} ({emp.skillLevel} {emp.role})
-                    </button>
-                  ))}
-                </div>
-              )}
-              <button 
-                className="cancel-button"
-                onClick={() => setAssigningTaskId(null)}
-              >
-                Cancel
-              </button>
-            </Box>
-          )}
-
-          <div className="kanban-board">
-            {columns.map(col => (
-              <div key={col.status} className="kanban-column">
-                <div className="column-header">
-                  <span>{col.title}</span>
-                  <span className="column-count">
-                    {tasks.filter(t => t.status === col.status).length}
-                  </span>
-                </div>
-                <div className="column-tasks">
-                  {tasks
-                    .filter(t => t.status === col.status)
-                    .map(task => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        onAssign={() => setAssigningTaskId(task.id)}
-                        onUpdateStatus={(status) => updateTaskStatus(task.id, status)}
-                        onAIBoost={() => handleAIBoost(task.id)}
-                        aiEnabled={aiSettings.enabled}
-                      />
-                    ))}
-                </div>
-              </div>
-            ))}
+            </div>
           </div>
+        )}
+
+        {/* Assign Modal */}
+        {assigningTaskId && (
+          <div className="modal-overlay" onClick={() => setAssigningTaskId(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Assign Task</h2>
+                <button className="close-btn" onClick={() => setAssigningTaskId(null)}>×</button>
+              </div>
+              
+              <div className="modal-body">
+                {availableEmployees.length === 0 ? (
+                  <p className="empty-text">No available team members. Wait for tasks to complete or hire more.</p>
+                ) : (
+                  <div className="assignee-list">
+                    {availableEmployees.map(emp => (
+                      <button
+                        key={emp.id}
+                        className="assignee-btn"
+                        onClick={() => handleAssign(assigningTaskId, emp.id)}
+                      >
+                        <span className="assignee-name">{emp.name}</span>
+                        <span className="assignee-role">{emp.role}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Kanban Board */}
+        <div className="kanban-board">
+          {columns.map(col => (
+            <div key={col.status} className="kanban-column">
+              <div className="column-header">
+                <span className="column-title">{col.title}</span>
+                <span className="column-count">
+                  {tasks.filter(t => t.status === col.status).length}
+                </span>
+              </div>
+              <div className="column-tasks">
+                {tasks
+                  .filter(t => t.status === col.status)
+                  .map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onAssign={() => setAssigningTaskId(task.id)}
+                      onUpdateStatus={(status) => updateTaskStatus(task.id, status)}
+                      onAIBoost={() => handleAIBoost(task.id)}
+                      aiEnabled={aiSettings.enabled}
+                    />
+                  ))}
+                {tasks.filter(t => t.status === col.status).length === 0 && (
+                  <div className="column-empty">No tasks</div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-      </Terminal>
+      </div>
     </div>
   );
 }

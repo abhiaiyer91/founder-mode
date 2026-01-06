@@ -1,12 +1,13 @@
 /**
  * GitHubConnect styles - OAuth-based GitHub connection
+ * Follows the modern design system (purple/indigo gradients)
  */
 
 .github-connect {
   padding: 1.5rem;
-  background: var(--color-surface, #1a1a2e);
+  background: #0d0d12;
   border-radius: 12px;
-  border: 1px solid var(--color-border, #2a2a4a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .connect-header {
@@ -23,18 +24,18 @@
 .connect-header h3 {
   margin: 0;
   font-size: 1.25rem;
-  color: var(--color-text, #fff);
+  color: #fff;
 }
 
 .connect-description {
-  color: var(--color-text-secondary, #888);
+  color: #a1a1aa;
   font-size: 0.9rem;
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
 .connect-error {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #f87171;
   padding: 0.75rem;
@@ -51,8 +52,8 @@
   gap: 0.75rem;
   width: 100%;
   padding: 0.875rem 1.5rem;
-  background: #24292f;
-  border: 1px solid #30363d;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
@@ -62,8 +63,8 @@
 }
 
 .oauth-btn:hover:not(:disabled) {
-  background: #30363d;
-  border-color: #8b949e;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
 .oauth-btn:disabled {
@@ -78,7 +79,7 @@
 .connect-hint {
   margin-top: 1rem;
   font-size: 0.8rem;
-  color: var(--color-text-tertiary, #666);
+  color: #71717a;
   text-align: center;
 }
 
@@ -86,7 +87,7 @@
   background: rgba(255, 255, 255, 0.1);
   padding: 0.2em 0.4em;
   border-radius: 4px;
-  font-family: monospace;
+  font-family: 'SF Mono', monospace;
 }
 
 /* Connected User */
@@ -102,19 +103,19 @@
 }
 
 .user-badge {
-  color: var(--color-text, #fff);
+  color: #fff;
   font-size: 0.9rem;
 }
 
 .user-badge strong {
-  color: #22c55e;
+  color: #4ade80;
 }
 
 .disconnect-btn {
   padding: 0.375rem 0.75rem;
   background: transparent;
-  border: 1px solid var(--color-border, #444);
-  color: var(--color-text-secondary, #888);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #a1a1aa;
   font-size: 0.8rem;
   border-radius: 6px;
   cursor: pointer;
@@ -141,9 +142,9 @@
 .option-tabs button {
   flex: 1;
   padding: 0.625rem;
-  background: var(--color-surface-elevated, #252540);
-  border: 1px solid var(--color-border, #444);
-  color: var(--color-text-secondary, #888);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -159,13 +160,13 @@
 }
 
 .option-tabs button.active {
-  background: var(--color-primary, #6366f1);
-  border-color: var(--color-primary, #6366f1);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: #6366f1;
   color: #fff;
 }
 
 .option-tabs button:hover:not(.active) {
-  background: var(--color-surface-hover, #303050);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Create Repo */
@@ -177,14 +178,14 @@
 
 .create-repo label {
   font-size: 0.85rem;
-  color: var(--color-text-secondary, #888);
+  color: #a1a1aa;
 }
 
 .repo-input {
   display: flex;
   align-items: center;
-  background: var(--color-surface-elevated, #252540);
-  border: 1px solid var(--color-border, #444);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -192,9 +193,9 @@
 .repo-prefix {
   padding: 0.625rem 0.75rem;
   background: rgba(0, 0, 0, 0.2);
-  color: var(--color-text-secondary, #888);
+  color: #a1a1aa;
   font-size: 0.9rem;
-  border-right: 1px solid var(--color-border, #444);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .repo-input input {
@@ -202,7 +203,7 @@
   padding: 0.625rem 0.75rem;
   background: transparent;
   border: none;
-  color: var(--color-text, #fff);
+  color: #fff;
   font-size: 0.9rem;
 }
 
@@ -212,7 +213,7 @@
 
 .create-btn {
   padding: 0.75rem;
-  background: var(--color-primary, #6366f1);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   border: none;
   color: #fff;
   font-size: 0.9rem;
@@ -224,8 +225,8 @@
 }
 
 .create-btn:hover:not(:disabled) {
-  background: var(--color-primary-hover, #5558e3);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
 .create-btn:disabled {
@@ -240,7 +241,7 @@
 
 .no-repos {
   text-align: center;
-  color: var(--color-text-secondary, #888);
+  color: #71717a;
   padding: 1rem;
 }
 
@@ -257,10 +258,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background: var(--color-surface-elevated, #252540);
-  border: 1px solid var(--color-border, #444);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  color: var(--color-text, #fff);
+  color: #fff;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -268,8 +269,8 @@
 }
 
 .repo-item:hover {
-  background: var(--color-surface-hover, #303050);
-  border-color: var(--color-primary, #6366f1);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .repo-name {
@@ -277,20 +278,20 @@
 }
 
 .repo-arrow {
-  color: var(--color-text-secondary, #888);
+  color: #71717a;
   transition: transform 0.2s ease;
 }
 
 .repo-item:hover .repo-arrow {
   transform: translateX(4px);
-  color: var(--color-primary, #6366f1);
+  color: #a5b4fc;
 }
 
 /* Connected State */
 .github-connect.connected {
   background: linear-gradient(135deg, 
     rgba(34, 197, 94, 0.05) 0%,
-    var(--color-surface, #1a1a2e) 100%
+    #0d0d12 100%
   );
   border-color: rgba(34, 197, 94, 0.2);
 }
@@ -304,17 +305,17 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: var(--color-surface-elevated, #252540);
-  border: 1px solid var(--color-border, #444);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
-  color: var(--color-text, #fff);
+  color: #fff;
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .repo-link:hover {
-  background: var(--color-surface-hover, #303050);
-  border-color: var(--color-primary, #6366f1);
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .repo-icon {
@@ -323,12 +324,12 @@
 
 .repo-path {
   flex: 1;
-  font-family: monospace;
+  font-family: 'SF Mono', monospace;
   font-size: 0.9rem;
 }
 
 .external-icon {
-  color: var(--color-text-secondary, #888);
+  color: #71717a;
 }
 
 /* Repo Stats */
@@ -342,7 +343,7 @@
   flex: 1;
   text-align: center;
   padding: 0.75rem;
-  background: var(--color-surface-elevated, #252540);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 8px;
 }
 
@@ -350,19 +351,19 @@
   display: block;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-primary, #6366f1);
+  color: #a5b4fc;
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #888);
+  color: #71717a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .last-push {
   font-size: 0.8rem;
-  color: var(--color-text-secondary, #888);
+  color: #71717a;
   text-align: center;
   margin: 0.5rem 0;
 }
@@ -377,7 +378,7 @@
 .push-btn {
   flex: 1;
   padding: 0.75rem;
-  background: var(--color-primary, #6366f1);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   border: none;
   color: #fff;
   font-size: 0.9rem;
@@ -388,8 +389,8 @@
 }
 
 .push-btn:hover {
-  background: var(--color-primary-hover, #5558e3);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
 .connect-actions .disconnect-btn {

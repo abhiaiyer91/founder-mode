@@ -1,4 +1,4 @@
-/* GitHub Import Styles */
+/* GitHub Import - Matches App Aesthetic */
 
 .github-import-overlay {
   position: fixed;
@@ -6,25 +6,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .github-import {
-  background: #0d0d12;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  width: 600px;
+  background: #0a0a0f;
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  border-radius: 12px;
+  width: 520px;
   max-width: 95vw;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 60px rgba(0, 255, 136, 0.1);
 }
 
 /* Header */
@@ -33,19 +33,28 @@
   align-items: center;
   gap: 12px;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .header-icon {
-  font-size: 32px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  font-size: 18px;
+  color: #00ff88;
 }
 
 .import-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   flex: 1;
+  color: #e4e4e7;
 }
 
 .close-btn {
@@ -55,17 +64,17 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: none;
-  color: #71717a;
-  font-size: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #52525b;
+  font-size: 18px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: all 0.2s;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e4e4e7;
 }
 
 /* Import Steps */
@@ -82,108 +91,120 @@
 }
 
 .step-intro p {
-  color: #a1a1aa;
-  margin: 0 0 12px 0;
-  font-size: 15px;
-}
-
-.token-link {
-  color: #6366f1;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.token-link:hover {
-  text-decoration: underline;
-}
-
-.token-input {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.token-input label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #e4e4e7;
-}
-
-.token-input input {
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 15px;
-  font-family: 'SF Mono', monospace;
-}
-
-.token-input input:focus {
-  outline: none;
-  border-color: #6366f1;
-}
-
-.token-hint {
-  font-size: 12px;
   color: #71717a;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.oauth-note {
+  font-size: 12px;
+  color: #52525b;
 }
 
 .import-error {
   background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   color: #f87171;
   padding: 12px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 24px;
+  text-align: center;
 }
 
 .step-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .secondary-btn {
   padding: 12px 20px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: #a1a1aa;
+  color: #71717a;
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .secondary-btn:hover {
-  border-color: #fff;
-  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e4e4e7;
 }
 
 .primary-btn {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #00ff88;
   border: none;
   border-radius: 8px;
-  color: #fff;
+  color: #000;
   font-size: 14px;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .primary-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+  background: #00cc6a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.3);
 }
 
 .primary-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.github-oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Connected User */
+.connected-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #00ff88;
+  font-weight: 500;
+}
+
+.disconnect-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #71717a;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.disconnect-btn:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
 }
 
 /* Browse Step */
@@ -196,25 +217,32 @@
 .repo-search {
   flex: 1;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: #fff;
+  color: #e4e4e7;
   font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s;
 }
 
 .repo-search:focus {
-  outline: none;
-  border-color: #6366f1;
+  border-color: rgba(0, 255, 136, 0.5);
+}
+
+.repo-search::placeholder {
+  color: #52525b;
 }
 
 .sort-select {
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: #fff;
+  color: #e4e4e7;
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
 }
 
@@ -222,7 +250,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 400px;
+  max-height: 320px;
   overflow-y: auto;
   margin-bottom: 16px;
 }
@@ -230,27 +258,31 @@
 .no-repos {
   text-align: center;
   padding: 40px;
-  color: #71717a;
+  color: #52525b;
+  font-size: 14px;
 }
 
 .repo-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
+  padding: 14px 16px;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
   text-align: left;
   cursor: pointer;
   transition: all 0.2s;
   width: 100%;
   color: inherit;
+  font-family: inherit;
 }
 
 .repo-card:hover {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(0, 255, 136, 0.05);
+  border-color: rgba(0, 255, 136, 0.15);
+  border-left-color: #00ff88;
 }
 
 .repo-main {
@@ -259,20 +291,22 @@
 
 .repo-name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 6px;
+  color: #e4e4e7;
 }
 
 .private-badge {
-  font-size: 12px;
+  font-size: 11px;
+  color: #71717a;
 }
 
 .repo-desc {
-  font-size: 13px;
-  color: #71717a;
+  font-size: 12px;
+  color: #52525b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -281,15 +315,15 @@
 .repo-meta {
   display: flex;
   gap: 12px;
-  font-size: 12px;
-  color: #a1a1aa;
+  font-size: 11px;
+  color: #71717a;
 }
 
 .repo-lang {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(0, 255, 136, 0.1);
   padding: 2px 8px;
   border-radius: 4px;
-  color: #a5b4fc;
+  color: #00ff88;
 }
 
 /* Analyze Step */
@@ -297,7 +331,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
+  min-height: 240px;
 }
 
 .analyze-content {
@@ -305,24 +339,29 @@
 }
 
 .analyze-spinner {
-  font-size: 64px;
-  animation: spin 2s linear infinite;
+  font-size: 48px;
+  color: #00ff88;
   margin-bottom: 20px;
+  display: inline-block;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
 }
 
 .analyze-content h3 {
   margin: 0 0 8px 0;
-  font-size: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e4e4e7;
 }
 
 .analyze-content p {
-  color: #71717a;
+  color: #52525b;
   margin: 0;
+  font-size: 13px;
 }
 
 /* Ready Step */
@@ -330,40 +369,43 @@
   text-align: center;
   margin-bottom: 24px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .repo-summary h3 {
   margin: 0 0 8px 0;
-  font-size: 24px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #e4e4e7;
 }
 
 .repo-summary p {
-  color: #a1a1aa;
+  color: #71717a;
   margin: 0 0 12px 0;
+  font-size: 14px;
 }
 
 .complexity-badge {
   display: inline-block;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: capitalize;
 }
 
 .complexity-badge[data-complexity="simple"] {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
 }
 
 .complexity-badge[data-complexity="medium"] {
-  background: rgba(251, 191, 36, 0.2);
+  background: rgba(251, 191, 36, 0.1);
   color: #fbbf24;
 }
 
 .complexity-badge[data-complexity="complex"] {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.1);
   color: #f87171;
 }
 
@@ -376,8 +418,11 @@
 
 .result-section h4 {
   margin: 0 0 12px 0;
-  font-size: 14px;
-  color: #a1a1aa;
+  font-size: 12px;
+  font-weight: 500;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .languages {
@@ -393,28 +438,29 @@
 }
 
 .lang-name {
-  width: 100px;
+  width: 80px;
   font-size: 13px;
+  color: #a1a1aa;
 }
 
 .lang-progress {
   flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .lang-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #a855f7);
-  border-radius: 4px;
+  background: #00ff88;
+  border-radius: 3px;
 }
 
 .lang-pct {
   width: 40px;
   font-size: 12px;
-  color: #71717a;
+  color: #52525b;
   text-align: right;
 }
 
@@ -434,21 +480,23 @@
 }
 
 .task-priority {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .task-title {
   font-size: 13px;
+  color: #a1a1aa;
 }
 
 .result-section p {
   margin: 0;
   color: #e4e4e7;
+  font-size: 14px;
 }
 
 .start-btn {
   padding: 14px 28px !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
 }
 
 /* Mobile Responsive */

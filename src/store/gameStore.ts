@@ -12,10 +12,8 @@ import type {
   GameState,
   GameActions,
   GameScreen,
-  GameSpeed,
   Employee,
   EmployeeRole,
-  EmployeeSkillLevel,
   Task,
   TaskStatus,
   TaskType,
@@ -89,15 +87,11 @@ function generateEmployeeName(): string {
   return `${firstName} ${lastName}`;
 }
 
-// Helper to generate random productivity/morale
-function generateRandomStat(base: number, variance: number): number {
-  return Math.min(100, Math.max(0, base + Math.floor(Math.random() * variance * 2) - variance));
-}
+
 
 // Initial game state
 const initialState: GameState = {
   screen: 'landing', // Start with landing page for new users
-  gameSpeed: 'paused',
   tick: 0,
   startedAt: new Date(),
   money: 100000, // Start with $100k
@@ -204,27 +198,25 @@ export const useGameStore = create<GameState & GameActions>()(
       setScreen: (screen: GameScreen) => set({ screen }),
 
   // Game Control
-  setGameSpeed: (speed: GameSpeed) => set({ gameSpeed: speed }),
-  
   togglePause: () => {
     const state = get();
-    if (state.gameSpeed === 'paused') {
-      set({ gameSpeed: 'normal', isPaused: false });
-    } else {
-      set({ gameSpeed: 'paused', isPaused: true });
-    }
+    set({ isPaused: !state.isPaused });
   },
 
   gameTick: () => {
     const state = get();
-    if (state.gameSpeed === 'paused') return;
+    if (state.isPaused) return;
 
-    // Process employee work
+    // Process employee work - track ticks worked
     const updatedEmployees = state.employees.map(employee => {
       if (employee.status !== 'working' || !employee.currentTaskId) {
         return employee;
       }
-      return employee;
+      // Increment totalTicksWorked for employees actively working
+      return {
+        ...employee,
+        totalTicksWorked: employee.totalTicksWorked + 1,
+      };
     });
 
     // Process task progress
@@ -236,8 +228,9 @@ export const useGameStore = create<GameState & GameActions>()(
       const assignee = state.employees.find(e => e.id === task.assigneeId);
       if (!assignee) return task;
 
-      // Calculate progress based on employee productivity
-      const progressIncrement = assignee.productivity / 100;
+      // Base progress rate: 1 tick of work per game tick
+      // Tasks complete based on their estimatedTicks
+      const progressIncrement = 1;
       const newProgress = task.progressTicks + progressIncrement;
 
       if (newProgress >= task.estimatedTicks) {
@@ -300,9 +293,12 @@ export const useGameStore = create<GameState & GameActions>()(
     // Create the git repository
     const gitRepo = createGitRepo(projectName, idea);
     
+    const projectId = uuidv4();
+    const now = Date.now();
+    
     set({
       project: {
-        id: uuidv4(),
+        id: projectId,
         name: projectName,
         description: idea,
         idea,
@@ -313,8 +309,31 @@ export const useGameStore = create<GameState & GameActions>()(
       },
       gitRepo: gitRepo as unknown as GitRepo,
       screen: 'rts', // Go to isometric RTS view (Civ/Warcraft style)
-      gameSpeed: 'normal',
+      isPaused: false, // Start the game running
     });
+    
+    // Save project to projects list for easy access later
+    try {
+      const savedProjects = JSON.parse(localStorage.getItem('founder-mode-projects') || '[]');
+      const newProject = {
+        id: projectId,
+        name: projectName,
+        description: idea,
+        projectType,
+        createdAt: now,
+        lastPlayedAt: now,
+        tick: 0,
+        money: get().money,
+        employeeCount: 0,
+        tasksCompleted: 0,
+      };
+      // Remove any existing project with same ID and add new one at start
+      const updated = [newProject, ...savedProjects.filter((p: { id: string }) => p.id !== projectId)];
+      localStorage.setItem('founder-mode-projects', JSON.stringify(updated.slice(0, 20))); // Keep max 20 projects
+    } catch (e) {
+      console.error('Failed to save project to list:', e);
+    }
+    
     get().addNotification(`🚀 Started project: ${projectName}`, 'success');
     get().logActivity({
       tick,
@@ -329,10 +348,8 @@ export const useGameStore = create<GameState & GameActions>()(
   },
 
   // Team Management
-  hireEmployee: (role: EmployeeRole, skillLevel: EmployeeSkillLevel) => {
-    const template = EMPLOYEE_TEMPLATES.find(
-      t => t.role === role && t.skillLevel === skillLevel
-    );
+  hireEmployee: (role: EmployeeRole, aiProvider?: AIProvider, aiModel?: string) => {
+    const template = EMPLOYEE_TEMPLATES.find(t => t.role === role);
     if (!template) return;
 
     const state = get();
@@ -341,26 +358,26 @@ export const useGameStore = create<GameState & GameActions>()(
       return;
     }
 
-    const baseProductivity = skillLevel === 'junior' ? 50 : 
-                             skillLevel === 'mid' ? 70 : 
-                             skillLevel === 'senior' ? 85 : 95;
+    const roleIcons: Record<EmployeeRole, string> = {
+      pm: '◈',
+      designer: '◇',
+      engineer: '◆',
+    };
 
     const newEmployee: Employee = {
       id: uuidv4(),
       name: generateEmployeeName(),
       role,
-      skillLevel,
       status: 'idle',
-      avatarEmoji: template.emoji,
+      avatarEmoji: roleIcons[role],
       salary: template.baseSalary,
-      productivity: generateRandomStat(baseProductivity, 10),
-      morale: generateRandomStat(80, 15),
       currentTaskId: null,
       hiredAt: state.tick,
-      aiModel: null, // Uses global default
-      aiProvider: null,
+      aiModel: aiModel || null,
+      aiProvider: aiProvider || null,
       memory: [],
       tasksCompleted: 0,
+      totalTicksWorked: 0,
       specializations: [],
       systemPrompt: template.systemPrompt,
       customPrompt: '',
@@ -371,7 +388,20 @@ export const useGameStore = create<GameState & GameActions>()(
       money: state.money - template.baseSalary, // First month's salary upfront
     });
 
-    get().addNotification(`👋 Hired ${newEmployee.name} as ${template.title}!`, 'success');
+    // Enable AI if this employee has an AI provider configured
+    if (aiProvider && !state.aiSettings.enabled) {
+      aiService.enable();
+      set({
+        aiSettings: {
+          ...get().aiSettings,
+          enabled: true,
+          provider: aiProvider,
+          model: aiModel || 'gpt-4o-mini',
+        },
+      });
+    }
+
+    get().addNotification(`Hired ${newEmployee.name} as ${template.title}!`, 'success');
     get().logActivity({
       tick: state.tick,
       message: `Hired ${newEmployee.name} (${template.title})`,
@@ -617,32 +647,24 @@ export const useGameStore = create<GameState & GameActions>()(
   },
   
   quickHire: (role: EmployeeRole) => {
-    // Hire a mid-level employee of this role
-    get().hireEmployee(role, 'mid');
+    get().hireEmployee(role);
   },
   
   boostMorale: () => {
     const state = get();
     if (state.money < 1000) {
-      get().addNotification('Not enough money for team boost ($1,000 needed)', 'error');
+      get().addNotification('Not enough money for team event ($1,000 needed)', 'error');
       return;
     }
     
-    const boostedEmployees = state.employees.map(e => ({
-      ...e,
-      morale: Math.min(100, e.morale + 20),
-      productivity: Math.min(100, e.productivity + 5),
-    }));
-    
     set({ 
-      employees: boostedEmployees,
       money: state.money - 1000,
     });
     
-    get().addNotification('🍕 Team pizza party! Morale boosted (+20)', 'success');
+    get().addNotification('🍕 Team pizza party!', 'success');
     get().logActivity({
       tick: state.tick,
-      message: 'Team morale boosted with pizza party',
+      message: 'Team pizza party',
       type: 'event',
     });
   },
@@ -694,28 +716,17 @@ export const useGameStore = create<GameState & GameActions>()(
       case 'morale_boost':
       case 'team_lunch':
       case 'viral_moment': {
-        const boostedEmployees = state.employees.map(e => ({
-          ...e,
-          morale: Math.min(100, e.morale + 15),
-        }));
-        set({ employees: boostedEmployees });
+        // These events now just show a notification
         break;
       }
       case 'morale_drop':
       case 'coffee_machine_broken': {
-        const droppedEmployees = state.employees.map(e => ({
-          ...e,
-          morale: Math.max(0, e.morale - 10),
-        }));
-        set({ employees: droppedEmployees });
+        // These events now just show a notification
         break;
       }
-      case 'productivity_boost': {
-        const boostedEmployees = state.employees.map(e => ({
-          ...e,
-          productivity: Math.min(100, e.productivity + 10),
-        }));
-        set({ employees: boostedEmployees });
+      case 'productivity_boost':
+      case 'competitor_launch': {
+        // These events now just show a notification
         break;
       }
       case 'investor_interest': {
@@ -748,15 +759,6 @@ export const useGameStore = create<GameState & GameActions>()(
         });
         break;
       }
-      case 'competitor_launch': {
-        // Speed boost for a while - morale boost from competition
-        const motivatedEmployees = state.employees.map(e => ({
-          ...e,
-          productivity: Math.min(100, e.productivity + 5),
-        }));
-        set({ employees: motivatedEmployees });
-        break;
-      }
     }
 
     get().addNotification(`${eventDef.title}: ${eventDef.description}`, 'info');
@@ -783,9 +785,9 @@ export const useGameStore = create<GameState & GameActions>()(
       return;
     }
 
-    // PM generates task based on skill level
+    // PM generates 2 tasks per cycle
     const pm = pms[0];
-    const numTasks = pm.skillLevel === 'senior' ? 3 : pm.skillLevel === 'mid' ? 2 : 1;
+    const numTasks = 2;
     
     for (let i = 0; i < Math.min(numTasks, availableIdeas.length); i++) {
       const idea = availableIdeas[Math.floor(Math.random() * availableIdeas.length)];
@@ -805,36 +807,23 @@ export const useGameStore = create<GameState & GameActions>()(
     get().addNotification(`📊 ${pm.name} added ${numTasks} task(s) to the backlog!`, 'success');
   },
 
-  // AI Configuration
-  configureAI: (apiKey: string, provider?: AIProvider) => {
-    const currentProvider = provider || get().aiSettings.provider;
-    aiService.configure(apiKey);
+  // AI Configuration - All AI goes through Mastra server
+  configureAI: () => {
+    // Enable AI when Mastra server is connected
+    aiService.enable();
     set({
       aiSettings: {
         ...get().aiSettings,
         enabled: true,
-        apiKey,
-        provider: currentProvider,
-        providerKeys: {
-          ...get().aiSettings.providerKeys,
-          [currentProvider]: apiKey,
-        },
       },
     });
-    get().addNotification(`🤖 AI agents activated with ${currentProvider.toUpperCase()}!`, 'success');
+    get().addNotification('🤖 AI agents activated via Mastra server!', 'success');
   },
 
-  configureProviderKey: (provider: AIProvider, apiKey: string) => {
-    set({
-      aiSettings: {
-        ...get().aiSettings,
-        providerKeys: {
-          ...get().aiSettings.providerKeys,
-          [provider]: apiKey,
-        },
-      },
-    });
-    get().addNotification(`🔑 ${provider.toUpperCase()} API key saved.`, 'info');
+  // Legacy: kept for compatibility but no longer stores keys client-side
+  configureProviderKey: (_provider: AIProvider, _apiKey: string) => {
+    // API keys should be configured on the Mastra server, not client-side
+    get().addNotification('⚠️ API keys should be configured on the server (OPENAI_API_KEY env var)', 'warning');
   },
 
   setGlobalModel: (modelId: string) => {
@@ -1836,16 +1825,17 @@ export const useGameStore = create<GameState & GameActions>()(
     const hasEngineer = employees.some(e => e.role === 'engineer');
     const hasDesigner = employees.some(e => e.role === 'designer');
     const hasPM = employees.some(e => e.role === 'pm');
-    const hasMarketer = employees.some(e => e.role === 'marketer');
-    if (hasEngineer && hasDesigner && hasPM && hasMarketer) unlock('full-stack-team');
+    if (hasEngineer && hasDesigner && hasPM) unlock('full-stack-team');
     
-    const highMoraleCount = employees.filter(e => e.morale >= 80).length;
-    if (highMoraleCount >= 5) unlock('dream-team');
+    // High performer achievement - employees with 5+ tasks completed
+    const highPerformerCount = employees.filter(e => e.tasksCompleted >= 5).length;
+    if (highPerformerCount >= 5) unlock('dream-team');
     
-    const seniorCount = employees.filter(e => e.skillLevel === 'senior' || e.skillLevel === 'lead').length;
-    if (seniorCount >= 3) unlock('senior-staff');
+    // Experienced team achievement
+    if (employees.length >= 5) unlock('senior-staff');
     
-    if (employees.every(e => e.morale === 100) && employees.length > 0) unlock('perfectionist');
+    // Perfectionist: all employees have completed at least 10 tasks
+    if (employees.every(e => e.tasksCompleted >= 10) && employees.length > 0) unlock('perfectionist');
     
     // Check shipping achievements
     const doneTasks = tasks.filter(t => t.status === 'done');
@@ -2043,37 +2033,8 @@ export const useGameStore = create<GameState & GameActions>()(
       set({ money: Math.max(0, state.money + effect.value) });
     }
     
-    if (effect.type === 'morale') {
-      let targetEmployees = state.employees;
-      if (effect.target === 'random' && state.employees.length > 0) {
-        const randomIndex = Math.floor(Math.random() * state.employees.length);
-        targetEmployees = [state.employees[randomIndex]];
-      }
-      
-      const newEmployees = state.employees.map(e => {
-        if (targetEmployees.includes(e)) {
-          return { ...e, morale: Math.max(0, Math.min(100, e.morale + effect.value)) };
-        }
-        return e;
-      });
-      set({ employees: newEmployees });
-    }
-    
-    if (effect.type === 'productivity') {
-      let targetEmployees = state.employees;
-      if (effect.target === 'random' && state.employees.length > 0) {
-        const randomIndex = Math.floor(Math.random() * state.employees.length);
-        targetEmployees = [state.employees[randomIndex]];
-      }
-      
-      const newEmployees = state.employees.map(e => {
-        if (targetEmployees.includes(e)) {
-          return { ...e, productivity: Math.max(0, Math.min(100, e.productivity + effect.value)) };
-        }
-        return e;
-      });
-      set({ employees: newEmployees });
-    }
+    // Morale and productivity effects no longer apply - these are now calculated from actual work
+    // Keeping the function signature for backwards compatibility with event definitions
   },
   
   updatePlayTime: () => {
@@ -2121,7 +2082,7 @@ export const useGameStore = create<GameState & GameActions>()(
         autoAssignEnabled: newAutopilot ? true : state.taskQueue.autoAssignEnabled,
       },
       focusMode: newAutopilot ? true : state.focusMode,
-      gameSpeed: newAutopilot ? 'fast' : state.gameSpeed,
+      isPaused: newAutopilot ? false : state.isPaused, // Ensure game runs when autopilot is on
     });
     
     if (newAutopilot) {
@@ -2183,14 +2144,6 @@ export const useGameStore = create<GameState & GameActions>()(
       });
     }
     
-    // Auto-boost morale if low
-    const avgMorale = state.employees.length > 0
-      ? state.employees.reduce((sum, e) => sum + e.morale, 0) / state.employees.length
-      : 100;
-    
-    if (avgMorale < 50 && state.money > 5000) {
-      get().boostMorale();
-    }
   },
 
   // ============================================
@@ -2541,7 +2494,6 @@ export const useGameStore = create<GameState & GameActions>()(
         status: 'pending',
         payload: {
           role: neededRole,
-          skillLevel: 'mid',
         },
       };
       
@@ -2947,7 +2899,6 @@ export const useGameStore = create<GameState & GameActions>()(
         if (state) {
           // Reset UI state on load
           state.screen = state.project ? 'rts' : 'landing'; // Show landing for new users
-          state.gameSpeed = 'paused';
           state.selectedEmployeeId = null;
           state.selectedEmployeeIds = [];
           state.selectedTaskId = null;

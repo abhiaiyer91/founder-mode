@@ -75,18 +75,22 @@ router.get('/github/callback', async (req, res) => {
 
     const userData = await userResponse.json();
 
-    // Parse state (for potential future use like return URL)
+    // Parse state to get return URL
+    let returnTo = '/start';
     try {
       if (state) {
-        JSON.parse(Buffer.from(state as string, 'base64').toString());
+        const stateData = JSON.parse(Buffer.from(state as string, 'base64').toString());
+        if (stateData.returnTo) {
+          returnTo = stateData.returnTo;
+        }
       }
     } catch {
-      // Ignore state parsing errors
+      // Ignore state parsing errors, use default
     }
 
     // Redirect back to frontend with token in URL fragment (more secure than query)
     // The frontend will store this in localStorage
-    const redirectUrl = new URL(FRONTEND_URL);
+    const redirectUrl = new URL(`${FRONTEND_URL}${returnTo}`);
     redirectUrl.hash = `github_token=${accessToken}&github_user=${encodeURIComponent(userData.login)}&github_avatar=${encodeURIComponent(userData.avatar_url || '')}`;
     
     res.redirect(redirectUrl.toString());

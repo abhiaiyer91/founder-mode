@@ -342,8 +342,8 @@ function EmployeePopup({ employeeId }: { employeeId: string }) {
           <span className="stat-label">Tasks completed</span>
         </div>
         <div className="popup-stat">
-          <span className="stat-value">{employee.productivity}%</span>
-          <span className="stat-label">Productivity</span>
+          <span className="stat-value">{employee.tasksCompleted}</span>
+          <span className="stat-label">Tasks Done</span>
         </div>
       </div>
     </div>

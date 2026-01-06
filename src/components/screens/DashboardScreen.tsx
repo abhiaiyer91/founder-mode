@@ -54,9 +54,8 @@ function EmployeeRow({
     name: string;
     role: string;
     avatarEmoji: string;
-    skillLevel: string;
     status: string;
-    morale: number;
+    tasksCompleted: number;
   };
   task?: {
     title: string;
@@ -71,13 +70,6 @@ function EmployeeRow({
     engineer: 'Engineer',
     designer: 'Designer',
     pm: 'PM',
-    marketer: 'Marketer',
-  };
-  const skillLabels: Record<string, string> = {
-    junior: 'Jr',
-    mid: 'Mid',
-    senior: 'Sr',
-    lead: 'Lead',
   };
 
   return (
@@ -88,7 +80,7 @@ function EmployeeRow({
       <div className="emp-avatar">{employee.avatarEmoji}</div>
       <div className="emp-info">
         <div className="emp-name">{employee.name}</div>
-        <div className="emp-role">{skillLabels[employee.skillLevel]} {roleLabels[employee.role]}</div>
+        <div className="emp-role">{roleLabels[employee.role]}</div>
       </div>
       <div className="emp-status">
         {employee.status === 'working' && task ? (
@@ -107,8 +99,8 @@ function EmployeeRow({
           <div className="emp-idle">💤 Idle</div>
         )}
       </div>
-      <div className="emp-morale" title={`Morale: ${employee.morale}%`}>
-        {employee.morale >= 80 ? '😊' : employee.morale >= 50 ? '😐' : '😟'}
+      <div className="emp-tasks-done" title={`Tasks completed: ${employee.tasksCompleted}`}>
+        ✓{employee.tasksCompleted}
       </div>
     </div>
   );
@@ -147,10 +139,9 @@ export function DashboardScreen() {
     tasks,
     taskQueue,
     activityLog,
-    gameSpeed,
+    isPaused,
     selectedEmployeeIds,
     setScreen,
-    setGameSpeed,
     togglePause,
     selectEmployee,
     selectEmployees,
@@ -199,24 +190,13 @@ export function DashboardScreen() {
             <span className="stat">📅 {formatGameTime(tick)}</span>
           </div>
           <div className="topbar-right">
-            <div className="speed-controls">
-              <button 
-                className={`speed-btn ${gameSpeed === 'paused' ? 'active' : ''}`}
-                onClick={togglePause}
-              >⏸</button>
-              <button 
-                className={`speed-btn ${gameSpeed === 'normal' ? 'active' : ''}`}
-                onClick={() => setGameSpeed('normal')}
-              >▶</button>
-              <button 
-                className={`speed-btn ${gameSpeed === 'fast' ? 'active' : ''}`}
-                onClick={() => setGameSpeed('fast')}
-              >▶▶</button>
-              <button 
-                className={`speed-btn ${gameSpeed === 'turbo' ? 'active' : ''}`}
-                onClick={() => setGameSpeed('turbo')}
-              >▶▶▶</button>
-            </div>
+            <button 
+              className={`pause-btn ${isPaused ? 'paused' : ''}`}
+              onClick={togglePause}
+              title="Toggle pause [Space]"
+            >
+              {isPaused ? '▶ Play' : '❚❚ Pause'}
+            </button>
             <button className="queue-btn" onClick={() => setScreen('queue')}>
               📥 Queue {queueCount > 0 && <span className="badge">{queueCount}</span>}
             </button>
@@ -397,7 +377,6 @@ export function DashboardScreen() {
           </div>
           <div className="keyboard-hints">
             <span><kbd>Space</kbd> Pause</span>
-            <span><kbd>Q</kbd> Queue</span>
             <span><kbd>H</kbd> Hire</span>
           </div>
         </div>

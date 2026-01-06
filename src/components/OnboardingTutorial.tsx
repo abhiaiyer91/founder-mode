@@ -1,7 +1,5 @@
 /**
  * Onboarding Tutorial - Guide new users through their first project
- * 
- * A step-by-step interactive tutorial that appears for new users.
  */
 
 import { useState, useEffect } from 'react';
@@ -12,8 +10,8 @@ interface TutorialStep {
   id: string;
   title: string;
   description: string;
-  target?: string; // CSS selector for highlight
-  action?: string; // What user needs to do
+  target?: string;
+  action?: string;
   position: 'top' | 'bottom' | 'left' | 'right' | 'center';
   checkComplete?: () => boolean;
 }
@@ -21,50 +19,50 @@ interface TutorialStep {
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Founder Mode! 🎮',
-    description: 'You just started your startup journey. Let\'s build something amazing together. This quick tutorial will show you the basics.',
+    title: 'Welcome to Founder Mode',
+    description: 'Your startup journey begins now. This quick tutorial will show you the basics.',
     position: 'center',
   },
   {
     id: 'hire',
-    title: 'Step 1: Hire Your First Employee',
-    description: 'Click the "Hire" button or press H to open the hiring screen. Every great startup needs a team!',
+    title: 'Hire Your First Employee',
+    description: 'Click "Hire" or press H to open the hiring screen. Every startup needs a team.',
     target: '[data-tutorial="hire"]',
     action: 'hire',
     position: 'bottom',
   },
   {
     id: 'create-task',
-    title: 'Step 2: Create a Task',
-    description: 'Now let\'s create some work. Click "Tasks" or press T, then create your first task.',
+    title: 'Create a Task',
+    description: 'Click "Tasks" or press T, then create your first task for the team.',
     target: '[data-tutorial="tasks"]',
     action: 'create-task',
     position: 'bottom',
   },
   {
     id: 'assign-task',
-    title: 'Step 3: Assign the Task',
-    description: 'Click on an employee, then click on a task to assign it. Watch them start working!',
+    title: 'Assign the Task',
+    description: 'Click on an employee, then click on a task to assign it. Watch them start working.',
     action: 'assign',
     position: 'center',
   },
   {
     id: 'watch-progress',
-    title: 'Step 4: Watch the Magic ✨',
-    description: 'Your AI team is now working! If you have an API key configured, they\'ll generate real code.',
+    title: 'Watch the Progress',
+    description: 'Your AI team is now working. With an API key configured, they generate real code.',
     position: 'center',
   },
   {
     id: 'view-artifacts',
-    title: 'Step 5: View Generated Code',
-    description: 'Press A to open Artifacts and see all the code, designs, and content your team creates.',
+    title: 'View Generated Code',
+    description: 'Press A to open Artifacts and see all the code your team creates.',
     target: '[data-tutorial="artifacts"]',
     position: 'bottom',
   },
   {
     id: 'complete',
-    title: 'You\'re Ready! 🚀',
-    description: 'You now know the basics. Explore missions, the PM advisor, and push your code to GitHub when ready!',
+    title: 'You\'re Ready',
+    description: 'You know the basics. Explore missions, the PM advisor, and push to GitHub when ready.',
     position: 'center',
   },
 ];
@@ -81,7 +79,6 @@ export function OnboardingTutorial() {
   const [isVisible, setIsVisible] = useState(true);
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
 
-  // Check if user has seen tutorial before
   useEffect(() => {
     const seen = localStorage.getItem('founder-mode-tutorial-complete');
     if (seen) {
@@ -90,24 +87,22 @@ export function OnboardingTutorial() {
     }
   }, []);
 
-  // Auto-advance based on user actions
   useEffect(() => {
     if (!isVisible) return;
 
     const step = TUTORIAL_STEPS[currentStep];
     
-    // Check step completion conditions
     if (step.id === 'hire' && employees.length > 0) {
-      setCurrentStep(2); // Move to create-task
+      setCurrentStep(2);
     }
     if (step.id === 'create-task' && tasks.length > 0) {
-      setCurrentStep(3); // Move to assign-task
+      setCurrentStep(3);
     }
     if (step.id === 'assign-task' && tasks.some(t => t.assigneeId)) {
-      setCurrentStep(4); // Move to watch-progress
+      setCurrentStep(4);
     }
     if (step.id === 'watch-progress' && tasks.some(t => t.status === 'done' || t.status === 'review')) {
-      setCurrentStep(5); // Move to view-artifacts
+      setCurrentStep(5);
     }
   }, [currentStep, employees.length, tasks, isVisible]);
 
@@ -129,50 +124,41 @@ export function OnboardingTutorial() {
     setIsVisible(false);
   };
 
-  // Don't show on landing or start screens
-  if (!project || screen === 'landing' || screen === 'start' || !isVisible || hasSeenTutorial) {
+  if (!project || screen === 'landing' || screen === 'start' || screen === 'projects' || !isVisible || hasSeenTutorial) {
     return null;
   }
 
   const step = TUTORIAL_STEPS[currentStep];
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
-  const progress = ((currentStep + 1) / TUTORIAL_STEPS.length) * 100;
 
   return (
     <>
-      {/* Overlay for center-positioned steps */}
       {step.position === 'center' && (
-        <div className="tutorial-overlay" onClick={handleSkip} />
+        <div className="tutorial-overlay" />
       )}
 
       <div className={`tutorial-popup position-${step.position}`}>
-        {/* Progress bar */}
-        <div className="tutorial-progress">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        <div className="tutorial-header">
+          <span className="tutorial-step-badge">
+            {currentStep + 1} of {TUTORIAL_STEPS.length}
+          </span>
+          <button className="tutorial-close" onClick={handleSkip}>×</button>
         </div>
 
-        {/* Content */}
         <div className="tutorial-content">
           <h3>{step.title}</h3>
           <p>{step.description}</p>
         </div>
 
-        {/* Actions */}
         <div className="tutorial-actions">
-          <button className="skip-btn" onClick={handleSkip}>
-            Skip Tutorial
+          <button className="tutorial-skip" onClick={handleSkip}>
+            Skip
           </button>
-          <div className="tutorial-nav">
-            <span className="step-counter">
-              {currentStep + 1} / {TUTORIAL_STEPS.length}
-            </span>
-            <button className="next-btn" onClick={handleNext}>
-              {isLastStep ? 'Get Started!' : 'Next →'}
-            </button>
-          </div>
+          <button className="tutorial-next" onClick={handleNext}>
+            {isLastStep ? 'Get Started' : 'Next'} →
+          </button>
         </div>
 
-        {/* Pointer arrow for targeted steps */}
         {step.target && step.position !== 'center' && (
           <div className={`tutorial-arrow arrow-${step.position}`} />
         )}
@@ -181,7 +167,6 @@ export function OnboardingTutorial() {
   );
 }
 
-// Hook to reset tutorial (for testing)
 export function useResetTutorial() {
   return () => {
     localStorage.removeItem('founder-mode-tutorial-complete');
