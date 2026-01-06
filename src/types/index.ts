@@ -251,12 +251,23 @@ export interface SavedProject {
   tasksCompleted: number;
 }
 
+// Game Flow Phase - tracks the onboarding/gameplay progression
+export type GamePhase = 
+  | 'new'           // Just started, no project yet
+  | 'hire_pm'       // Project created, need to hire PM first
+  | 'ideate'        // PM hired, breaking down idea into tasks
+  | 'hire_engineer' // Ideation done, need engineer to start building
+  | 'playing';      // Full game mode - all core roles in place
+
 // Game State
 export type GameScreen = 
   | 'landing'      // Landing page for new users
   | 'auth'         // Login/signup
   | 'start'        // Start new project
   | 'projects'     // Project list - continue a saved project
+  | 'hire_pm'      // First gate: hire a PM to start
+  | 'ideate'       // Chat with PM to break down vision into tasks
+  | 'hire_engineer'// Second gate: hire engineer to start building
   | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
   | 'campus'       // Isometric campus view (Phaser 3) - Visual startup HQ
   | 'dashboard'    // Clean split-view
@@ -343,6 +354,7 @@ export interface AISettings {
 export interface GameState {
   // Meta
   screen: GameScreen;
+  phase: GamePhase; // Current game flow phase
   tick: number; // Game time unit
   startedAt: Date;
   
@@ -571,6 +583,7 @@ export const EVENT_DEFINITIONS: Omit<GameEvent, 'id' | 'effect'>[] = [
 export interface GameActions {
   // Navigation
   setScreen: (screen: GameScreen) => void;
+  setPhase: (phase: GamePhase) => void;
   
   // Game Control
   gameTick: () => void;
@@ -578,6 +591,9 @@ export interface GameActions {
   
   // Project
   startProject: (idea: string) => void;
+  
+  // Ideation Phase
+  completeIdeation: () => void; // Called when PM finishes breaking down vision
   
   // Team
   hireEmployee: (role: EmployeeRole, aiProvider?: AIProvider, aiModel?: string) => void;

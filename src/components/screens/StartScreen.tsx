@@ -50,8 +50,8 @@ export function StartScreen() {
     e?.preventDefault();
     if (idea.trim().length >= 10) {
       startProject(idea.trim());
-      // Navigate to the game after starting the project
-      navigate('/');
+      // Navigate to onboarding flow (hire PM first)
+      navigate('/play/onboarding');
     }
   };
 

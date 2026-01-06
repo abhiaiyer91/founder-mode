@@ -1,0 +1,344 @@
+/* Hire Engineer Screen - Second gate after ideation */
+
+.hire-engineer-screen {
+  min-height: 100vh;
+  background: #050508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hire-engineer-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.step-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  color: #52525b;
+}
+
+.step.completed .step-icon {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+}
+
+.step.active .step-icon {
+  background: #00ff88;
+  border-color: #00ff88;
+  color: #000;
+}
+
+.step-label {
+  font-size: 11px;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step.completed .step-label,
+.step.active .step-label {
+  color: #a1a1aa;
+}
+
+.step-line {
+  width: 40px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 12px;
+  margin-bottom: 20px;
+}
+
+.step-line.completed {
+  background: rgba(0, 255, 136, 0.3);
+}
+
+/* Main Content */
+.hire-engineer-content {
+  text-align: center;
+}
+
+.hire-engineer-content h1 {
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.hire-engineer-content .subtitle {
+  margin: 0 0 32px 0;
+  font-size: 15px;
+  color: #71717a;
+  line-height: 1.6;
+}
+
+/* Engineer Card */
+.engineer-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.engineer-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 14px;
+  font-size: 24px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.engineer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.engineer-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.engineer-info p {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+.engineer-details {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.engineer-salary {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.engineer-budget {
+  font-size: 13px;
+  color: #52525b;
+}
+
+.hire-engineer-btn {
+  padding: 14px 28px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.hire-engineer-btn:hover:not(.disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.hire-engineer-btn.disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #52525b;
+  cursor: not-allowed;
+}
+
+/* Task Preview */
+.task-preview {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-count {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: 4px;
+  color: #00ff88;
+}
+
+.preview-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-dot {
+  width: 6px;
+  height: 6px;
+  background: #00ff88;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-title {
+  font-size: 13px;
+  color: #a1a1aa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-more {
+  font-size: 12px;
+  color: #52525b;
+  margin-left: 16px;
+}
+
+/* Team Status */
+.team-status {
+  padding: 16px 20px;
+  background: rgba(0, 255, 136, 0.04);
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  border-radius: 10px;
+}
+
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #00ff88;
+}
+
+.member-name {
+  flex: 1;
+  font-size: 14px;
+  color: #e4e4e7;
+}
+
+.member-status {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.member-status.ready {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+/* Modal styles inherit from HireScreen.css */
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hire-engineer-screen {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .progress-steps {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .step-line {
+    display: none;
+  }
+
+  .hire-engineer-content h1 {
+    font-size: 22px;
+  }
+
+  .engineer-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .engineer-icon {
+    margin: 0 auto;
+  }
+
+  .engineer-details {
+    justify-content: center;
+  }
+
+  .hire-engineer-btn {
+    width: 100%;
+  }
+}

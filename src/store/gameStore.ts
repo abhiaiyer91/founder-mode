@@ -12,6 +12,7 @@ import type {
   GameState,
   GameActions,
   GameScreen,
+  GamePhase,
   Employee,
   EmployeeRole,
   Task,
@@ -92,6 +93,7 @@ function generateEmployeeName(): string {
 // Initial game state
 const initialState: GameState = {
   screen: 'landing', // Start with landing page for new users
+  phase: 'new', // New game, no project yet
   tick: 0,
   startedAt: new Date(),
   money: 100000, // Start with $100k
@@ -196,6 +198,25 @@ export const useGameStore = create<GameState & GameActions>()(
 
       // Navigation
       setScreen: (screen: GameScreen) => set({ screen }),
+      
+      setPhase: (phase: GamePhase) => {
+        set({ phase });
+        // Auto-navigate to appropriate screen based on phase
+        switch (phase) {
+          case 'hire_pm':
+            set({ screen: 'hire_pm' });
+            break;
+          case 'ideate':
+            set({ screen: 'ideate' });
+            break;
+          case 'hire_engineer':
+            set({ screen: 'hire_engineer' });
+            break;
+          case 'playing':
+            set({ screen: 'rts' });
+            break;
+        }
+      },
 
   // Game Control
   togglePause: () => {
@@ -308,8 +329,9 @@ export const useGameStore = create<GameState & GameActions>()(
         createdAt: tick,
       },
       gitRepo: gitRepo as unknown as GitRepo,
-      screen: 'rts', // Go to isometric RTS view (Civ/Warcraft style)
-      isPaused: false, // Start the game running
+      screen: 'hire_pm', // First gate: hire a PM
+      phase: 'hire_pm', // Set phase to hire_pm
+      isPaused: true, // Paused until we have a team
     });
     
     // Save project to projects list for easy access later
@@ -406,6 +428,19 @@ export const useGameStore = create<GameState & GameActions>()(
       type: 'hire',
       employeeId: newEmployee.id,
     });
+    
+    // Handle phase transitions based on hiring
+    const currentPhase = get().phase;
+    if (currentPhase === 'hire_pm' && role === 'pm') {
+      // PM hired! Move to ideation phase
+      get().setPhase('ideate');
+      get().addNotification('🎯 Great! Now let\'s break down your vision with your PM.', 'info');
+    } else if (currentPhase === 'hire_engineer' && role === 'engineer') {
+      // Engineer hired! Move to playing phase
+      get().setPhase('playing');
+      get().addNotification('🚀 Your team is ready! Let\'s start building.', 'success');
+      set({ isPaused: false }); // Start the game
+    }
   },
 
   fireEmployee: (id: string) => {
@@ -760,6 +795,26 @@ export const useGameStore = create<GameState & GameActions>()(
     }
 
     get().addNotification(`${eventDef.title}: ${eventDef.description}`, 'info');
+  },
+
+  // Complete Ideation Phase - move to hiring engineer
+  completeIdeation: () => {
+    const state = get();
+    if (state.phase !== 'ideate') return;
+    
+    // Check if we have at least some tasks
+    if (state.tasks.length === 0) {
+      get().addNotification('⚠️ Add at least one task before continuing', 'warning');
+      return;
+    }
+    
+    get().setPhase('hire_engineer');
+    get().addNotification('📋 Vision breakdown complete! Now hire an engineer to start building.', 'success');
+    get().logActivity({
+      tick: state.tick,
+      message: 'Ideation phase complete - ready to build!',
+      type: 'system',
+    });
   },
 
   // PM Task Generation
@@ -2832,6 +2887,7 @@ export const useGameStore = create<GameState & GameActions>()(
       // Only persist game state, not UI state
       partialize: (state) => ({
         tick: state.tick,
+        phase: state.phase, // Persist game phase
         money: state.money,
         runway: state.runway,
         project: state.project,
@@ -2875,13 +2931,34 @@ export const useGameStore = create<GameState & GameActions>()(
       // Rehydrate with default UI state
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Reset UI state on load
-          state.screen = state.project ? 'rts' : 'landing'; // Show landing for new users
+          // Set screen based on game phase
+          if (!state.project) {
+            state.screen = 'landing';
+            state.phase = 'new';
+          } else {
+            // Determine screen from phase
+            switch (state.phase) {
+              case 'hire_pm':
+                state.screen = 'hire_pm';
+                break;
+              case 'ideate':
+                state.screen = 'ideate';
+                break;
+              case 'hire_engineer':
+                state.screen = 'hire_engineer';
+                break;
+              case 'playing':
+              default:
+                state.screen = 'rts';
+                state.phase = 'playing'; // Ensure we have a valid phase
+                break;
+            }
+          }
           state.selectedEmployeeId = null;
           state.selectedEmployeeIds = [];
           state.selectedTaskId = null;
           state.notifications = [];
-          state.isPaused = true;
+          state.isPaused = state.phase !== 'playing'; // Only run in playing phase
           state.showCommandPalette = false;
           
           // Rehydrate gitRepo.files as Map
