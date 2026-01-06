@@ -1,11 +1,11 @@
 /**
- * Team Screen - Clean team management view
+ * Team Screen - Clean team management view with prompt editing
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../../store/gameStore';
-import { calculateProductivity } from '../../types';
+import { calculateProductivity, ROLE_BASE_PROMPTS } from '../../types';
 import type { Employee } from '../../types';
 import './TeamScreen.css';
 
@@ -18,20 +18,118 @@ function formatMoney(amount: number): string {
 }
 
 const roleIcons: Record<string, string> = {
-  engineer: '◆',
-  designer: '◇',
-  pm: '◈',
-  marketer: '◎',
+  engineer: '\u25C6',
+  designer: '\u25C7',
+  pm: '\u25C8',
 };
+
+function PromptEditorModal({ 
+  employee, 
+  onClose 
+}: { 
+  employee: Employee; 
+  onClose: () => void;
+}) {
+  const { updateEmployeePrompt } = useGameStore();
+  // Fallback to ROLE_BASE_PROMPTS for legacy employees without systemPrompt
+  const [systemPrompt, setSystemPrompt] = useState(
+    employee.systemPrompt || ROLE_BASE_PROMPTS[employee.role]
+  );
+  const [customPrompt, setCustomPrompt] = useState(employee.customPrompt || '');
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleSystemPromptChange = (value: string) => {
+    setSystemPrompt(value);
+    setHasChanges(true);
+  };
+
+  const handleCustomPromptChange = (value: string) => {
+    setCustomPrompt(value);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    updateEmployeePrompt(employee.id, systemPrompt, customPrompt);
+    setHasChanges(false);
+    onClose();
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="modal prompt-editor-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Configure {employee.name}'s AI</h2>
+          <button className="close-btn" onClick={onClose}>x</button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="prompt-section">
+            <label>System Prompt (Archetype Behavior)</label>
+            <p className="prompt-hint">
+              This defines the base personality and behavior. Edit with caution.
+            </p>
+            <textarea
+              className="system-prompt-textarea"
+              value={systemPrompt}
+              onChange={(e) => handleSystemPromptChange(e.target.value)}
+              rows={10}
+            />
+          </div>
+
+          <div className="prompt-section">
+            <label>Custom Instructions</label>
+            <p className="prompt-hint">
+              Additional instructions appended to the system prompt.
+            </p>
+            <textarea
+              className="custom-prompt-textarea"
+              value={customPrompt}
+              onChange={(e) => handleCustomPromptChange(e.target.value)}
+              placeholder="Add custom instructions for this employee...
+
+Examples:
+- Always add detailed comments
+- Prefer functional programming patterns
+- Focus on mobile-first design
+- Use specific naming conventions"
+              rows={6}
+            />
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="cancel-btn" onClick={onClose}>
+            Cancel
+          </button>
+          <button 
+            className="confirm-btn" 
+            onClick={handleSave}
+            disabled={!hasChanges}
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function EmployeeCard({ 
   employee, 
   onSelect,
   onFire,
+  onEditPrompt,
 }: { 
   employee: Employee; 
   onSelect: () => void;
   onFire: () => void;
+  onEditPrompt: () => void;
 }) {
   const task = useGameStore(state => 
     state.tasks.find(t => t.id === employee.currentTaskId)
@@ -85,6 +183,26 @@ function EmployeeCard({
         </div>
       </div>
 
+      {/* AI Configuration Preview */}
+      <div className="ai-config-preview">
+        <div className="ai-config-header">
+          <span className="config-label">AI Config</span>
+          <button 
+            className="edit-prompt-btn" 
+            onClick={(e) => { e.stopPropagation(); onEditPrompt(); }}
+          >
+            Edit Prompts
+          </button>
+        </div>
+        {employee.customPrompt ? (
+          <p className="custom-prompt-snippet">
+            {employee.customPrompt.slice(0, 60)}{employee.customPrompt.length > 60 ? '...' : ''}
+          </p>
+        ) : (
+          <p className="no-custom-prompt">Using default archetype</p>
+        )}
+      </div>
+
       <div className="card-footer">
         <span className="salary">{formatMoney(employee.salary)}/mo</span>
         <button 
@@ -102,6 +220,7 @@ export function TeamScreen() {
   const navigate = useNavigate();
   const { employees, fireEmployee } = useGameStore();
   const [confirmFire, setConfirmFire] = useState<Employee | null>(null);
+  const [editingPrompt, setEditingPrompt] = useState<Employee | null>(null);
 
   const handleConfirmFire = () => {
     if (confirmFire) {
@@ -118,13 +237,13 @@ export function TeamScreen() {
 
   return (
     <div className="team-screen">
-      {/* Confirm Modal */}
+      {/* Confirm Fire Modal */}
       {confirmFire && (
         <div className="modal-overlay" onClick={() => setConfirmFire(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Remove Team Member</h2>
-              <button className="close-btn" onClick={() => setConfirmFire(null)}>×</button>
+              <button className="close-btn" onClick={() => setConfirmFire(null)}>x</button>
             </div>
             <div className="modal-body">
               <p>Are you sure you want to remove <strong>{confirmFire.name}</strong> from your team?</p>
@@ -139,6 +258,14 @@ export function TeamScreen() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Prompt Editor Modal */}
+      {editingPrompt && (
+        <PromptEditorModal
+          employee={editingPrompt}
+          onClose={() => setEditingPrompt(null)}
+        />
       )}
 
       <div className="team-container">
@@ -186,6 +313,7 @@ export function TeamScreen() {
                 employee={emp}
                 onSelect={() => {}}
                 onFire={() => setConfirmFire(emp)}
+                onEditPrompt={() => setEditingPrompt(emp)}
               />
             ))}
           </div>
