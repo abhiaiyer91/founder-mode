@@ -1,5 +1,3 @@
-import OpenAI from 'openai';
-import { getAgent } from './agents';
 import { mastraClient } from './mastra-client';
 import type { Task, TaskType, TaskPriority } from '../../types';
 
@@ -8,66 +6,52 @@ import type { Task, TaskType, TaskPriority } from '../../types';
  * 
  * This service provides a unified interface that:
  * 1. Uses the Mastra server when available (full power!)
- * 2. Falls back to direct OpenAI when server is unavailable but API key is set
- * 3. Uses simulation mode when neither is available
+ * 2. Falls back to simulation mode when server is unavailable
+ * 
+ * All AI calls go through Mastra - no direct OpenAI client usage.
  */
 export class AIService {
-  private client: OpenAI | null = null;
-  private _apiKey: string | null = null;
   private enabled: boolean = false;
   private model: string = 'gpt-4o-mini';
-  private useMastraServer: boolean = false;
 
   /**
    * Initialize the AI service
-   * Checks for Mastra server first, then falls back to OpenAI
+   * Checks for Mastra server connection
    */
-  async initialize(): Promise<{ mode: 'mastra' | 'openai' | 'simulation' }> {
-    // Try to connect to Mastra server first
+  async initialize(): Promise<{ mode: 'mastra' | 'simulation' }> {
     const mastraConnected = await mastraClient.checkHealth();
     
     if (mastraConnected) {
-      this.useMastraServer = true;
       this.enabled = true;
       console.log('🤖 Connected to Mastra server');
       return { mode: 'mastra' };
     }
     
-    // Fall back to OpenAI if API key is set
-    if (this._apiKey && this.client) {
-      this.useMastraServer = false;
-      this.enabled = true;
-      return { mode: 'openai' };
-    }
-    
+    this.enabled = false;
     return { mode: 'simulation' };
   }
 
   /**
-   * Configure with OpenAI API key (fallback mode)
-   */
-  configure(apiKey: string, model: string = 'gpt-4o-mini') {
-    this._apiKey = apiKey;
-    this.model = model;
-    this.client = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true,
-    });
-    this.enabled = true;
-  }
-
-  /**
-   * Check if AI is enabled
+   * Check if AI is enabled (Mastra server connected)
    */
   isEnabled(): boolean {
-    return this.enabled;
+    return this.enabled && mastraClient.isConnected();
   }
 
   /**
    * Check if using Mastra server
    */
   isMastraMode(): boolean {
-    return this.useMastraServer && mastraClient.isConnected();
+    return mastraClient.isConnected();
+  }
+
+  /**
+   * Enable AI (when Mastra server is available)
+   */
+  enable() {
+    if (mastraClient.isConnected()) {
+      this.enabled = true;
+    }
   }
 
   /**
@@ -75,7 +59,13 @@ export class AIService {
    */
   disable() {
     this.enabled = false;
-    this.client = null;
+  }
+
+  /**
+   * Set the model (for display purposes - actual model is controlled by Mastra server)
+   */
+  setModel(model: string) {
+    this.model = model;
   }
 
   /**
@@ -86,14 +76,6 @@ export class AIService {
   }
 
   /**
-   * Get masked API key for display
-   */
-  getMaskedApiKey(): string | null {
-    if (!this._apiKey) return null;
-    return `****${this._apiKey.slice(-4)}`;
-  }
-
-  /**
    * Have an engineer work on a coding task
    */
   async engineerWorkOnTask(task: Task, projectContext: string): Promise<{
@@ -101,7 +83,7 @@ export class AIService {
     files: { path: string; content: string }[];
     explanation: string;
   }> {
-    // Try Mastra server first
+    // Use Mastra server
     if (this.isMastraMode()) {
       try {
         const result = await mastraClient.engineerWork(task, projectContext);
@@ -117,41 +99,12 @@ export class AIService {
           explanation: `Mastra agent completed: ${task.title}`,
         };
       } catch (error) {
-        console.warn('Mastra engineer failed, falling back:', error);
+        console.warn('Mastra engineer failed, falling back to simulation:', error);
       }
     }
 
-    // Fall back to direct OpenAI
-    if (!this.enabled || !this.client) {
-      return this.simulateEngineerWork(task);
-    }
-
-    try {
-      const agent = getAgent('engineer');
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: 'system', content: agent.systemPrompt },
-          {
-            role: 'user',
-            content: `Work on this task: "${task.title}"\n\nType: ${task.type}\nDescription: ${task.description || 'No description'}\n\nProject: ${projectContext}`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
-
-      const code = response.choices[0]?.message?.content || '';
-      
-      return {
-        code,
-        files: [{ path: `src/components/${task.title.replace(/\s+/g, '')}.tsx`, content: code }],
-        explanation: `AI completed: ${task.title}`,
-      };
-    } catch (error) {
-      console.error('AI Engineer error:', error);
-      return this.simulateEngineerWork(task);
-    }
+    // Fall back to simulation
+    return this.simulateEngineerWork(task);
   }
 
   /**
@@ -168,7 +121,7 @@ export class AIService {
     priority: TaskPriority;
     estimatedTicks: number;
   }[]> {
-    // Try Mastra server first
+    // Use Mastra server
     if (this.isMastraMode()) {
       try {
         const result = await mastraClient.pmBreakdown(projectIdea, existingTasks, teamSize);
@@ -185,49 +138,12 @@ export class AIService {
           }));
         }
       } catch (error) {
-        console.warn('Mastra PM failed, falling back:', error);
+        console.warn('Mastra PM failed, falling back to simulation:', error);
       }
     }
 
-    // Fall back to direct OpenAI
-    if (!this.enabled || !this.client) {
-      return this.simulatePMTasks(projectIdea, existingTasks);
-    }
-
-    try {
-      const agent = getAgent('pm');
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          { role: 'system', content: agent.systemPrompt },
-          {
-            role: 'user',
-            content: `Break down: "${projectIdea}"\n\nTeam: ${teamSize.engineers} engineers, ${teamSize.designers} designers, ${teamSize.marketers} marketers\n\nExisting: ${existingTasks.join(', ') || 'None'}`,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-      });
-
-      const content = response.choices[0]?.message?.content || '[]';
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      
-      if (jsonMatch) {
-        const tasks = JSON.parse(jsonMatch[0]);
-        return tasks.map((t: { title: string; description: string; type: TaskType; priority: TaskPriority; estimatedHours?: number }) => ({
-          title: t.title,
-          description: t.description || '',
-          type: t.type || 'feature',
-          priority: t.priority || 'medium',
-          estimatedTicks: ((t.estimatedHours || 4) * 15),
-        }));
-      }
-      
-      return this.simulatePMTasks(projectIdea, existingTasks);
-    } catch (error) {
-      console.error('AI PM error:', error);
-      return this.simulatePMTasks(projectIdea, existingTasks);
-    }
+    // Fall back to simulation
+    return this.simulatePMTasks(projectIdea, existingTasks);
   }
 
   /**
@@ -237,7 +153,7 @@ export class AIService {
     css: string;
     description: string;
   }> {
-    // Try Mastra server first
+    // Use Mastra server
     if (this.isMastraMode()) {
       try {
         const result = await mastraClient.designerCreate(componentName, 'custom', purpose);
@@ -248,7 +164,7 @@ export class AIService {
           description: `Mastra designed: ${componentName}`,
         };
       } catch (error) {
-        console.warn('Mastra designer failed, falling back:', error);
+        console.warn('Mastra designer failed, falling back to simulation:', error);
       }
     }
 
@@ -268,7 +184,7 @@ export class AIService {
     content: string;
     cta: string;
   }> {
-    // Try Mastra server first
+    // Use Mastra server
     if (this.isMastraMode()) {
       try {
         const result = await mastraClient.marketerCreate(contentType, productName, productDescription);
@@ -288,7 +204,7 @@ export class AIService {
           cta: 'Get Started',
         };
       } catch (error) {
-        console.warn('Mastra marketer failed, falling back:', error);
+        console.warn('Mastra marketer failed, falling back to simulation:', error);
       }
     }
 

@@ -1,15 +1,21 @@
+/**
+ * Auth Screen - Login / Signup
+ * 
+ * Clean, modern design matching the landing page aesthetic
+ */
+
 import { useState } from 'react';
-import { Terminal, Box, Input } from '../tui';
+import { Link } from 'react-router-dom';
 import { signIn, signUp } from '../../lib/auth';
 import './AuthScreen.css';
 
 interface AuthScreenProps {
+  mode?: 'login' | 'signup';
   onSuccess: () => void;
   onSkip: () => void;
 }
 
-export function AuthScreen({ onSuccess, onSkip }: AuthScreenProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+export function AuthScreen({ mode = 'login', onSuccess, onSkip }: AuthScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -53,105 +59,107 @@ export function AuthScreen({ onSuccess, onSkip }: AuthScreenProps) {
     }
   };
 
-  return (
-    <Terminal title="FOUNDER MODE - AUTHENTICATION" showControls>
-      <div className="auth-screen">
-        <div className="auth-logo">
-          <pre className="ascii-logo">{`
-  ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ███████╗██████╗ 
-  ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔════╝██╔══██╗
-  █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║█████╗  ██████╔╝
-  ██╔══╝  ██║   ██║██║   ██║██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗
-  ██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝███████╗██║  ██║
-  ╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝
-          `}</pre>
-          <div className="tagline">Build a real startup. Ship real code.</div>
-        </div>
+  const isValid = email && password && (mode === 'login' || name);
 
-        <Box title={mode === 'login' ? '🔐 LOGIN' : '📝 CREATE ACCOUNT'} className="auth-box">
-          <form onSubmit={handleSubmit}>
+  return (
+    <div className="auth-screen">
+      {/* Header */}
+      <header className="auth-header">
+        <Link to="/" className="nav-logo">
+          <span className="logo-icon">⌘</span>
+          <span className="logo-text">Founder Mode</span>
+        </Link>
+      </header>
+
+      {/* Main Content */}
+      <main className="auth-main">
+        <div className="auth-content">
+          <div className="auth-badge">
+            {mode === 'login' ? 'Welcome Back' : 'Get Started'}
+          </div>
+          
+          <h1>{mode === 'login' ? 'Log in to your account' : 'Create your account'}</h1>
+          <p className="auth-subtitle">
+            {mode === 'login' 
+              ? 'Continue building your startup' 
+              : 'Start building real products with AI'}
+          </p>
+
+          <form onSubmit={handleSubmit} className="auth-form">
             {mode === 'signup' && (
               <div className="form-field">
-                <label>Founder Name</label>
-                <Input
+                <label>Name</label>
+                <input
+                  type="text"
                   value={name}
-                  onChange={setName}
-                  placeholder="Enter your name"
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Your name"
+                  autoFocus
                 />
               </div>
             )}
             
             <div className="form-field">
               <label>Email</label>
-              <Input
+              <input
+                type="email"
                 value={email}
-                onChange={setEmail}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="founder@startup.com"
+                autoFocus={mode === 'login'}
               />
             </div>
             
             <div className="form-field">
               <label>Password</label>
-              <Input
+              <input
+                type="password"
                 value={password}
-                onChange={setPassword}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                // Note: Input component would need type="password" support
               />
             </div>
 
             {error && (
               <div className="auth-error">
-                ⚠️ {error}
+                {error}
               </div>
             )}
 
-            <div className="auth-actions">
-              <button 
-                type="submit" 
-                className="auth-btn primary"
-                disabled={loading || !email || !password}
-              >
-                {loading ? 'Loading...' : mode === 'login' ? '🚀 Login' : '🚀 Create Account'}
-              </button>
-            </div>
+            <button 
+              type="submit" 
+              className={`auth-btn ${isValid ? 'active' : ''}`}
+              disabled={loading || !isValid}
+            >
+              {loading ? 'Loading...' : mode === 'login' ? 'Log In →' : 'Create Account →'}
+            </button>
           </form>
 
           <div className="auth-toggle">
             {mode === 'login' ? (
               <>
-                New founder?{' '}
-                <button className="link-btn" onClick={() => setMode('signup')}>
-                  Create account
-                </button>
+                Don't have an account?{' '}
+                <Link to="/signup">Sign up</Link>
               </>
             ) : (
               <>
                 Already have an account?{' '}
-                <button className="link-btn" onClick={() => setMode('login')}>
-                  Login
-                </button>
+                <Link to="/login">Log in</Link>
               </>
             )}
           </div>
-        </Box>
 
-        <div className="auth-skip">
+          <div className="auth-divider">
+            <span>or</span>
+          </div>
+
           <button className="skip-btn" onClick={onSkip}>
-            Skip for now → Play as guest
+            Continue as guest
           </button>
-          <p className="skip-note">
-            Guest progress is saved locally only
-          </p>
+          <p className="skip-note">Guest progress is saved locally only</p>
         </div>
-
-        <div className="auth-features">
-          <div className="feature">☁️ Cloud saves</div>
-          <div className="feature">📊 Leaderboards</div>
-          <div className="feature">🤝 Multiplayer</div>
-        </div>
-      </div>
-    </Terminal>
+      </main>
+    </div>
   );
 }
 

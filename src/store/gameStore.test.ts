@@ -17,7 +17,6 @@ import { useGameStore } from './gameStore';
 function resetStore() {
   useGameStore.setState({
     screen: 'start',
-    gameSpeed: 'paused',
     tick: 0,
     startedAt: new Date(),
     money: 100000,
@@ -258,7 +257,7 @@ describe('Game Store', () => {
 
   describe('Game Tick', () => {
     it('should increment tick counter when not paused', () => {
-      useGameStore.setState({ gameSpeed: 'normal' }); // Must not be paused
+      useGameStore.setState({ isPaused: false }); // Must not be paused
       const initialTick = useGameStore.getState().tick;
       
       useGameStore.getState().gameTick();
@@ -267,7 +266,7 @@ describe('Game Store', () => {
     });
 
     it('should NOT increment tick when paused', () => {
-      useGameStore.setState({ gameSpeed: 'paused' });
+      useGameStore.setState({ isPaused: true });
       const initialTick = useGameStore.getState().tick;
       
       useGameStore.getState().gameTick();
@@ -276,7 +275,7 @@ describe('Game Store', () => {
     });
 
     it('should progress task when employee is working', () => {
-      useGameStore.setState({ gameSpeed: 'normal' }); // Must not be paused
+      useGameStore.setState({ isPaused: false }); // Must not be paused
       const store = useGameStore.getState();
       store.hireEmployee('engineer', 'mid');
       store.createTask({
@@ -303,7 +302,7 @@ describe('Game Store', () => {
     });
 
     it('should complete task when progress reaches estimated ticks', () => {
-      useGameStore.setState({ gameSpeed: 'normal' }); // Must not be paused
+      useGameStore.setState({ isPaused: false }); // Must not be paused
       const store = useGameStore.getState();
       store.hireEmployee('engineer', 'lead'); // Higher productivity
       store.createTask({
@@ -399,23 +398,16 @@ describe('Game Store', () => {
     });
   });
 
-  describe('Game Speed', () => {
-    it('should change game speed', () => {
-      const store = useGameStore.getState();
-      store.setGameSpeed('fast');
-      
-      expect(useGameStore.getState().gameSpeed).toBe('fast');
-    });
-
+  describe('Pause Toggle', () => {
     it('should toggle pause', () => {
       const store = useGameStore.getState();
-      store.setGameSpeed('normal');
-      store.togglePause();
-      
-      expect(useGameStore.getState().gameSpeed).toBe('paused');
+      useGameStore.setState({ isPaused: false });
       
       store.togglePause();
-      expect(useGameStore.getState().gameSpeed).toBe('normal');
+      expect(useGameStore.getState().isPaused).toBe(true);
+      
+      store.togglePause();
+      expect(useGameStore.getState().isPaused).toBe(false);
     });
   });
 

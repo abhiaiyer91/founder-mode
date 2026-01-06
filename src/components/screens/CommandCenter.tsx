@@ -53,8 +53,7 @@ function EmployeeUnit({
         )}
       </div>
       <div className="unit-stats">
-        <span className="stat" title="Productivity">⚡{employee.productivity}</span>
-        <span className="stat" title="Morale">😊{employee.morale}</span>
+        <span className="stat" title="Tasks Completed">✓{employee.tasksCompleted}</span>
       </div>
     </div>
   );
@@ -194,13 +193,12 @@ function ProjectMinimap() {
 function CommandBar() {
   const { 
     selectedEmployeeIds, 
-    gameSpeed, 
+    isPaused, 
     money, 
     tick,
     employees,
     tasks,
     togglePause,
-    setGameSpeed,
     selectAllIdle,
     boostMorale,
     pmGenerateTask,
@@ -248,34 +246,13 @@ function CommandBar() {
         </button>
       </div>
       
-      <div className="command-section speed">
+      <div className="command-section pause">
         <button 
-          className={`speed-btn ${gameSpeed === 'paused' ? 'active' : ''}`}
+          className={`pause-btn ${isPaused ? 'paused' : ''}`}
           onClick={togglePause}
           title="Pause [Space]"
         >
-          ⏸
-        </button>
-        <button 
-          className={`speed-btn ${gameSpeed === 'normal' ? 'active' : ''}`}
-          onClick={() => setGameSpeed('normal')}
-          title="Normal speed [1]"
-        >
-          ▶
-        </button>
-        <button 
-          className={`speed-btn ${gameSpeed === 'fast' ? 'active' : ''}`}
-          onClick={() => setGameSpeed('fast')}
-          title="Fast [2]"
-        >
-          ▶▶
-        </button>
-        <button 
-          className={`speed-btn ${gameSpeed === 'turbo' ? 'active' : ''}`}
-          onClick={() => setGameSpeed('turbo')}
-          title="Turbo [3]"
-        >
-          ▶▶▶
+          {isPaused ? '▶ Play' : '❚❚ Pause'}
         </button>
       </div>
     </div>
@@ -289,7 +266,7 @@ export function CommandCenter() {
     tasks, 
     selectedEmployeeIds, 
     selectedTaskId,
-    gameSpeed,
+    isPaused,
     selectEmployee,
     addToSelection,
     selectTask,
@@ -297,7 +274,6 @@ export function CommandCenter() {
     updateTaskStatus,
     setScreen,
     togglePause,
-    setGameSpeed,
     selectAllIdle,
   } = useGameStore();
   
@@ -310,15 +286,6 @@ export function CommandCenter() {
       case ' ':
         e.preventDefault();
         togglePause();
-        break;
-      case '1':
-        setGameSpeed('normal');
-        break;
-      case '2':
-        setGameSpeed('fast');
-        break;
-      case '3':
-        setGameSpeed('turbo');
         break;
       case 'i':
         selectAllIdle();
@@ -334,7 +301,7 @@ export function CommandCenter() {
         selectTask(null);
         break;
     }
-  }, [togglePause, setGameSpeed, selectAllIdle, setScreen, selectEmployee, selectTask]);
+  }, [togglePause, selectAllIdle, setScreen, selectEmployee, selectTask]);
   
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -369,13 +336,13 @@ export function CommandCenter() {
   };
 
   return (
-    <div className={`command-center ${gameSpeed === 'paused' ? 'paused' : ''}`}>
+    <div className={`command-center ${isPaused ? 'paused' : ''}`}>
       {/* Top Bar */}
       <div className="cc-topbar">
         <div className="cc-title">
           <span className="title-icon">🏢</span>
           <span className="title-text">Command Center</span>
-          {gameSpeed === 'paused' && <span className="paused-badge">PAUSED</span>}
+          {isPaused && <span className="paused-badge">PAUSED</span>}
         </div>
         <div className="cc-nav">
           <button className="nav-btn active">🎮 Command</button>
@@ -488,7 +455,6 @@ export function CommandCenter() {
       {/* Keyboard shortcuts hint */}
       <div className="shortcuts-hint">
         <span>[Space] Pause</span>
-        <span>[1-3] Speed</span>
         <span>[I] Select Idle</span>
         <span>[H] Hire</span>
         <span>[Esc] Deselect</span>

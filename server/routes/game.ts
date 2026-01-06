@@ -196,19 +196,19 @@ router.post('/sync', async (req, res) => {
     
     if (gameState.employees?.length > 0) {
       await db.insert(employees).values(
-        gameState.employees.map((emp: { id: string; name: string; role: string; skillLevel: string; status: string; avatarEmoji: string; salary: number; productivity: number; morale: number; currentTaskId: string | null; hiredAt: number }) => ({
+        gameState.employees.map((emp: { id: string; name: string; role: string; status: string; avatarEmoji: string; salary: number; currentTaskId: string | null; hiredAt: number; tasksCompleted: number; totalTicksWorked: number }) => ({
           gameSaveId: save.id,
           empId: emp.id,
           name: emp.name,
           role: emp.role,
-          skillLevel: emp.skillLevel,
+          skillLevel: 'mid', // Default for backwards compatibility
           status: emp.status,
           avatarEmoji: emp.avatarEmoji,
           salary: emp.salary,
-          productivity: emp.productivity,
-          morale: emp.morale,
           currentTaskId: emp.currentTaskId,
           hiredAt: emp.hiredAt,
+          tasksCompleted: emp.tasksCompleted || 0,
+          totalTicksWorked: emp.totalTicksWorked || 0,
         }))
       );
     }
@@ -278,14 +278,13 @@ router.get('/sync/:saveId', async (req, res) => {
         id: emp.empId,
         name: emp.name,
         role: emp.role,
-        skillLevel: emp.skillLevel,
         status: emp.status,
         avatarEmoji: emp.avatarEmoji,
         salary: emp.salary,
-        productivity: emp.productivity,
-        morale: emp.morale,
         currentTaskId: emp.currentTaskId,
         hiredAt: emp.hiredAt,
+        tasksCompleted: emp.tasksCompleted,
+        totalTicksWorked: emp.totalTicksWorked,
       })),
       tasks: save.tasks.map(task => ({
         id: task.taskId,

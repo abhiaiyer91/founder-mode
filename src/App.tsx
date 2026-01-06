@@ -1,108 +1,97 @@
 import { useEffect, useCallback, useState } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useGameStore } from './store/gameStore';
 import { 
   LandingPage,
   AuthScreen,
-  StartScreen, 
-  RTSView,
-  CampusScreen,
-  DashboardScreen,
-  CommandCenter,
-  TaskQueueScreen,
-  MissionsScreen,
-  ArtifactsScreen,
-  PreviewScreen,
-  TechTreeScreen,
-  AchievementsScreen,
-  OfficeScreen, 
+  StartScreen,
+  ProjectsScreen,
   HireScreen, 
   TasksScreen,
   TeamScreen,
-  CodeScreen,
+  ArtifactsScreen,
+  PreviewScreen,
   SettingsScreen 
 } from './components/screens';
-import { StatusBar } from './components/StatusBar';
-import { RTSTopBar } from './components/RTSTopBar';
-import { EventPanel } from './components/EventPanel';
-import { FloatingResources } from './components/FloatingResources';
-import { MobileNav } from './components/MobileNav';
-import { OnboardingTutorial } from './components/OnboardingTutorial';
+import { GameLayout } from './components/GameLayout';
 import { useSession } from './lib/auth';
-import { getApiKey } from './lib/storage/secureStorage';
-import type { GameScreen, GameSpeed } from './types';
+import { getApiKey, saveApiKey } from './lib/storage/secureStorage';
 import './App.css';
 
-function App() {
-  const { 
-    screen, 
-    gameSpeed, 
-    setScreen, 
-    setGameSpeed,
-    gameTick,
-    processQueue,
-    triggerRandomEvent,
-    checkAchievements,
-    triggerEvent,
-    updatePlayTime,
-    runAutopilot,
-    runPMEvaluation,
-    tick,
-    project,
-    selectedEmployeeIds,
-    setControlGroup,
-    selectControlGroup,
-    autopilot,
-    focusMode,
-    eventsEnabled,
-    pmBrain,
-  } = useGameStore();
-  
-  // Auth state
-  const { data: session, isPending: authLoading } = useSession();
-  const [isGuest, setIsGuest] = useState(false);
-  
-  // Check if user should see auth screen
-  const needsAuth = !session && !isGuest && !authLoading;
-  
-  // Get configureAI for restoring saved key
-  const { configureAI, aiSettings, processAIWorkQueue, aiWorkQueue } = useGameStore();
+/**
+ * Main App Component
+ * 
+ * Routes:
+ * - / : Landing page (marketing)
+ * - /login, /signup : Authentication
+ * - /start : Start a new project
+ * - /projects : List of saved projects
+ * - /play : Main game view (requires active project)
+ * - /play/hire : Hire employees
+ * - /play/tasks : Manage tasks
+ * - /play/team : View team
+ * - /play/code : View generated code
+ * - /play/preview : Live app preview
+ * - /play/settings : Game settings
+ */
 
-  // Restore saved API key on mount
+/**
+ * RequireProject - Route guard that redirects to /start if no project is active
+ * IMPORTANT: This must be defined OUTSIDE the App component to avoid remounting
+ */
+function RequireProject({ children }: { children: React.ReactNode }) {
+  const project = useGameStore(state => state.project);
+  
+  if (!project) {
+    return <Navigate to="/start" replace />;
+  }
+  return <>{children}</>;
+}
+
+/**
+ * GameLoop - Handles the game tick loop without causing App to re-render
+ * This is a "headless" component that only manages side effects
+ */
+function GameLoop() {
+  const isPaused = useGameStore(state => state.isPaused);
+  const project = useGameStore(state => state.project);
+  const autopilot = useGameStore(state => state.autopilot);
+  const focusMode = useGameStore(state => state.focusMode);
+  const eventsEnabled = useGameStore(state => state.eventsEnabled);
+  const pmBrain = useGameStore(state => state.pmBrain);
+  const tick = useGameStore(state => state.tick);
+  const aiSettings = useGameStore(state => state.aiSettings);
+  const aiWorkQueue = useGameStore(state => state.aiWorkQueue);
+  
+  const gameTick = useGameStore(state => state.gameTick);
+  const processQueue = useGameStore(state => state.processQueue);
+  const runAutopilot = useGameStore(state => state.runAutopilot);
+  const triggerRandomEvent = useGameStore(state => state.triggerRandomEvent);
+  const triggerEvent = useGameStore(state => state.triggerEvent);
+  const checkAchievements = useGameStore(state => state.checkAchievements);
+  const updatePlayTime = useGameStore(state => state.updatePlayTime);
+  const runPMEvaluation = useGameStore(state => state.runPMEvaluation);
+  const processAIWorkQueue = useGameStore(state => state.processAIWorkQueue);
+
+  // Game loop - runs at fixed speed when not paused
   useEffect(() => {
-    if (!aiSettings.enabled) {
-      const savedKey = getApiKey('openai');
-      if (savedKey) {
-        configureAI(savedKey);
-      }
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Game loop
-  useEffect(() => {
-    if (gameSpeed === 'paused') return;
-
-    const speeds = {
-      normal: 1000,
-      fast: 500,
-      turbo: 100,
-    };
+    if (isPaused || !project) return;
 
     const interval = setInterval(() => {
       gameTick();
-      processQueue(); // Process task queue every tick
+      processQueue();
       if (autopilot) {
-        runAutopilot(); // Run autopilot logic
+        runAutopilot();
       }
-    }, speeds[gameSpeed as keyof typeof speeds] || 1000);
+    }, 500);
 
     return () => clearInterval(interval);
-  }, [gameSpeed, gameTick, processQueue, autopilot, runAutopilot]);
+  }, [isPaused, gameTick, processQueue, autopilot, runAutopilot, project]);
 
-  // AI Work Queue processor (runs independently of game speed)
+  // AI Work Queue processor
   useEffect(() => {
     if (!aiSettings.enabled || aiWorkQueue.length === 0) return;
     
-    // Process AI work every 2 seconds (don't block on game tick)
     const interval = setInterval(() => {
       processAIWorkQueue();
     }, 2000);
@@ -110,13 +99,12 @@ function App() {
     return () => clearInterval(interval);
   }, [aiSettings.enabled, aiWorkQueue.length, processAIWorkQueue]);
 
-  // Random events (every ~5 minutes of game time / 300 ticks)
-  // Skip if events disabled or in focus mode
+  // Random events
   useEffect(() => {
     if (tick > 0 && tick % 300 === 0 && Math.random() > 0.5) {
       if (eventsEnabled && !focusMode) {
         triggerRandomEvent();
-        triggerEvent(); // New event system
+        triggerEvent();
       }
     }
   }, [tick, triggerRandomEvent, triggerEvent, eventsEnabled, focusMode]);
@@ -131,7 +119,6 @@ function App() {
   // PM Brain evaluation loop
   useEffect(() => {
     if (project && pmBrain.enabled && tick > 0) {
-      // Run evaluation at the configured interval
       if (tick - pmBrain.lastEvaluation >= pmBrain.evaluationInterval) {
         runPMEvaluation();
       }
@@ -148,7 +135,7 @@ function App() {
     return () => clearInterval(interval);
   }, [project, updatePlayTime]);
 
-  // Monthly payroll (every 1440 ticks = 1 day in-game)
+  // Monthly payroll
   useEffect(() => {
     if (tick > 0 && tick % 1440 === 0) {
       const state = useGameStore.getState();
@@ -157,89 +144,74 @@ function App() {
         useGameStore.setState({ 
           money: Math.max(0, state.money - monthlyBurn) 
         });
-        state.addNotification(`💸 Payday! -$${monthlyBurn.toLocaleString()} in salaries`, 'warning');
+        state.addNotification(`Payday! -$${monthlyBurn.toLocaleString()} in salaries`, 'warning');
       }
     }
   }, [tick]);
 
+  return null; // This component renders nothing
+}
+
+function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Only subscribe to what App actually needs for rendering/navigation
+  const project = useGameStore(state => state.project);
+  const togglePause = useGameStore(state => state.togglePause);
+  
+  // Auth state
+  const { data: session, isPending: authLoading } = useSession();
+  const [isGuest, setIsGuest] = useState(false);
+  
+  // Check if user is authenticated (session or guest)
+  const isAuthenticated = !!session || isGuest;
+  
+  // Get AI configuration
+  const configureAI = useGameStore(state => state.configureAI);
+  const aiSettings = useGameStore(state => state.aiSettings);
+
+  // Restore saved API key on mount
+  useEffect(() => {
+    const savedKey = getApiKey('openai');
+    if (savedKey && !aiSettings.enabled) {
+      configureAI();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Global keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Only handle if not typing in an input
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
       return;
     }
 
-    // Escape to go back
-    if (e.key === 'Escape') {
-      if (screen !== 'start' && screen !== 'office') {
-        setScreen('office');
-      }
+    if (!project) return;
+
+    // Pause toggle
+    if (e.key === ' ') {
+      e.preventDefault();
+      togglePause();
       return;
     }
 
-    // Speed controls (when in game)
-    if (project) {
-      // Control groups: Ctrl+1-9 to set, 1-9 to recall (when not setting speed)
-      const num = parseInt(e.key);
-      if (num >= 1 && num <= 9) {
-        if (e.ctrlKey || e.metaKey) {
-          // Set control group
-          e.preventDefault();
-          setControlGroup(num, selectedEmployeeIds);
-          return;
-        } else if (!e.shiftKey) {
-          // Check if we should use as speed or control group
-          // Use as speed only for 1-3, otherwise control group
-          if (num <= 3) {
-            const speedMap: Record<number, GameSpeed> = {
-              1: 'normal',
-              2: 'fast',
-              3: 'turbo',
-            };
-            e.preventDefault();
-            setGameSpeed(speedMap[num]);
-            return;
-          } else {
-            // Recall control group for 4-9
-            e.preventDefault();
-            selectControlGroup(num);
-            return;
-          }
-        }
-      }
-      
-      if (e.key === '0') {
+    // Navigation shortcuts
+    const isInGame = location.pathname.startsWith('/play');
+    if (isInGame) {
+      const navMap: Record<string, string> = {
+        'h': '/play/hire',
+        't': '/play/tasks',
+        'e': '/play/team',
+        'c': '/play/code',
+        'p': '/play/preview',
+        's': '/play/settings',
+        'Escape': '/play',
+      };
+      if (navMap[e.key]) {
         e.preventDefault();
-        setGameSpeed('paused');
-        return;
-      }
-
-      // Screen shortcuts (when in main screens)
-      const mainScreens: GameScreen[] = ['rts', 'campus', 'dashboard', 'command', 'office'];
-      if (mainScreens.includes(screen)) {
-        const screenMap: Record<string, GameScreen> = {
-          'r': 'rts',        // Isometric RTS view (new default)
-          'v': 'campus',     // Isometric campus view (Phaser)
-          'd': 'dashboard',
-          'c': 'command',
-          'h': 'hire',
-          't': 'tasks',
-          'e': 'team',
-          'q': 'queue',
-          'm': 'missions',   // PM missions (git worktrees)
-          'a': 'artifacts',  // AI-generated content
-          'p': 'preview',    // Live code preview
-          'u': 'tech', // Upgrades/tech tree
-          'y': 'achievements', // Trophy room
-          's': 'settings',
-        };
-        if (screenMap[e.key.toLowerCase()]) {
-          e.preventDefault();
-          setScreen(screenMap[e.key.toLowerCase()]);
-        }
+        navigate(navMap[e.key]);
       }
     }
-  }, [screen, setScreen, setGameSpeed, project, selectedEmployeeIds, setControlGroup, selectControlGroup]);
+  }, [project, togglePause, navigate, location.pathname]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -249,95 +221,395 @@ function App() {
   // Handle auth success
   const handleAuthSuccess = () => {
     setIsGuest(false);
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get('redirect');
+    navigate(redirect || '/start');
   };
   
-  // Handle skip (guest mode)
   const handleSkipAuth = () => {
     setIsGuest(true);
+    navigate('/');
   };
 
-  // Render current screen
-  const renderScreen = () => {
-    // Show loading while checking auth
-    if (authLoading) {
-      return (
-        <div className="loading-screen">
-          <div className="loading-spinner">⏳</div>
-          <div className="loading-text">Loading...</div>
+  // Loading screen
+  if (authLoading) {
+    return (
+      <div className="app">
+        <div className="app-content">
+          <div className="loading-screen">
+            <div className="loading-spinner" />
+            <div className="loading-text">Loading...</div>
+          </div>
         </div>
-      );
-    }
-    
-    // Show auth if needed (optional - can be skipped)
-    if (needsAuth && screen === 'start' && !project) {
-      return (
-        <AuthScreen 
-          onSuccess={handleAuthSuccess} 
-          onSkip={handleSkipAuth} 
-        />
-      );
-    }
-    
-    switch (screen) {
-      case 'landing':
-        return <LandingPage />;
-      case 'start':
-        return <StartScreen />;
-      case 'rts':
-        return <RTSView />;
-      case 'campus':
-        return <CampusScreen />;
-      case 'dashboard':
-        return <DashboardScreen />;
-      case 'command':
-        return <CommandCenter />;
-      case 'queue':
-        return <TaskQueueScreen />;
-      case 'missions':
-        return <MissionsScreen />;
-      case 'artifacts':
-        return <ArtifactsScreen />;
-      case 'preview':
-        return <PreviewScreen />;
-      case 'tech':
-        return <TechTreeScreen />;
-      case 'achievements':
-        return <AchievementsScreen />;
-      case 'office':
-        return <OfficeScreen />;
-      case 'hire':
-        return <HireScreen />;
-      case 'tasks':
-        return <TasksScreen />;
-      case 'team':
-        return <TeamScreen />;
-      case 'code':
-        return <CodeScreen />;
-      case 'settings':
-        return <SettingsScreen />;
-      default:
-        return <StartScreen />;
-    }
-  };
-
-  // Screens with built-in status bars (no extra chrome needed)
-  const fullScreens: GameScreen[] = ['landing', 'rts', 'campus', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'preview', 'tech', 'achievements'];
-  const showStatusBar = project && !fullScreens.includes(screen);
-  
-  // Show top bar when in game (not on landing or start)
-  const showTopBar = project && screen !== 'start' && screen !== 'landing';
+      </div>
+    );
+  }
 
   return (
     <div className="app">
-      {showTopBar && <RTSTopBar />}
+      {/* Game loop runs independently without causing App re-renders */}
+      <GameLoop />
+      
       <div className="app-content">
-        {renderScreen()}
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Auth routes */}
+          <Route 
+            path="/login" 
+            element={
+              isAuthenticated ? <Navigate to="/projects" replace /> : (
+                <AuthScreen mode="login" onSuccess={handleAuthSuccess} onSkip={handleSkipAuth} />
+              )
+            } 
+          />
+          <Route 
+            path="/signup" 
+            element={
+              isAuthenticated ? <Navigate to="/projects" replace /> : (
+                <AuthScreen mode="signup" onSuccess={handleAuthSuccess} onSkip={handleSkipAuth} />
+              )
+            } 
+          />
+          
+          {/* Protected routes */}
+          <Route 
+            path="/start" 
+            element={isAuthenticated ? <StartScreen /> : <Navigate to="/login?redirect=/start" replace />} 
+          />
+          <Route 
+            path="/projects" 
+            element={isAuthenticated ? <ProjectsScreen /> : <Navigate to="/login?redirect=/projects" replace />} 
+          />
+          
+          {/* Game routes - require active project */}
+          <Route 
+            path="/play" 
+            element={
+              <RequireProject>
+                <GameLayout />
+              </RequireProject>
+            }
+          >
+            <Route index element={<GameDashboard />} />
+            <Route path="hire" element={<HireScreen />} />
+            <Route path="tasks" element={<TasksScreen />} />
+            <Route path="team" element={<TeamScreen />} />
+            <Route path="code" element={<ArtifactsScreen />} />
+            <Route path="preview" element={<PreviewScreen />} />
+            <Route path="settings" element={<SettingsScreen />} />
+          </Route>
+          
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
-      {showStatusBar && <StatusBar />}
-      {project && !focusMode && <EventPanel />}
-      {project && <FloatingResources />}
-      <OnboardingTutorial />
-      <MobileNav />
+    </div>
+  );
+}
+
+// AI Provider configurations
+const AI_PROVIDERS = [
+  { 
+    id: 'openai', 
+    name: 'OpenAI', 
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+    keyPlaceholder: 'sk-...',
+    keyUrl: 'https://platform.openai.com/api-keys',
+  },
+  { 
+    id: 'anthropic', 
+    name: 'Anthropic', 
+    models: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022'],
+    keyPlaceholder: 'sk-ant-...',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+  },
+  { 
+    id: 'google', 
+    name: 'Google', 
+    models: ['gemini-2.0-flash', 'gemini-1.5-pro'],
+    keyPlaceholder: 'API key...',
+    keyUrl: 'https://aistudio.google.com/app/apikey',
+  },
+  { 
+    id: 'groq', 
+    name: 'Groq', 
+    models: ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768'],
+    keyPlaceholder: 'gsk_...',
+    keyUrl: 'https://console.groq.com/keys',
+  },
+];
+
+/**
+ * GameDashboard - Main game view showing gameplay progress and next actions
+ */
+function GameDashboard() {
+  const navigate = useNavigate();
+  const { employees, tasks, project, aiSettings, configureAI, setGlobalModel } = useGameStore();
+  const [selectedProvider, setSelectedProvider] = useState('openai');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [apiKey, setApiKey] = useState('');
+  const [showKey, setShowKey] = useState(false);
+  const [error, setError] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  const activeTasks = tasks.filter(t => t.status === 'in_progress').length;
+  const completedTasks = tasks.filter(t => t.status === 'done').length;
+  const codeGenerated = tasks.filter(t => t.codeGenerated).length;
+  
+  const currentProvider = AI_PROVIDERS.find(p => p.id === selectedProvider)!;
+  
+  // Update model when provider changes
+  const handleProviderChange = (providerId: string) => {
+    setSelectedProvider(providerId);
+    const provider = AI_PROVIDERS.find(p => p.id === providerId);
+    if (provider) {
+      setSelectedModel(provider.models[0]);
+    }
+    setError('');
+  };
+  
+  // Handle API key submission
+  const handleSubmit = async () => {
+    if (!apiKey.trim()) {
+      setError('Please enter your API key');
+      return;
+    }
+    
+    setIsConnecting(true);
+    setError('');
+    
+    try {
+      // Save the API key
+      saveApiKey(selectedProvider as 'openai' | 'anthropic' | 'google' | 'groq', apiKey.trim());
+      
+      // Set model and enable AI
+      setGlobalModel(selectedModel);
+      configureAI();
+    } catch (err) {
+      setError('Failed to configure AI. Please try again.');
+      console.error(err);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+  
+  // If AI is not enabled, show setup screen
+  if (!aiSettings.enabled) {
+    return (
+      <div className="game-dashboard">
+        <div className="ai-setup">
+          <div className="setup-icon">◈</div>
+          <h1>Configure AI</h1>
+          <p>Select your AI provider and model, then enter your API key.</p>
+          
+          <div className="setup-form">
+            {/* Provider Selection */}
+            <div className="form-group">
+              <label>Provider</label>
+              <div className="provider-grid">
+                {AI_PROVIDERS.map(provider => (
+                  <button
+                    key={provider.id}
+                    type="button"
+                    className={`provider-btn ${selectedProvider === provider.id ? 'active' : ''}`}
+                    onClick={() => handleProviderChange(provider.id)}
+                  >
+                    {provider.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Model Selection */}
+            <div className="form-group">
+              <label>Model</label>
+              <select 
+                value={selectedModel} 
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="model-select"
+              >
+                {currentProvider.models.map(model => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* API Key Input */}
+            <div className="form-group">
+              <label>API Key</label>
+              <div className="input-wrapper">
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder={currentProvider.keyPlaceholder}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                />
+                <button 
+                  type="button" 
+                  className="toggle-visibility"
+                  onClick={() => setShowKey(!showKey)}
+                >
+                  {showKey ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <a 
+                href={currentProvider.keyUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="key-link"
+              >
+                Get {currentProvider.name} API key →
+              </a>
+            </div>
+            
+            {error && <div className="setup-error">{error}</div>}
+            
+            <button 
+              className="setup-submit" 
+              onClick={handleSubmit}
+              disabled={isConnecting || !apiKey.trim()}
+            >
+              {isConnecting ? 'Connecting...' : 'Start Playing'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Determine current game phase
+  const getGamePhase = () => {
+    if (employees.length === 0) return 'hire';
+    if (tasks.length === 0) return 'tasks';
+    if (activeTasks > 0) return 'working';
+    if (completedTasks > 0 && codeGenerated === 0) return 'waiting';
+    if (codeGenerated > 0) return 'review';
+    return 'working';
+  };
+  
+  const phase = getGamePhase();
+  
+  const steps = [
+    { 
+      id: 'hire', 
+      label: 'Build Your Team', 
+      description: 'Hire engineers, designers, and more to work on your project.',
+      action: () => navigate('/play/hire'),
+      actionLabel: 'Hire Team',
+      complete: employees.length > 0,
+    },
+    { 
+      id: 'tasks', 
+      label: 'Create Tasks', 
+      description: 'Break down your project into tasks for your team to work on.',
+      action: () => navigate('/play/tasks'),
+      actionLabel: 'Create Tasks',
+      complete: tasks.length > 0,
+    },
+    { 
+      id: 'working', 
+      label: 'Watch Progress', 
+      description: 'Your team is working. AI generates real code as tasks complete.',
+      action: () => navigate('/play/tasks'),
+      actionLabel: 'View Progress',
+      complete: completedTasks > 0,
+    },
+    { 
+      id: 'review', 
+      label: 'Review Code', 
+      description: 'Check the generated code and preview your app.',
+      action: () => navigate('/play/code'),
+      actionLabel: 'View Code',
+      complete: codeGenerated > 0,
+    },
+    { 
+      id: 'deploy', 
+      label: 'Deploy', 
+      description: 'Push your generated code to GitHub.',
+      action: () => navigate('/play/code'),
+      actionLabel: 'Deploy',
+      complete: false,
+    },
+  ];
+  
+  const currentStepIndex = steps.findIndex(s => s.id === phase);
+  
+  return (
+    <div className="game-dashboard">
+      {/* Project Header */}
+      <div className="dashboard-header">
+        <div className="project-title">
+          <h1>{project?.name || 'My Project'}</h1>
+          <p>{project?.description || 'Your startup simulation'}</p>
+        </div>
+        <div className="project-stats">
+          <div className="stat">
+            <span className="stat-value">{employees.length}</span>
+            <span className="stat-label">Team</span>
+          </div>
+          <div className="stat">
+            <span className="stat-value">{activeTasks}</span>
+            <span className="stat-label">Active</span>
+          </div>
+          <div className="stat">
+            <span className="stat-value">{completedTasks}</span>
+            <span className="stat-label">Done</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Progress Steps */}
+      <div className="progress-steps">
+        <h2>How to Play</h2>
+        <div className="steps-list">
+          {steps.map((step, i) => (
+            <div 
+              key={step.id} 
+              className={`step ${step.complete ? 'complete' : ''} ${i === currentStepIndex ? 'current' : ''}`}
+            >
+              <div className="step-number">
+                {step.complete ? '✓' : i + 1}
+              </div>
+              <div className="step-content">
+                <h3>{step.label}</h3>
+                <p>{step.description}</p>
+                {i === currentStepIndex && (
+                  <button className="step-action" onClick={step.action}>
+                    {step.actionLabel} →
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <button onClick={() => navigate('/play/hire')}>
+          <span className="action-icon">◆</span>
+          <span>Hire</span>
+        </button>
+        <button onClick={() => navigate('/play/tasks')}>
+          <span className="action-icon">◇</span>
+          <span>Tasks</span>
+        </button>
+        <button onClick={() => navigate('/play/team')}>
+          <span className="action-icon">◈</span>
+          <span>Team</span>
+        </button>
+        <button onClick={() => navigate('/play/code')}>
+          <span className="action-icon">○</span>
+          <span>Code</span>
+        </button>
+        <button onClick={() => navigate('/play/preview')}>
+          <span className="action-icon">◎</span>
+          <span>Preview</span>
+        </button>
+      </div>
     </div>
   );
 }

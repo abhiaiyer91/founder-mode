@@ -1,13 +1,19 @@
 import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { db } from './db';
+import * as schema from './db/schema';
 
-// Create the auth instance with Convex-compatible setup
-// Note: better-auth will use its own session management
-// We sync user data to Convex via the API
+// Create the auth instance with Drizzle adapter
 export const auth = betterAuth({
-  // Use in-memory for sessions, sync to Convex for persistence
-  database: {
-    type: 'memory',
-  },
+  database: drizzleAdapter(db, { 
+    provider: 'pg',
+    schema: {
+      user: schema.user,
+      session: schema.session,
+      account: schema.account,
+      verification: schema.verification,
+    },
+  }),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -23,7 +29,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:5173',
     'http://localhost:3001',
-  ],
+    process.env.FRONTEND_URL,
+  ].filter(Boolean) as string[],
 });
 
 // Helper to sync user to Convex after auth

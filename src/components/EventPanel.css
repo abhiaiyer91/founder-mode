@@ -1,33 +1,31 @@
-/* Event Panel - Floating alerts for events */
+/* Event Panel - Clean Notification Style */
 
 .event-panel {
   position: fixed;
-  top: 70px;
-  right: 20px;
-  width: 350px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
+  top: 72px;
+  right: 24px;
+  z-index: 200;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  z-index: 200;
+  max-width: 360px;
   pointer-events: none;
 }
 
 .event-alert {
-  background: var(--terminal-box-bg);
-  border: 2px solid var(--terminal-border);
-  border-radius: 8px;
+  background: rgba(10, 10, 12, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  animation: slideIn 0.3s ease;
-  pointer-events: all;
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(50px);
+    transform: translateX(20px);
   }
   to {
     opacity: 1;
@@ -35,62 +33,73 @@
   }
 }
 
-.event-alert.danger {
-  border-color: #ef4444;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), var(--terminal-box-bg));
-}
-
 .event-alert.warning {
-  border-color: #f59e0b;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), var(--terminal-box-bg));
+  border-color: rgba(251, 191, 36, 0.3);
 }
 
-.event-alert.opportunity {
-  border-color: #22c55e;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), var(--terminal-box-bg));
+.event-alert.error {
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
-.event-alert.info {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), var(--terminal-box-bg));
+.event-alert.success {
+  border-color: rgba(0, 255, 136, 0.3);
 }
 
 .alert-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
-.alert-title {
+.alert-icon {
   font-size: 14px;
-  font-weight: bold;
-  color: var(--text-primary);
+  color: #00ff88;
+}
+
+.event-alert.warning .alert-icon {
+  color: #fbbf24;
+}
+
+.event-alert.error .alert-icon {
+  color: #ef4444;
+}
+
+.alert-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e4e4e7;
 }
 
 .dismiss-btn {
   width: 24px;
   height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: #52525b;
   font-size: 18px;
   cursor: pointer;
-  opacity: 0.6;
+  border-radius: 4px;
+  transition: all 0.15s;
 }
 
 .dismiss-btn:hover {
-  opacity: 1;
-  color: var(--text-primary);
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .alert-message {
   margin: 0 0 12px 0;
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: #71717a;
   line-height: 1.5;
 }
 
+/* Event Choices */
 .event-choices {
   display: flex;
   flex-direction: column;
@@ -99,46 +108,41 @@
 
 .choice-btn {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 12px;
-  background: var(--terminal-bg);
-  border: 1px solid var(--terminal-border);
-  border-radius: 4px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
-  text-align: left;
-  width: 100%;
 }
 
 .choice-btn:hover {
-  border-color: var(--color-accent);
   background: rgba(0, 255, 136, 0.05);
+  border-color: rgba(0, 255, 136, 0.2);
 }
 
 .choice-label {
   font-size: 13px;
-  font-weight: bold;
-  color: var(--text-primary);
-}
-
-.choice-desc {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: #e4e4e7;
 }
 
 .choice-cost {
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   color: #ef4444;
-  margin-top: 4px;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .event-panel {
-    right: 10px;
-    left: 10px;
-    width: auto;
+    top: auto;
+    bottom: 24px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
   }
 }

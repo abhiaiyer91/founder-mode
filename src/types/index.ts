@@ -124,12 +124,10 @@ export interface ActivityLogEntry {
   taskId?: string;
 }
 
-// Employee Types
-export type EmployeeRole = 'engineer' | 'designer' | 'pm' | 'marketer';
+// Employee Types (simplified to 3 core roles)
+export type EmployeeRole = 'engineer' | 'designer' | 'pm';
 
 export type EmployeeStatus = 'idle' | 'working' | 'blocked' | 'on_break';
-
-export type EmployeeSkillLevel = 'junior' | 'mid' | 'senior' | 'lead';
 
 // Memory entry for agent recall
 export interface AgentMemory {
@@ -146,21 +144,36 @@ export interface Employee {
   id: string;
   name: string;
   role: EmployeeRole;
-  skillLevel: EmployeeSkillLevel;
   status: EmployeeStatus;
   avatarEmoji: string;
   salary: number; // Monthly salary
-  productivity: number; // 0-100
-  morale: number; // 0-100
   currentTaskId: string | null;
   hiredAt: number; // Game tick when hired
-  // AI Model configuration (null = use global default)
+  // AI Model configuration
   aiModel: string | null;
   aiProvider: AIProvider | null;
   // Agent memory - remembers past work
   memory: AgentMemory[];
   tasksCompleted: number;
+  totalTicksWorked: number; // Total ticks spent working on tasks
   specializations: string[]; // Areas they've worked on most
+}
+
+/**
+ * Calculate employee productivity based on actual work done.
+ * Returns 0-100 representing tasks completed per time unit.
+ * New employees start at 0 and build up as they complete tasks.
+ */
+export function calculateProductivity(employee: Employee): number {
+  if (employee.tasksCompleted === 0) return 0;
+  if (employee.totalTicksWorked === 0) return 0;
+  
+  // Base calculation: tasks per 1000 ticks, scaled to 0-100
+  // Assuming ~100 ticks per task is "average", so 10 tasks per 1000 ticks = 100%
+  const tasksPerThousandTicks = (employee.tasksCompleted / employee.totalTicksWorked) * 1000;
+  const productivity = Math.min(100, Math.round(tasksPerThousandTicks * 10));
+  
+  return productivity;
 }
 
 // Task Types
@@ -168,7 +181,7 @@ export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export type TaskType = 'feature' | 'bug' | 'design' | 'marketing' | 'infrastructure';
+export type TaskType = 'feature' | 'bug' | 'design' | 'infrastructure';
 
 // AI-generated artifacts from task work
 export interface TaskArtifact {
@@ -224,11 +237,26 @@ export interface Project {
   createdAt: number;
 }
 
+// Saved Project - stores project metadata for the project list
+export interface SavedProject {
+  id: string;
+  name: string;
+  description: string;
+  projectType: ProjectType;
+  createdAt: number;
+  lastPlayedAt: number;
+  tick: number; // Progress indicator
+  money: number;
+  employeeCount: number;
+  tasksCompleted: number;
+}
+
 // Game State
 export type GameScreen = 
   | 'landing'      // Landing page for new users
   | 'auth'         // Login/signup
-  | 'start' 
+  | 'start'        // Start new project
+  | 'projects'     // Project list - continue a saved project
   | 'rts'          // Isometric RTS view (Civ/Warcraft style) - NEW DEFAULT
   | 'campus'       // Isometric campus view (Phaser 3) - Visual startup HQ
   | 'dashboard'    // Clean split-view
@@ -246,8 +274,6 @@ export type GameScreen =
   | 'code' 
   | 'git' 
   | 'settings';
-
-export type GameSpeed = 'paused' | 'normal' | 'fast' | 'turbo';
 
 export interface GameStats {
   totalRevenue: number;
@@ -317,7 +343,6 @@ export interface AISettings {
 export interface GameState {
   // Meta
   screen: GameScreen;
-  gameSpeed: GameSpeed;
   tick: number; // Game time unit
   startedAt: Date;
   
@@ -548,7 +573,6 @@ export interface GameActions {
   setScreen: (screen: GameScreen) => void;
   
   // Game Control
-  setGameSpeed: (speed: GameSpeed) => void;
   gameTick: () => void;
   togglePause: () => void;
   
@@ -556,7 +580,7 @@ export interface GameActions {
   startProject: (idea: string) => void;
   
   // Team
-  hireEmployee: (role: EmployeeRole, skillLevel: EmployeeSkillLevel) => void;
+  hireEmployee: (role: EmployeeRole, aiProvider?: AIProvider, aiModel?: string) => void;
   fireEmployee: (id: string) => void;
   
   // Tasks
@@ -685,29 +709,33 @@ export interface GameActions {
   disconnectGitHub: () => void;
 }
 
-// Employee Templates for Hiring
+// Employee Templates for Hiring (simplified: 3 roles, flat salaries)
 export interface EmployeeTemplate {
   role: EmployeeRole;
-  skillLevel: EmployeeSkillLevel;
   baseSalary: number;
-  emoji: string;
   title: string;
+  description: string;
 }
 
 export const EMPLOYEE_TEMPLATES: EmployeeTemplate[] = [
-  { role: 'engineer', skillLevel: 'junior', baseSalary: 5000, emoji: '👨‍💻', title: 'Junior Engineer' },
-  { role: 'engineer', skillLevel: 'mid', baseSalary: 8000, emoji: '👩‍💻', title: 'Software Engineer' },
-  { role: 'engineer', skillLevel: 'senior', baseSalary: 12000, emoji: '🧑‍💻', title: 'Senior Engineer' },
-  { role: 'engineer', skillLevel: 'lead', baseSalary: 15000, emoji: '👨‍🔬', title: 'Lead Engineer' },
-  { role: 'designer', skillLevel: 'junior', baseSalary: 4000, emoji: '🎨', title: 'Junior Designer' },
-  { role: 'designer', skillLevel: 'mid', baseSalary: 6000, emoji: '🎨', title: 'Product Designer' },
-  { role: 'designer', skillLevel: 'senior', baseSalary: 9000, emoji: '🎨', title: 'Senior Designer' },
-  { role: 'pm', skillLevel: 'junior', baseSalary: 5000, emoji: '📊', title: 'Associate PM' },
-  { role: 'pm', skillLevel: 'mid', baseSalary: 7000, emoji: '📊', title: 'Product Manager' },
-  { role: 'pm', skillLevel: 'senior', baseSalary: 11000, emoji: '📊', title: 'Senior PM' },
-  { role: 'marketer', skillLevel: 'junior', baseSalary: 3500, emoji: '📢', title: 'Marketing Associate' },
-  { role: 'marketer', skillLevel: 'mid', baseSalary: 5000, emoji: '📢', title: 'Growth Marketer' },
-  { role: 'marketer', skillLevel: 'senior', baseSalary: 8000, emoji: '📢', title: 'Head of Marketing' },
+  { 
+    role: 'pm', 
+    baseSalary: 8000, 
+    title: 'Product Manager',
+    description: 'Breaks down your idea into actionable tasks and manages priorities.',
+  },
+  { 
+    role: 'designer', 
+    baseSalary: 7000, 
+    title: 'Designer',
+    description: 'Creates UI/UX designs and generates CSS for your product.',
+  },
+  { 
+    role: 'engineer', 
+    baseSalary: 10000, 
+    title: 'Engineer',
+    description: 'Writes code, builds features, and fixes bugs.',
+  },
 ];
 
 // Name generator data

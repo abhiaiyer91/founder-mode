@@ -24,14 +24,13 @@ interface GameState {
     id: string;
     name: string;
     role: string;
-    skillLevel: string;
     status: string;
     avatarEmoji: string;
     salary: number;
-    productivity: number;
-    morale: number;
     currentTaskId: string | null;
     hiredAt: number;
+    tasksCompleted: number;
+    totalTicksWorked: number;
   }>;
   tasks: Array<{
     id: string;

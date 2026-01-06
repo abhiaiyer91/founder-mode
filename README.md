@@ -10,10 +10,6 @@
 
 ## 🚀 Quick Start
 
-### Option 1: Frontend Only (Fastest)
-
-Play immediately with simulated AI:
-
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/founder-mode.git
@@ -22,34 +18,20 @@ cd founder-mode
 # Install dependencies
 pnpm install
 
-# Start the game
-pnpm dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) and start playing!
-
-### Option 2: Full Stack (Recommended)
-
-Enable real AI code generation and persistence:
-
-```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Copy environment file
+# Copy environment file
 cp .env.example .env
 
-# 3. Add your OpenAI API key to .env
+# Add your OpenAI API key to .env
 # OPENAI_API_KEY=sk-your-key-here
 
-# 4. Start PostgreSQL (optional, for cloud saves)
+# Start PostgreSQL
 docker compose up -d
 
-# 5. Push database schema
+# Push database schema
 pnpm db:push
 
-# 6. Start everything
-pnpm dev:all
+# Start everything (frontend + server)
+pnpm start
 ```
 
 This starts:
@@ -65,8 +47,8 @@ This starts:
 |------|---------|----------|-------|
 | Node.js | 18+ | Yes | 20+ recommended |
 | pnpm | 8+ | Yes | `npm install -g pnpm` |
-| Docker | 20+ | No | Only for PostgreSQL |
-| OpenAI API Key | - | No | For real AI code generation |
+| Docker | 20+ | Yes | For PostgreSQL |
+| OpenAI API Key | - | Yes | For AI code generation |
 
 ---
 
@@ -75,10 +57,10 @@ This starts:
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Database (PostgreSQL) - Optional for local dev
+# Database (PostgreSQL)
 DATABASE_URL=postgres://founder:founder123@localhost:5432/founder_mode
 
-# AI (OpenAI) - Optional, can be set in-game Settings
+# AI (OpenAI)
 OPENAI_API_KEY=sk-your-key-here
 
 # Server
@@ -98,9 +80,9 @@ FRONTEND_URL=http://localhost:5173
 
 | Command | Description |
 |---------|-------------|
+| `pnpm start` | Start frontend + server (one command!) |
 | `pnpm dev` | Start frontend only (port 5173) |
 | `pnpm dev:server` | Start API server only (port 3001) |
-| `pnpm dev:all` | Start both frontend and server |
 | `pnpm build` | Build for production |
 | `pnpm preview` | Preview production build |
 | `pnpm test` | Run all tests |
@@ -161,24 +143,9 @@ founder-mode/
 
 ---
 
-## 🚢 Deployment
+## 🚢 Deployment (Railway)
 
-### Deploy to Vercel (Recommended)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/founder-mode)
-
-1. Click the button or run `vercel` in the project root
-2. Configure environment variables in Vercel:
-   - `DATABASE_URL` - Use [Vercel Postgres](https://vercel.com/storage/postgres) or [Supabase](https://supabase.com)
-   - `OPENAI_API_KEY` - Optional (users can add their own in-game)
-   - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - For GitHub OAuth
-
-**Note**: The frontend works standalone with localStorage. Database and server are only needed for:
-- Cloud saves (sync across devices)
-- Real AI code generation
-- GitHub OAuth (pushing code)
-
-### Deploy to Railway
+Deploy to [Railway](https://railway.app):
 
 ```bash
 # Install Railway CLI
@@ -190,55 +157,17 @@ railway init
 railway up
 ```
 
-Add environment variables in the Railway dashboard.
+### Environment Variables
 
-### Deploy to Fly.io
+Add these in the Railway dashboard:
 
-```bash
-# Install Fly CLI
-curl -L https://fly.io/install.sh | sh
-
-# Deploy
-fly auth login
-fly launch
-fly deploy
-```
-
-### Deploy Frontend Only (Static)
-
-For a static frontend (game saves locally, no AI):
-
-```bash
-# Build
-pnpm build
-
-# Deploy dist/ folder to any static host:
-# - Vercel
-# - Netlify
-# - GitHub Pages
-# - Cloudflare Pages
-# - AWS S3 + CloudFront
-```
-
-### Docker Deployment
-
-```dockerfile
-# Dockerfile
-FROM node:20-alpine
-WORKDIR /app
-RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm build
-EXPOSE 5173
-CMD ["pnpm", "preview", "--host", "0.0.0.0"]
-```
-
-```bash
-docker build -t founder-mode .
-docker run -p 5173:5173 founder-mode
-```
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Railway Postgres (auto-provisioned) |
+| `OPENAI_API_KEY` | Your OpenAI API key |
+| `GITHUB_CLIENT_ID` | For GitHub OAuth (optional) |
+| `GITHUB_CLIENT_SECRET` | For GitHub OAuth (optional) |
+| `FRONTEND_URL` | Your Railway app URL |
 
 ---
 
@@ -274,12 +203,6 @@ pnpm test:watch
 # With coverage report
 pnpm test:coverage
 ```
-
-**Current Coverage:**
-- 270 tests passing
-- gitService: 95% coverage
-- gameStore: 42% coverage
-- Campus types: fully tested
 
 ---
 
@@ -320,11 +243,6 @@ The game uses [Mastra](https://mastra.ai) for AI agents:
 | PM | Plan work | `breakdownProject`, `prioritizeTasks` |
 | Designer | Create styles | `createDesignSystem`, `createStyles` |
 | Marketer | Write copy | `createLandingCopy`, `createSocialPost` |
-
-**AI Fallback Chain:**
-1. Mastra Server (full agent capabilities)
-2. Direct OpenAI API (simpler prompts)
-3. Simulation Mode (fake responses for testing)
 
 ---
 
@@ -370,7 +288,7 @@ The game uses [Mastra](https://mastra.ai) for AI agents:
 
 ## 🤝 Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions welcome!
 
 ```bash
 # Fork and clone
@@ -379,7 +297,7 @@ cd founder-mode
 
 # Install and start
 pnpm install
-pnpm dev
+pnpm start
 
 # Make changes and test
 pnpm test

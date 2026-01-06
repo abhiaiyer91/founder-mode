@@ -188,7 +188,7 @@ describe('PM Brain - generatePMThoughts', () => {
   it('should generate priority thought when no active missions', () => {
     const productState = createProductState({ featureCount: 1 });
     const employees: Employee[] = [
-      { id: 'e1', name: 'Alice', role: 'engineer', skillLevel: 'mid', salary: 5000, status: 'idle', morale: 100, productivity: 70, avatar: '👩‍💻', currentTaskId: null, hiredAt: 0 },
+      { id: 'e1', name: 'Alice', role: 'engineer', salary: 5000, status: 'idle', avatarEmoji: '👩‍💻', currentTaskId: null, hiredAt: 0, aiModel: null, aiProvider: null, memory: [], tasksCompleted: 0, totalTicksWorked: 0, specializations: [] },
     ];
     
     const thoughts = generatePMThoughts(productState, [], [], employees);
@@ -200,8 +200,8 @@ describe('PM Brain - generatePMThoughts', () => {
   it('should generate thought about idle employees', () => {
     const productState = createProductState();
     const employees: Employee[] = [
-      { id: 'e1', name: 'Alice', role: 'engineer', skillLevel: 'mid', salary: 5000, status: 'idle', morale: 100, productivity: 70, avatar: '👩‍💻', currentTaskId: null, hiredAt: 0 },
-      { id: 'e2', name: 'Bob', role: 'engineer', skillLevel: 'mid', salary: 5000, status: 'idle', morale: 100, productivity: 70, avatar: '👨‍💻', currentTaskId: null, hiredAt: 0 },
+      { id: 'e1', name: 'Alice', role: 'engineer', salary: 5000, status: 'idle', avatarEmoji: '👩‍💻', currentTaskId: null, hiredAt: 0, aiModel: null, aiProvider: null, memory: [], tasksCompleted: 0, totalTicksWorked: 0, specializations: [] },
+      { id: 'e2', name: 'Bob', role: 'engineer', salary: 5000, status: 'idle', avatarEmoji: '👨‍💻', currentTaskId: null, hiredAt: 0, aiModel: null, aiProvider: null, memory: [], tasksCompleted: 0, totalTicksWorked: 0, specializations: [] },
     ];
     
     const thoughts = generatePMThoughts(productState, [], [], employees);

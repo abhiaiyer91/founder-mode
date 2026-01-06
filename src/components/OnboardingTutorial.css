@@ -1,43 +1,42 @@
-/* Onboarding Tutorial Styles */
+/* Onboarding Tutorial - Clean Modal Style */
 
 .tutorial-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  z-index: 998;
-  backdrop-filter: blur(4px);
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .tutorial-popup {
   position: fixed;
-  z-index: 999;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 16px;
-  padding: 0;
-  width: 400px;
-  max-width: 90vw;
-  box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.5),
-    0 0 100px rgba(99, 102, 241, 0.2);
-  animation: popIn 0.3s ease-out;
+  z-index: 1000;
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  background: rgba(10, 10, 12, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  animation: popIn 0.25s ease-out;
 }
 
 @keyframes popIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 }
 
-/* Positioning */
 .tutorial-popup.position-center {
   top: 50%;
   left: 50%;
@@ -45,193 +44,150 @@
 }
 
 .tutorial-popup.position-top {
-  top: 80px;
+  bottom: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
 }
 
 .tutorial-popup.position-bottom {
-  bottom: 100px;
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
 }
 
-.tutorial-popup.position-left {
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+/* Header */
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-.tutorial-popup.position-right {
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+.tutorial-step-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #00ff88;
+  padding: 4px 10px;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Progress bar */
-.tutorial-progress {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px 16px 0 0;
-  overflow: hidden;
+.tutorial-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #52525b;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
 }
 
-.tutorial-progress .progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #a855f7);
-  transition: width 0.3s ease;
+.tutorial-close:hover {
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Content */
-.tutorial-content {
-  padding: 24px;
-}
-
 .tutorial-content h3 {
-  margin: 0 0 12px 0;
-  font-size: 20px;
+  margin: 0 0 8px 0;
+  font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: #e4e4e7;
 }
 
 .tutorial-content p {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
+  color: #71717a;
   line-height: 1.6;
-  color: #a1a1aa;
 }
 
 /* Actions */
 .tutorial-actions {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 0 0 16px 16px;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.skip-btn {
+.tutorial-skip {
   padding: 8px 16px;
   background: transparent;
   border: none;
-  color: #71717a;
+  color: #52525b;
   font-size: 13px;
+  font-family: inherit;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.15s;
 }
 
-.skip-btn:hover {
+.tutorial-skip:hover {
   color: #a1a1aa;
 }
 
-.tutorial-nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.step-counter {
-  font-size: 13px;
-  color: #71717a;
-}
-
-.next-btn {
+.tutorial-next {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #00ff88;
   border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 14px;
+  border-radius: 6px;
+  color: #000;
+  font-size: 13px;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s;
 }
 
-.next-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+.tutorial-next:hover {
+  background: #00cc6a;
 }
 
-/* Arrow pointers */
+/* Arrow */
 .tutorial-arrow {
   position: absolute;
-  width: 0;
-  height: 0;
+  width: 12px;
+  height: 12px;
+  background: rgba(10, 10, 12, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: rotate(45deg);
 }
 
 .tutorial-arrow.arrow-bottom {
-  bottom: 100%;
+  top: -6px;
   left: 50%;
-  transform: translateX(-50%);
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 12px solid #1a1a2e;
+  margin-left: -6px;
+  border-bottom: none;
+  border-right: none;
 }
 
 .tutorial-arrow.arrow-top {
-  top: 100%;
+  bottom: -6px;
   left: 50%;
-  transform: translateX(-50%);
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 12px solid #1a1a2e;
+  margin-left: -6px;
+  border-top: none;
+  border-left: none;
 }
 
-.tutorial-arrow.arrow-left {
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  border-left: 12px solid #1a1a2e;
-}
-
-.tutorial-arrow.arrow-right {
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  border-right: 12px solid #1a1a2e;
-}
-
-/* Mobile responsive */
-@media (max-width: 480px) {
+/* Responsive */
+@media (max-width: 640px) {
   .tutorial-popup {
     width: calc(100vw - 32px);
     left: 16px !important;
-    right: 16px !important;
+    right: 16px;
     transform: none !important;
   }
 
   .tutorial-popup.position-center {
     top: auto;
-    bottom: 16px;
-  }
-
-  .tutorial-popup.position-top,
-  .tutorial-popup.position-bottom {
-    top: auto;
-    bottom: 16px;
-  }
-
-  .tutorial-content h3 {
-    font-size: 18px;
-  }
-
-  .tutorial-content p {
-    font-size: 14px;
-  }
-
-  .tutorial-actions {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .tutorial-nav {
-    width: 100%;
-    justify-content: space-between;
+    bottom: 24px;
   }
 }

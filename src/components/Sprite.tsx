@@ -9,12 +9,10 @@ import './Sprite.css';
 export function EmployeeSprite({
   role,
   status,
-  morale,
   size = 'medium',
 }: {
   role: 'engineer' | 'designer' | 'pm' | 'marketer';
   status: 'idle' | 'working' | 'blocked' | 'on_break';
-  morale: number;
   size?: 'small' | 'medium' | 'large';
 }) {
   const [frame, setFrame] = useState(0);
@@ -59,13 +57,9 @@ export function EmployeeSprite({
 
   const sprites = roleSprites[role] || roleSprites.engineer;
   const currentSprite = sprites[status]?.[frame] || sprites.idle[0];
-  
-  // Morale affects appearance
-  const moraleIndicator = morale >= 80 ? '😊' : morale >= 50 ? '' : '😫';
-  const moraleClass = morale >= 80 ? 'happy' : morale >= 50 ? 'neutral' : 'stressed';
 
   return (
-    <div className={`employee-sprite ${size} ${status} ${moraleClass}`}>
+    <div className={`employee-sprite ${size} ${status}`}>
       <div className="sprite-main">
         {currentSprite}
       </div>
@@ -75,9 +69,6 @@ export function EmployeeSprite({
           <span className="typing-dot" />
           <span className="typing-dot" />
         </div>
-      )}
-      {moraleIndicator && (
-        <div className="morale-indicator">{moraleIndicator}</div>
       )}
     </div>
   );
