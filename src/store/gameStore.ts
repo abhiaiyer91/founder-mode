@@ -362,6 +362,8 @@ export const useGameStore = create<GameState & GameActions>()(
       memory: [],
       tasksCompleted: 0,
       specializations: [],
+      systemPrompt: template.systemPrompt,
+      customPrompt: '',
     };
 
     set({
@@ -870,6 +872,25 @@ export const useGameStore = create<GameState & GameActions>()(
     }
   },
 
+  updateEmployeePrompt: (employeeId: string, systemPrompt?: string, customPrompt?: string) => {
+    set({
+      employees: get().employees.map(e => 
+        e.id === employeeId 
+          ? { 
+              ...e, 
+              ...(systemPrompt !== undefined && { systemPrompt }),
+              ...(customPrompt !== undefined && { customPrompt }),
+            }
+          : e
+      ),
+    });
+    
+    const employee = get().employees.find(e => e.id === employeeId);
+    if (employee) {
+      get().addNotification(`Updated instructions for ${employee.name}`, 'info');
+    }
+  },
+
   disableAI: () => {
     aiService.disable();
     set({
@@ -896,7 +917,8 @@ export const useGameStore = create<GameState & GameActions>()(
       if (assignee.role === 'engineer') {
         const result = await aiService.engineerWorkOnTask(
           task,
-          state.project?.idea || 'A startup project'
+          state.project?.idea || 'A startup project',
+          assignee
         );
 
         // Create artifacts for each generated file

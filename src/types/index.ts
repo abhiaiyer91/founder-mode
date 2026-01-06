@@ -161,6 +161,9 @@ export interface Employee {
   memory: AgentMemory[];
   tasksCompleted: number;
   specializations: string[]; // Areas they've worked on most
+  // System prompt configuration
+  systemPrompt: string; // Base archetype prompt for this employee
+  customPrompt: string; // User-added instructions (appended to system prompt)
 }
 
 // Task Types
@@ -599,6 +602,7 @@ export interface GameActions {
   configureProviderKey: (provider: AIProvider, apiKey: string) => void;
   setGlobalModel: (modelId: string) => void;
   setEmployeeModel: (employeeId: string, modelId: string | null, provider?: AIProvider | null) => void;
+  updateEmployeePrompt: (employeeId: string, systemPrompt?: string, customPrompt?: string) => void;
   disableAI: () => void;
   aiWorkOnTask: (taskId: string) => Promise<void>;
   
@@ -692,22 +696,120 @@ export interface EmployeeTemplate {
   baseSalary: number;
   emoji: string;
   title: string;
+  systemPrompt: string;
+}
+
+// Base prompts by role - these define the core archetype
+export const ROLE_BASE_PROMPTS: Record<EmployeeRole, string> = {
+  engineer: `You are a software engineer working at a startup. You write clean, efficient, and well-documented code.
+
+Your responsibilities:
+- Write production-quality code for features and bug fixes
+- Follow best practices for React, TypeScript, and modern web development
+- Consider performance, accessibility, and maintainability
+- Write code that is easy to understand and modify
+
+When given a task:
+1. Understand the requirements fully
+2. Plan your approach
+3. Write clean, working code
+4. Include helpful comments
+5. Consider edge cases
+
+Always respond with actual working code. Use React and TypeScript.
+Format your response as a code block with the file path as a comment at the top.`,
+
+  designer: `You are a product designer at a startup. You create beautiful, functional, and accessible interfaces.
+
+Your responsibilities:
+- Create modern, clean UI designs
+- Write CSS that brings designs to life
+- Ensure designs are accessible to all users
+- Consider mobile responsiveness
+
+Design principles you follow:
+1. Simplicity - remove unnecessary complexity
+2. Consistency - use patterns users recognize
+3. Accessibility - design for everyone
+4. Feedback - show users what's happening
+5. Delight - add moments of joy
+
+Respond with CSS code for the component. Use a dark terminal-style theme with:
+- Background: #0a0e14
+- Accent: #00ff88
+- Text: #e6edf3
+- Monospace fonts`,
+
+  pm: `You are a product manager at a startup. You excel at breaking down complex ideas into actionable tasks.
+
+Your responsibilities:
+- Understand the product vision and user needs
+- Break down features into clear, actionable tasks
+- Prioritize work based on impact and effort
+- Write clear task descriptions that engineers can understand
+
+When creating tasks, respond with a JSON array of tasks. Each task should have:
+- title: A clear, actionable title (start with a verb)
+- description: Brief context
+- type: One of "feature", "bug", "design", "marketing", "infrastructure"
+- priority: One of "low", "medium", "high", "critical"
+- estimatedHours: A number
+
+Respond ONLY with the JSON array, no other text.`,
+
+  marketer: `You are a growth marketer at a startup. You craft compelling messages that resonate with users.
+
+Your responsibilities:
+- Write persuasive landing page copy
+- Create engaging social media content
+- Understand the target audience deeply
+
+Your writing principles:
+1. Lead with benefits, not features
+2. Be clear and concise
+3. Create urgency without being pushy
+4. Tell stories that connect emotionally
+5. Always include a clear call to action
+
+Respond with marketing copy including:
+- A compelling headline
+- Supporting subheadline
+- Body copy (2-3 paragraphs)
+- Call to action`,
+};
+
+// Skill level modifiers that get prepended to the base prompt
+export const SKILL_LEVEL_PROMPTS: Record<EmployeeSkillLevel, string> = {
+  junior: `You are early in your career, eager to learn and grow. You may ask clarifying questions and prefer straightforward tasks. You focus on getting things done correctly, even if it takes a bit longer.`,
+  
+  mid: `You are an experienced professional with solid fundamentals. You work independently and deliver consistent quality. You balance speed with quality and can handle moderately complex tasks.`,
+  
+  senior: `You are a highly experienced professional with deep expertise. You mentor others, anticipate problems before they occur, and make architectural decisions. You optimize for long-term maintainability and write exemplary code/work.`,
+  
+  lead: `You are a technical leader who sets the direction for the team. You think strategically about how work fits into the bigger picture, establish best practices, and ensure quality across the team. You balance immediate needs with long-term vision.`,
+};
+
+// Helper to generate full system prompt for a template
+export function generateEmployeeSystemPrompt(role: EmployeeRole, skillLevel: EmployeeSkillLevel): string {
+  const skillModifier = SKILL_LEVEL_PROMPTS[skillLevel];
+  const basePrompt = ROLE_BASE_PROMPTS[role];
+  return `${skillModifier}\n\n${basePrompt}`;
 }
 
 export const EMPLOYEE_TEMPLATES: EmployeeTemplate[] = [
-  { role: 'engineer', skillLevel: 'junior', baseSalary: 5000, emoji: '👨‍💻', title: 'Junior Engineer' },
-  { role: 'engineer', skillLevel: 'mid', baseSalary: 8000, emoji: '👩‍💻', title: 'Software Engineer' },
-  { role: 'engineer', skillLevel: 'senior', baseSalary: 12000, emoji: '🧑‍💻', title: 'Senior Engineer' },
-  { role: 'engineer', skillLevel: 'lead', baseSalary: 15000, emoji: '👨‍🔬', title: 'Lead Engineer' },
-  { role: 'designer', skillLevel: 'junior', baseSalary: 4000, emoji: '🎨', title: 'Junior Designer' },
-  { role: 'designer', skillLevel: 'mid', baseSalary: 6000, emoji: '🎨', title: 'Product Designer' },
-  { role: 'designer', skillLevel: 'senior', baseSalary: 9000, emoji: '🎨', title: 'Senior Designer' },
-  { role: 'pm', skillLevel: 'junior', baseSalary: 5000, emoji: '📊', title: 'Associate PM' },
-  { role: 'pm', skillLevel: 'mid', baseSalary: 7000, emoji: '📊', title: 'Product Manager' },
-  { role: 'pm', skillLevel: 'senior', baseSalary: 11000, emoji: '📊', title: 'Senior PM' },
-  { role: 'marketer', skillLevel: 'junior', baseSalary: 3500, emoji: '📢', title: 'Marketing Associate' },
-  { role: 'marketer', skillLevel: 'mid', baseSalary: 5000, emoji: '📢', title: 'Growth Marketer' },
-  { role: 'marketer', skillLevel: 'senior', baseSalary: 8000, emoji: '📢', title: 'Head of Marketing' },
+  { role: 'engineer', skillLevel: 'junior', baseSalary: 5000, emoji: '👨‍💻', title: 'Junior Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'junior') },
+  { role: 'engineer', skillLevel: 'mid', baseSalary: 8000, emoji: '👩‍💻', title: 'Software Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'mid') },
+  { role: 'engineer', skillLevel: 'senior', baseSalary: 12000, emoji: '🧑‍💻', title: 'Senior Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'senior') },
+  { role: 'engineer', skillLevel: 'lead', baseSalary: 15000, emoji: '👨‍🔬', title: 'Lead Engineer', systemPrompt: generateEmployeeSystemPrompt('engineer', 'lead') },
+  { role: 'designer', skillLevel: 'junior', baseSalary: 4000, emoji: '🎨', title: 'Junior Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'junior') },
+  { role: 'designer', skillLevel: 'mid', baseSalary: 6000, emoji: '🎨', title: 'Product Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'mid') },
+  { role: 'designer', skillLevel: 'senior', baseSalary: 9000, emoji: '🎨', title: 'Senior Designer', systemPrompt: generateEmployeeSystemPrompt('designer', 'senior') },
+  { role: 'pm', skillLevel: 'junior', baseSalary: 5000, emoji: '📊', title: 'Associate PM', systemPrompt: generateEmployeeSystemPrompt('pm', 'junior') },
+  { role: 'pm', skillLevel: 'mid', baseSalary: 7000, emoji: '📊', title: 'Product Manager', systemPrompt: generateEmployeeSystemPrompt('pm', 'mid') },
+  { role: 'pm', skillLevel: 'senior', baseSalary: 11000, emoji: '📊', title: 'Senior PM', systemPrompt: generateEmployeeSystemPrompt('pm', 'senior') },
+  { role: 'marketer', skillLevel: 'junior', baseSalary: 3500, emoji: '📢', title: 'Marketing Associate', systemPrompt: generateEmployeeSystemPrompt('marketer', 'junior') },
+  { role: 'marketer', skillLevel: 'mid', baseSalary: 5000, emoji: '📢', title: 'Growth Marketer', systemPrompt: generateEmployeeSystemPrompt('marketer', 'mid') },
+  { role: 'marketer', skillLevel: 'senior', baseSalary: 8000, emoji: '📢', title: 'Head of Marketing', systemPrompt: generateEmployeeSystemPrompt('marketer', 'senior') },
 ];
 
 // Name generator data

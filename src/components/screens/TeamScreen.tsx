@@ -13,8 +13,78 @@ function formatMoney(amount: number): string {
   }).format(amount);
 }
 
+function PromptEditor({ employee, onClose }: { employee: Employee; onClose: () => void }) {
+  const { updateEmployeePrompt } = useGameStore();
+  const [systemPrompt, setSystemPrompt] = useState(employee.systemPrompt);
+  const [customPrompt, setCustomPrompt] = useState(employee.customPrompt);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleSystemPromptChange = (value: string) => {
+    setSystemPrompt(value);
+    setHasChanges(true);
+  };
+
+  const handleCustomPromptChange = (value: string) => {
+    setCustomPrompt(value);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    updateEmployeePrompt(employee.id, systemPrompt, customPrompt);
+    setHasChanges(false);
+    onClose();
+  };
+
+  return (
+    <Box title={`CONFIGURE ${employee.name.toUpperCase()}'S AI`} variant="accent" className="prompt-editor">
+      <div className="prompt-editor-content">
+        <div className="prompt-section">
+          <label>System Prompt (Archetype Behavior)</label>
+          <p className="prompt-hint">
+            This defines the base personality and behavior. Edit with caution - this changes how the AI fundamentally operates.
+          </p>
+          <textarea
+            className="system-prompt-textarea"
+            value={systemPrompt}
+            onChange={(e) => handleSystemPromptChange(e.target.value)}
+            rows={10}
+          />
+        </div>
+
+        <div className="prompt-section">
+          <label>Custom Instructions</label>
+          <p className="prompt-hint">
+            Additional instructions appended to the system prompt. Use this for specific preferences or requirements.
+          </p>
+          <textarea
+            className="custom-prompt-textarea"
+            value={customPrompt}
+            onChange={(e) => handleCustomPromptChange(e.target.value)}
+            placeholder="Add custom instructions for this employee...&#10;&#10;Examples:&#10;- Always add detailed comments&#10;- Prefer functional programming patterns&#10;- Focus on mobile-first design&#10;- Use specific naming conventions"
+            rows={6}
+          />
+        </div>
+
+        <div className="prompt-editor-actions">
+          <button className="action-btn close" onClick={onClose}>
+            Cancel
+          </button>
+          <button 
+            className="action-btn save" 
+            onClick={handleSave}
+            disabled={!hasChanges}
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </Box>
+  );
+}
+
 function EmployeeDetail({ employee, onClose }: { employee: Employee; onClose: () => void }) {
   const { tasks, fireEmployee } = useGameStore();
+  const [showPromptEditor, setShowPromptEditor] = useState(false);
   const currentTask = tasks.find(t => t.id === employee.currentTaskId);
   const completedTasks = tasks.filter(t => t.assigneeId === employee.id && t.status === 'done');
 
@@ -24,6 +94,10 @@ function EmployeeDetail({ employee, onClose }: { employee: Employee; onClose: ()
       onClose();
     }
   };
+
+  if (showPromptEditor) {
+    return <PromptEditor employee={employee} onClose={() => setShowPromptEditor(false)} />;
+  }
 
   return (
     <Box title="EMPLOYEE DETAILS" variant="accent" className="employee-detail">
@@ -85,14 +159,33 @@ function EmployeeDetail({ employee, onClose }: { employee: Employee; onClose: ()
         </div>
       )}
 
+      {/* AI Configuration Preview */}
+      <div className="ai-config-section">
+        <div className="ai-config-header">
+          <h4>AI Configuration</h4>
+          <button className="edit-prompt-btn" onClick={() => setShowPromptEditor(true)}>
+            [ Edit Prompts ]
+          </button>
+        </div>
+        {employee.customPrompt && (
+          <div className="custom-prompt-preview">
+            <span className="preview-label">Custom Instructions:</span>
+            <p>{employee.customPrompt.slice(0, 150)}{employee.customPrompt.length > 150 ? '...' : ''}</p>
+          </div>
+        )}
+        {!employee.customPrompt && (
+          <p className="no-custom-prompt">No custom instructions set. Using default archetype behavior.</p>
+        )}
+      </div>
+
       <EmployeeMemory employee={employee} />
 
       <div className="detail-actions">
         <button className="action-btn close" onClick={onClose}>
-          ← Back
+          Back
         </button>
         <button className="action-btn fire" onClick={handleFire}>
-          🚪 Let Go
+          Let Go
         </button>
       </div>
     </Box>

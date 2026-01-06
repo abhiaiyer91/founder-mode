@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { getAgent } from './agents';
+import { getAgent, getEmployeeSystemPrompt } from './agents';
 import { mastraClient } from './mastra-client';
-import type { Task, TaskType, TaskPriority } from '../../types';
+import type { Task, TaskType, TaskPriority, Employee } from '../../types';
 
 /**
  * AI Service - Unified AI integration for Founder Mode
@@ -95,8 +95,11 @@ export class AIService {
 
   /**
    * Have an engineer work on a coding task
+   * @param task - The task to work on
+   * @param projectContext - Context about the project
+   * @param employee - Optional employee for custom prompts
    */
-  async engineerWorkOnTask(task: Task, projectContext: string): Promise<{
+  async engineerWorkOnTask(task: Task, projectContext: string, employee?: Employee): Promise<{
     code: string;
     files: { path: string; content: string }[];
     explanation: string;
@@ -104,7 +107,7 @@ export class AIService {
     // Try Mastra server first
     if (this.isMastraMode()) {
       try {
-        const result = await mastraClient.engineerWork(task, projectContext);
+        const result = await mastraClient.engineerWork(task, projectContext, employee);
         
         // Extract code from tool calls if available
         const toolResult = result.toolCalls?.[0]?.result;
@@ -127,11 +130,15 @@ export class AIService {
     }
 
     try {
-      const agent = getAgent('engineer');
+      // Use employee-specific prompt if available, otherwise use default agent
+      const systemPrompt = employee 
+        ? getEmployeeSystemPrompt(employee)
+        : getAgent('engineer').systemPrompt;
+      
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
-          { role: 'system', content: agent.systemPrompt },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: `Work on this task: "${task.title}"\n\nType: ${task.type}\nDescription: ${task.description || 'No description'}\n\nProject: ${projectContext}`,
@@ -156,11 +163,16 @@ export class AIService {
 
   /**
    * Have a PM break down the project into tasks
+   * @param projectIdea - The project idea to break down
+   * @param existingTasks - Already created tasks
+   * @param teamSize - Current team composition
+   * @param employee - Optional employee for custom prompts
    */
   async pmGenerateTasks(
     projectIdea: string,
     existingTasks: string[],
-    teamSize: { engineers: number; designers: number; marketers: number }
+    teamSize: { engineers: number; designers: number; marketers: number },
+    employee?: Employee
   ): Promise<{
     title: string;
     description: string;
@@ -171,7 +183,7 @@ export class AIService {
     // Try Mastra server first
     if (this.isMastraMode()) {
       try {
-        const result = await mastraClient.pmBreakdown(projectIdea, existingTasks, teamSize);
+        const result = await mastraClient.pmBreakdown(projectIdea, existingTasks, teamSize, employee);
         
         // Extract tasks from tool calls
         const toolResult = result.toolCalls?.[0]?.result;
@@ -195,11 +207,15 @@ export class AIService {
     }
 
     try {
-      const agent = getAgent('pm');
+      // Use employee-specific prompt if available, otherwise use default agent
+      const systemPrompt = employee 
+        ? getEmployeeSystemPrompt(employee)
+        : getAgent('pm').systemPrompt;
+      
       const response = await this.client.chat.completions.create({
         model: this.model,
         messages: [
-          { role: 'system', content: agent.systemPrompt },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: `Break down: "${projectIdea}"\n\nTeam: ${teamSize.engineers} engineers, ${teamSize.designers} designers, ${teamSize.marketers} marketers\n\nExisting: ${existingTasks.join(', ') || 'None'}`,
