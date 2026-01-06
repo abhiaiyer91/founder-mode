@@ -225,6 +225,7 @@ export type GameScreen =
   | 'queue'        // Task queue / import view
   | 'missions'     // PM missions (git worktrees)
   | 'artifacts'    // AI-generated code/content viewer
+  | 'preview'      // Live code preview - see your app running!
   | 'tech'         // Tech tree / upgrades
   | 'achievements' // Trophy room
   | 'office' 

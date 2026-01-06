@@ -184,13 +184,23 @@ export function ArtifactsPanel() {
       <AIWorkStatus />
       
       <div className="artifacts-header">
-        <h2>📦 Generated Artifacts</h2>
-        <div className="artifacts-stats">
-          <span>{stats.total} total</span>
-          <span>💻 {stats.code}</span>
-          <span>🎨 {stats.design}</span>
-          <span>📝 {stats.copy}</span>
+        <div className="header-left">
+          <h2>📦 Generated Artifacts</h2>
+          <div className="artifacts-stats">
+            <span>{stats.total} total</span>
+            <span>💻 {stats.code}</span>
+            <span>🎨 {stats.design}</span>
+            <span>📝 {stats.copy}</span>
+          </div>
         </div>
+        {stats.code > 0 && (
+          <button 
+            className="preview-btn"
+            onClick={() => useGameStore.getState().setScreen('preview')}
+          >
+            👁️ Live Preview
+          </button>
+        )}
       </div>
       
       <div className="artifacts-filters">

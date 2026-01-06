@@ -16,3 +16,4 @@ export { CodeScreen } from './CodeScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { MissionsScreen } from './MissionsScreen';
 export { ArtifactsScreen } from './ArtifactsScreen';
+export { PreviewScreen } from './PreviewScreen';

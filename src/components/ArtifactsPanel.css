@@ -68,6 +68,12 @@
   border-bottom: 1px solid var(--terminal-border);
 }
 
+.artifacts-header .header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .artifacts-header h2 {
   margin: 0;
   font-size: 18px;
@@ -78,6 +84,26 @@
   gap: 12px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.preview-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
 }
 
 /* Filters */

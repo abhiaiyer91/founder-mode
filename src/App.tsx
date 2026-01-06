@@ -10,6 +10,7 @@ import {
   TaskQueueScreen,
   MissionsScreen,
   ArtifactsScreen,
+  PreviewScreen,
   TechTreeScreen,
   AchievementsScreen,
   OfficeScreen, 
@@ -225,6 +226,7 @@ function App() {
           'q': 'queue',
           'm': 'missions',   // PM missions (git worktrees)
           'a': 'artifacts',  // AI-generated content
+          'p': 'preview',    // Live code preview
           'u': 'tech', // Upgrades/tech tree
           'y': 'achievements', // Trophy room
           's': 'settings',
@@ -291,6 +293,8 @@ function App() {
         return <MissionsScreen />;
       case 'artifacts':
         return <ArtifactsScreen />;
+      case 'preview':
+        return <PreviewScreen />;
       case 'tech':
         return <TechTreeScreen />;
       case 'achievements':
@@ -313,7 +317,7 @@ function App() {
   };
 
   // Screens with built-in status bars (no extra chrome needed)
-  const fullScreens: GameScreen[] = ['landing', 'rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'tech', 'achievements'];
+  const fullScreens: GameScreen[] = ['landing', 'rts', 'dashboard', 'command', 'queue', 'missions', 'artifacts', 'preview', 'tech', 'achievements'];
   const showStatusBar = project && !fullScreens.includes(screen);
   
   // Show top bar when in game (not on landing or start)

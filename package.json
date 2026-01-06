@@ -22,6 +22,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
     "@git-diff-view/lowlight": "^0.0.35",
     "@git-diff-view/react": "^0.0.35",
     "@mastra/core": "^0.24.9",
