@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { GitHubConnect } from './GitHubConnect';
 import type { GitCommit } from '../types';
 import './GitTimeline.css';
 
@@ -81,6 +82,7 @@ interface GitTimelineProps {
 export function GitTimeline({ maxCommits = 10, compact = false }: GitTimelineProps) {
   const { gitRepo, gitHubConnection, pushToGitHub, project } = useGameStore();
   const [pushing, setPushing] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
   
   if (!gitRepo) {
     return (
@@ -161,7 +163,7 @@ export function GitTimeline({ maxCommits = 10, compact = false }: GitTimelinePro
           ) : (
             <button 
               className="push-btn"
-              onClick={() => useGameStore.getState().setScreen('settings')}
+              onClick={() => setShowConnect(true)}
             >
               🔗 Connect GitHub
             </button>
@@ -211,6 +213,15 @@ export function GitTimeline({ maxCommits = 10, compact = false }: GitTimelinePro
       {gitRepo.stats.totalCommits > maxCommits && (
         <div className="show-more">
           <span>+ {gitRepo.stats.totalCommits - maxCommits} more commits</span>
+        </div>
+      )}
+      
+      {showConnect && (
+        <div className="github-connect-modal-overlay" onClick={() => setShowConnect(false)}>
+          <div className="github-connect-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowConnect(false)}>×</button>
+            <GitHubConnect onClose={() => setShowConnect(false)} />
+          </div>
         </div>
       )}
     </div>

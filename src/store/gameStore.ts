@@ -2822,9 +2822,10 @@ export const useGameStore = create<GameState & GameActions>()(
       return false;
     }
     
-    const token = localStorage.getItem('github_token');
+    // Check for OAuth token in sessionStorage
+    const token = sessionStorage.getItem('github_access_token');
     if (!token) {
-      get().addNotification('GitHub token not found', 'error');
+      get().addNotification('Please reconnect to GitHub', 'error');
       return false;
     }
     
@@ -2859,7 +2860,8 @@ export const useGameStore = create<GameState & GameActions>()(
   },
 
   disconnectGitHub: () => {
-    localStorage.removeItem('github_token');
+    // Clear OAuth token from session storage
+    sessionStorage.removeItem('github_access_token');
     set({
       gitHubConnection: {
         connected: false,
