@@ -204,12 +204,22 @@ export interface Task {
 }
 
 // Project Types
+export type ProjectType = 
+  | 'frontend'    // React, Vue, static sites
+  | 'backend'     // APIs, servers
+  | 'fullstack'   // Both frontend and backend
+  | 'cli'         // Command-line tools
+  | 'library'     // NPM packages, libraries
+  | 'mobile'      // React Native, mobile apps
+  | 'other';      // Anything else
+
 export interface Project {
   id: string;
   name: string;
   description: string;
   idea: string; // Original founder idea
   techStack: string[];
+  projectType: ProjectType; // What kind of project is this?
   repository: string | null; // GitHub repo URL
   createdAt: number;
 }

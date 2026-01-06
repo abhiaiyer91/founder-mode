@@ -256,13 +256,37 @@ export const useGameStore = create<GameState & GameActions>()(
   startProject: (idea: string) => {
     const projectName = idea.split(' ').slice(0, 3).join(' ');
     const tick = get().tick;
+    
+    // Detect project type from the idea
+    const ideaLower = idea.toLowerCase();
+    let projectType: import('../types').ProjectType = 'frontend';
+    let techStack = ['TypeScript', 'React'];
+    
+    if (ideaLower.includes('api') || ideaLower.includes('backend') || ideaLower.includes('server') || ideaLower.includes('database')) {
+      projectType = 'backend';
+      techStack = ['TypeScript', 'Node.js', 'Express'];
+    } else if (ideaLower.includes('cli') || ideaLower.includes('command line') || ideaLower.includes('terminal')) {
+      projectType = 'cli';
+      techStack = ['TypeScript', 'Node.js'];
+    } else if (ideaLower.includes('library') || ideaLower.includes('package') || ideaLower.includes('sdk') || ideaLower.includes('npm')) {
+      projectType = 'library';
+      techStack = ['TypeScript'];
+    } else if (ideaLower.includes('mobile') || ideaLower.includes('ios') || ideaLower.includes('android') || ideaLower.includes('react native')) {
+      projectType = 'mobile';
+      techStack = ['TypeScript', 'React Native'];
+    } else if (ideaLower.includes('full stack') || ideaLower.includes('fullstack') || (ideaLower.includes('app') && ideaLower.includes('api'))) {
+      projectType = 'fullstack';
+      techStack = ['TypeScript', 'React', 'Node.js'];
+    }
+    
     set({
       project: {
         id: uuidv4(),
         name: projectName,
         description: idea,
         idea,
-        techStack: ['TypeScript', 'React'],
+        techStack,
+        projectType,
         repository: null,
         createdAt: tick,
       },
