@@ -239,10 +239,21 @@ export interface Project {
   createdAt: number;
 }
 
+// Game Flow Phase - tracks the onboarding/gameplay progression
+export type GamePhase = 
+  | 'new'           // Just started, no project yet
+  | 'hire_pm'       // Project created, need to hire PM first
+  | 'ideate'        // PM hired, breaking down idea into tasks
+  | 'hire_engineer' // Ideation done, need engineer to start building
+  | 'playing';      // Full game mode - all core roles in place
+
 // Game State
 export type GameScreen = 
   | 'title' 
   | 'onboarding'   // Initial project setup
+  | 'hire_pm'      // First gate: hire a PM to start
+  | 'ideate'       // Chat with PM to break down vision into tasks
+  | 'hire_engineer'// Second gate: hire engineer to start building
   | 'office' 
   | 'hire' 
   | 'team' 
@@ -446,6 +457,7 @@ export interface GameState {
   
   // UI State
   screen: GameScreen;
+  phase: GamePhase; // Current game flow phase
   speed: GameSpeed;
   selectedEmployeeId: string | null;
   selectedTaskId: string | null;
@@ -497,6 +509,10 @@ export interface GameActions {
   
   // Navigation
   setScreen: (screen: GameScreen) => void;
+  setPhase: (phase: GamePhase) => void;
+  
+  // Ideation Phase
+  completeIdeation: () => void; // Called when PM finishes breaking down vision
   
   // Time Management
   setSpeed: (speed: GameSpeed) => void;

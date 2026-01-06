@@ -6,6 +6,11 @@ import {
   AuthScreen,
   StartScreen,
   ProjectsScreen,
+  // Onboarding flow screens
+  HirePMScreen,
+  IdeateScreen,
+  HireEngineerScreen,
+  // Main game screens
   HireScreen, 
   TasksScreen,
   TeamScreen,
@@ -44,6 +49,39 @@ function RequireProject({ children }: { children: React.ReactNode }) {
   
   if (!project) {
     return <Navigate to="/start" replace />;
+  }
+  return <>{children}</>;
+}
+
+/**
+ * PhaseRouter - Routes to the correct screen based on game phase
+ * Used for the onboarding flow
+ */
+function PhaseRouter() {
+  const phase = useGameStore(state => state.phase);
+  
+  switch (phase) {
+    case 'hire_pm':
+      return <HirePMScreen />;
+    case 'ideate':
+      return <IdeateScreen />;
+    case 'hire_engineer':
+      return <HireEngineerScreen />;
+    case 'playing':
+    default:
+      // If in playing phase, redirect to main game
+      return <Navigate to="/play" replace />;
+  }
+}
+
+/**
+ * PlayingPhaseGuard - Redirects to onboarding if not in playing phase
+ */
+function PlayingPhaseGuard({ children }: { children: React.ReactNode }) {
+  const phase = useGameStore(state => state.phase);
+  
+  if (phase !== 'playing') {
+    return <Navigate to="/play/onboarding" replace />;
   }
   return <>{children}</>;
 }
@@ -283,12 +321,24 @@ function App() {
             element={isAuthenticated ? <ProjectsScreen /> : <Navigate to="/login?redirect=/projects" replace />} 
           />
           
-          {/* Game routes - require active project */}
+          {/* Onboarding flow routes - phase-specific screens */}
+          <Route 
+            path="/play/onboarding/*" 
+            element={
+              <RequireProject>
+                <PhaseRouter />
+              </RequireProject>
+            }
+          />
+          
+          {/* Game routes - require active project and playing phase */}
           <Route 
             path="/play" 
             element={
               <RequireProject>
-                <GameLayout />
+                <PlayingPhaseGuard>
+                  <GameLayout />
+                </PlayingPhaseGuard>
               </RequireProject>
             }
           >

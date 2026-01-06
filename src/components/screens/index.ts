@@ -3,6 +3,13 @@ export { LandingPage } from './LandingPage';
 export { AuthScreen } from './AuthScreen';
 export { StartScreen } from './StartScreen';
 export { ProjectsScreen } from './ProjectsScreen';
+
+// Onboarding Flow Screens
+export { HirePMScreen } from './HirePMScreen';        // First gate: hire PM
+export { IdeateScreen } from './IdeateScreen';        // PM chat to break down vision
+export { HireEngineerScreen } from './HireEngineerScreen'; // Second gate: hire engineer
+
+// Main Game Screens
 export { RTSView } from './RTSView';          // Isometric RTS view - Civ/Warcraft style
 export { CampusScreen } from './CampusScreen'; // Isometric campus view - Phaser 3
 export { DashboardScreen } from './DashboardScreen';

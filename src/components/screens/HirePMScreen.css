@@ -1,0 +1,194 @@
+/* Hire PM Screen - First gate after project creation */
+
+.hire-pm-screen {
+  min-height: 100vh;
+  background: #050508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hire-pm-container {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* Project Badge */
+.project-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 20px;
+  font-size: 13px;
+  color: #00ff88;
+  margin-bottom: 32px;
+}
+
+.badge-icon {
+  font-size: 14px;
+}
+
+/* Main Content */
+.hire-pm-content h1 {
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #e4e4e7;
+  line-height: 1.3;
+}
+
+.hire-pm-content .subtitle {
+  margin: 0 0 32px 0;
+  font-size: 15px;
+  color: #71717a;
+  line-height: 1.6;
+}
+
+/* PM Card */
+.pm-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.pm-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 14px;
+  font-size: 24px;
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+.pm-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pm-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.pm-info p {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+.pm-details {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pm-salary {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.pm-budget {
+  font-size: 13px;
+  color: #52525b;
+}
+
+.hire-pm-btn {
+  padding: 14px 28px;
+  background: #00ff88;
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.hire-pm-btn:hover:not(.disabled) {
+  background: #00cc6a;
+  transform: translateY(-1px);
+}
+
+.hire-pm-btn.disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: #52525b;
+  cursor: not-allowed;
+}
+
+/* Idea Preview */
+.idea-preview {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.idea-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.idea-text {
+  font-size: 14px;
+  color: #a1a1aa;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Modal styles inherit from HireScreen.css */
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hire-pm-screen {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 60px;
+  }
+
+  .hire-pm-content h1 {
+    font-size: 22px;
+  }
+
+  .pm-card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .pm-icon {
+    margin: 0 auto;
+  }
+
+  .pm-details {
+    justify-content: center;
+  }
+
+  .hire-pm-btn {
+    width: 100%;
+  }
+}
