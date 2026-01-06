@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Terminal, Input, Box } from '../tui';
 import { useGameStore } from '../../store/gameStore';
+import { GitHubImport } from '../GitHubImport';
 import './StartScreen.css';
 
 export function StartScreen() {
   const [idea, setIdea] = useState('');
+  const [showGitHubImport, setShowGitHubImport] = useState(false);
   const startProject = useGameStore(state => state.startProject);
 
   const handleSubmit = () => {
@@ -80,11 +82,26 @@ export function StartScreen() {
             </div>
           </Box>
 
+          <div className="or-divider">
+            <span>or</span>
+          </div>
+
+          <button 
+            className="github-import-btn" 
+            onClick={() => setShowGitHubImport(true)}
+          >
+            🐙 Import from GitHub
+          </button>
+
           <div className="tips-section">
             <p className="tip">💡 <strong>Tip:</strong> Be specific! "A task management app for remote teams" works better than "an app"</p>
           </div>
         </div>
       </Terminal>
+
+      {showGitHubImport && (
+        <GitHubImport onClose={() => setShowGitHubImport(false)} />
+      )}
     </div>
   );
 }

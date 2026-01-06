@@ -93,6 +93,44 @@
   font-family: var(--font-mono);
 }
 
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--terminal-border);
+}
+
+.github-import-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: transparent;
+  border: 1px solid var(--terminal-border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.github-import-btn:hover {
+  background: var(--terminal-box-bg);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 .tips-section {
   padding: 12px;
   background: var(--terminal-box-bg);

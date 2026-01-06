@@ -24,6 +24,7 @@ import { RTSTopBar } from './components/RTSTopBar';
 import { EventPanel } from './components/EventPanel';
 import { FloatingResources } from './components/FloatingResources';
 import { MobileNav } from './components/MobileNav';
+import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { useSession } from './lib/auth';
 import { getApiKey } from './lib/storage/secureStorage';
 import type { GameScreen, GameSpeed } from './types';
@@ -327,6 +328,7 @@ function App() {
       {showStatusBar && <StatusBar />}
       {project && !focusMode && <EventPanel />}
       {project && <FloatingResources />}
+      <OnboardingTutorial />
       <MobileNav />
     </div>
   );

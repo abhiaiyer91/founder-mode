@@ -89,6 +89,7 @@ export function RTSTopBar() {
             className={`view-btn ${screen === view.id ? 'active' : ''}`}
             onClick={() => setScreen(view.id)}
             title={`${view.label} [${view.hotkey}]`}
+            data-tutorial={view.id}
           >
             <span className="view-icon">{view.icon}</span>
             <span className="view-label">{view.label}</span>

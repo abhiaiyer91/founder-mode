@@ -6,6 +6,8 @@
 
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { LiteDemo } from '../LiteDemo';
+import { GitHubImport } from '../GitHubImport';
 import './LandingPage.css';
 
 // Animated typing effect
@@ -181,6 +183,7 @@ export function Login() {
 export function LandingPage() {
   const { startProject, setScreen } = useGameStore();
   const [idea, setIdea] = useState('');
+  const [showGitHubImport, setShowGitHubImport] = useState(false);
 
   const handleStart = () => {
     if (idea.trim().length >= 10) {
@@ -243,6 +246,15 @@ export function LandingPage() {
               </button>
             </div>
 
+            <div className="hero-or">
+              <span>or</span>
+            </div>
+
+            <button className="github-import-btn" onClick={() => setShowGitHubImport(true)}>
+              <span className="github-icon">🐙</span>
+              Import from GitHub
+            </button>
+
             <div className="hero-stats">
               <div className="stat">
                 <span className="stat-value"><Counter end={16000} suffix="+" /></span>
@@ -269,6 +281,15 @@ export function LandingPage() {
             <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="var(--terminal-bg)"/>
           </svg>
         </div>
+      </section>
+
+      {/* Interactive Demo Section */}
+      <section id="try-demo" className="try-demo">
+        <div className="section-header">
+          <h2>Try it now - no signup required</h2>
+          <p>Hire employees, assign tasks, and watch AI generate code</p>
+        </div>
+        <LiteDemo onStartGame={handleStart} />
       </section>
 
       {/* Features Section */}
@@ -489,6 +510,11 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* GitHub Import Modal */}
+      {showGitHubImport && (
+        <GitHubImport onClose={() => setShowGitHubImport(false)} />
+      )}
     </div>
   );
 }
