@@ -569,14 +569,15 @@ pnpm test:watch
 pnpm test:coverage
 ```
 
-**Test Coverage:**
+**Test Coverage (111 tests):**
 | Module | Coverage | Description |
 |--------|----------|-------------|
-| `src/lib/pm/pmBrain.ts` | ~98% | PM brain logic, product state analysis |
-| `src/store/gameStore.ts` | ~35% | Core game mechanics, state management |
-| `src/types/*.ts` | 100% | Type definitions |
+| `src/lib/pm/pmBrain.ts` | **~98%** | PM brain logic, product state analysis |
+| `src/store/gameStore.ts` | **~40%** | Core game mechanics, state management |
+| `src/components/ArtifactsPanel.tsx` | **~77%** | Artifacts viewer component |
+| `src/types/*.ts` | **100%** | Type definitions |
 
-**What's Tested:**
+**Unit Tests (96 tests):**
 - ✅ Project creation
 - ✅ Employee hiring/firing
 - ✅ Task creation, assignment, completion
@@ -585,6 +586,20 @@ pnpm test:coverage
 - ✅ PM brain evaluation and proposals
 - ✅ Task queue operations
 - ✅ Control groups
+- ✅ AI Work Queue (queueing, prioritization)
+- ✅ Task Artifacts (creation, storage)
+- ✅ Agent Memory (storage, retrieval, specializations)
+- ✅ UI Components (ArtifactsPanel, EmployeeMemory)
+
+**Integration Tests (15 tests):**
+- ✅ Full game startup flow (idea → hire → task → assign)
+- ✅ Task lifecycle (create → assign → progress → review → done)
+- ✅ AI work queue prioritization
+- ✅ Mission workflow with tasks
+- ✅ PM Brain proposals (approve/reject)
+- ✅ Employee progression and memory
+- ✅ Complete game session simulation
+- ✅ RTS control groups
 - ✅ Epics system
 
 ---
