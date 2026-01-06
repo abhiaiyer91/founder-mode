@@ -22,6 +22,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@git-diff-view/lowlight": "^0.0.35",
+    "@git-diff-view/react": "^0.0.35",
     "@mastra/core": "^0.24.9",
     "@mastra/memory": "^0.15.13",
     "@mastra/server": "^0.24.9",

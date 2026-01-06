@@ -11,6 +11,7 @@ import type {
   MissionStatus as MissionStatusType,
   MissionPriority as MissionPriorityType,
   MissionCommit as MissionCommitType,
+  FileDiff as FileDiffType,
   Epic as EpicType,
   EpicStatus as EpicStatusType,
   ProductPhase as ProductPhaseType,
@@ -26,6 +27,7 @@ export type Mission = MissionType;
 export type MissionStatus = MissionStatusType;
 export type MissionPriority = MissionPriorityType;
 export type MissionCommit = MissionCommitType;
+export type FileDiff = FileDiffType;
 export type Epic = EpicType;
 export type EpicStatus = EpicStatusType;
 export type ProductPhase = ProductPhaseType;

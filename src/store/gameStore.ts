@@ -42,7 +42,9 @@ import {
   FIRST_NAMES,
   LAST_NAMES,
   EVENT_DEFINITIONS,
+  AI_MODELS,
 } from '../types';
+import type { AIProvider } from '../types';
 import { aiService } from '../lib/ai';
 
 // Task ideas that PMs can generate
@@ -297,6 +299,8 @@ export const useGameStore = create<GameState & GameActions>()(
       morale: generateRandomStat(80, 15),
       currentTaskId: null,
       hiredAt: state.tick,
+      aiModel: null, // Uses global default
+      aiProvider: null,
     };
 
     set({

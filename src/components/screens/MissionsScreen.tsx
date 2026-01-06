@@ -8,8 +8,9 @@ import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { missionsApi } from '../../lib/api';
 import { useGitHub } from '../../lib/github/useGitHub';
+import { DiffViewer, SimpleDiff } from '../DiffViewer';
 import { MISSION_TEMPLATES } from '../../types/missions';
-import type { Mission, MissionPriority } from '../../types';
+import type { Mission, MissionPriority, MissionCommit } from '../../types';
 import './MissionsScreen.css';
 
 // Mission card component
@@ -255,6 +256,184 @@ function CreateMissionModal({
   );
 }
 
+// Mission detail panel with commits and diffs
+function MissionDetail({ 
+  mission, 
+  onClose 
+}: { 
+  mission: Mission; 
+  onClose: () => void;
+}) {
+  const { tasks } = useGameStore();
+  const [expandedCommit, setExpandedCommit] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'tasks' | 'commits' | 'files'>('commits');
+  
+  const missionTasks = tasks.filter(t => mission.taskIds.includes(t.id));
+  
+  return (
+    <div className="mission-detail-panel">
+      <div className="detail-header">
+        <div className="detail-title">
+          <h2>{mission.name}</h2>
+          <span className={`status-badge status-${mission.status}`}>
+            {mission.status}
+          </span>
+        </div>
+        <button className="close-btn" onClick={onClose}>×</button>
+      </div>
+      
+      <div className="detail-meta">
+        <div className="meta-item">
+          <span className="meta-label">Branch:</span>
+          <code>{mission.branchName}</code>
+        </div>
+        <div className="meta-item">
+          <span className="meta-label">Base:</span>
+          <code>{mission.baseBranch}</code>
+        </div>
+        {mission.pullRequestUrl && (
+          <div className="meta-item">
+            <span className="meta-label">PR:</span>
+            <a href={mission.pullRequestUrl} target="_blank" rel="noopener noreferrer">
+              #{mission.pullRequestNumber}
+            </a>
+          </div>
+        )}
+      </div>
+      
+      <div className="detail-tabs">
+        <button 
+          className={activeTab === 'commits' ? 'active' : ''}
+          onClick={() => setActiveTab('commits')}
+        >
+          📝 Commits ({mission.commits.length})
+        </button>
+        <button 
+          className={activeTab === 'tasks' ? 'active' : ''}
+          onClick={() => setActiveTab('tasks')}
+        >
+          ✅ Tasks ({missionTasks.length})
+        </button>
+        <button 
+          className={activeTab === 'files' ? 'active' : ''}
+          onClick={() => setActiveTab('files')}
+        >
+          📁 Files
+        </button>
+      </div>
+      
+      <div className="detail-content">
+        {activeTab === 'commits' && (
+          <div className="commits-list">
+            {mission.commits.length === 0 ? (
+              <div className="empty-commits">
+                <span>📭</span>
+                <p>No commits yet</p>
+                <small>Commits will appear here as your team works</small>
+              </div>
+            ) : (
+              mission.commits.map((commit: MissionCommit) => (
+                <div key={commit.sha} className="commit-item">
+                  <div 
+                    className="commit-header"
+                    onClick={() => setExpandedCommit(
+                      expandedCommit === commit.sha ? null : commit.sha
+                    )}
+                  >
+                    <div className="commit-info">
+                      <span className="commit-sha">{commit.sha.slice(0, 7)}</span>
+                      <span className="commit-message">{commit.message}</span>
+                    </div>
+                    <div className="commit-meta">
+                      <span className="commit-files">
+                        {commit.filesChanged.length} files
+                      </span>
+                      <span className="commit-time">
+                        {new Date(commit.timestamp).toLocaleDateString()}
+                      </span>
+                      <span className="expand-icon">
+                        {expandedCommit === commit.sha ? '▼' : '▶'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {expandedCommit === commit.sha && (
+                    <div className="commit-diff-panel">
+                      {commit.diffs && commit.diffs.length > 0 ? (
+                        commit.diffs.map((diff, i) => (
+                          <DiffViewer
+                            key={i}
+                            oldCode={diff.oldContent}
+                            newCode={diff.newContent}
+                            fileName={diff.path}
+                            oldTitle="Before"
+                            newTitle="After"
+                          />
+                        ))
+                      ) : (
+                        <div className="files-changed">
+                          <h4>Files Changed:</h4>
+                          {commit.filesChanged.map((file, i) => (
+                            <SimpleDiff
+                              key={i}
+                              fileName={file}
+                              additions={['// New code added']}
+                              deletions={[]}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'tasks' && (
+          <div className="tasks-list">
+            {missionTasks.map(task => (
+              <div key={task.id} className={`task-item status-${task.status}`}>
+                <span className="task-status">
+                  {task.status === 'done' ? '✅' : 
+                   task.status === 'in_progress' ? '🔨' : 
+                   task.status === 'review' ? '👀' : '📋'}
+                </span>
+                <span className="task-title">{task.title}</span>
+                <span className={`task-priority priority-${task.priority}`}>
+                  {task.priority}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {activeTab === 'files' && (
+          <div className="files-overview">
+            <p className="files-summary">
+              All files changed across {mission.commits.length} commits
+            </p>
+            {mission.commits.flatMap(c => c.filesChanged).filter((f, i, arr) => 
+              arr.indexOf(f) === i // Unique files
+            ).map((file, i) => (
+              <div key={i} className="file-item">
+                <span className="file-icon">📄</span>
+                <span className="file-path">{file}</span>
+              </div>
+            ))}
+            {mission.commits.length === 0 && (
+              <div className="empty-files">
+                <p>No files changed yet</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Main missions screen
 export function MissionsScreen() {
   const { 
@@ -439,30 +618,43 @@ export function MissionsScreen() {
         </button>
       </div>
       
-      <div className="missions-grid">
-        {filteredMissions.length === 0 ? (
-          <div className="empty-state">
-            <span className="empty-icon">🎯</span>
-            <h3>No missions yet</h3>
-            <p>Create a mission to start working on a feature branch</p>
-            <button onClick={() => setShowCreateModal(true)}>
-              ➕ Create First Mission
-            </button>
-          </div>
-        ) : (
-          filteredMissions.map(mission => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              isActive={mission.id === activeMissionId}
-              onSelect={() => {
-                setActiveMission(mission.id);
-              }}
-              onAction={(action) => handleAction(mission, action)}
-              isLoading={actionLoading?.startsWith(mission.id)}
+      <div className={`missions-layout ${activeMissionId ? 'with-detail' : ''}`}>
+        <div className="missions-grid">
+          {filteredMissions.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon">🎯</span>
+              <h3>No missions yet</h3>
+              <p>Create a mission to start working on a feature branch</p>
+              <button onClick={() => setShowCreateModal(true)}>
+                ➕ Create First Mission
+              </button>
+            </div>
+          ) : (
+            filteredMissions.map(mission => (
+              <MissionCard
+                key={mission.id}
+                mission={mission}
+                isActive={mission.id === activeMissionId}
+                onSelect={() => {
+                  setActiveMission(mission.id === activeMissionId ? null : mission.id);
+                }}
+                onAction={(action) => handleAction(mission, action)}
+                isLoading={actionLoading?.startsWith(mission.id)}
+              />
+            ))
+          )}
+        </div>
+        
+        {activeMissionId && (() => {
+          const selectedMission = missions.find(m => m.id === activeMissionId);
+          if (!selectedMission) return null;
+          return (
+            <MissionDetail 
+              mission={selectedMission}
+              onClose={() => setActiveMission(null)}
             />
-          ))
-        )}
+          );
+        })()}
       </div>
       
       {showCreateModal && (

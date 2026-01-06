@@ -145,11 +145,20 @@ export interface Mission {
   pullRequestNumber: number | null;
 }
 
+export interface FileDiff {
+  path: string;
+  oldContent: string;
+  newContent: string;
+  additions: number;
+  deletions: number;
+}
+
 export interface MissionCommit {
   sha: string;
   message: string;
   timestamp: number;
   filesChanged: string[];
+  diffs?: FileDiff[]; // Optional detailed diffs for each file
 }
 
 export interface MissionBreakdown {

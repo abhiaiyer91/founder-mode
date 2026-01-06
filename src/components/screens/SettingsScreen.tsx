@@ -4,7 +4,9 @@ import type { MenuItem } from '../tui';
 import { useGameStore } from '../../store/gameStore';
 import { aiService, mastraClient } from '../../lib/ai';
 import { saveApiKey, removeApiKey, hasStoredKey } from '../../lib/storage/secureStorage';
-import type { GameSpeed } from '../../types';
+import { ModelSelector } from '../ModelSelector';
+import { AI_MODELS } from '../../types';
+import type { GameSpeed, AIProvider } from '../../types';
 import './SettingsScreen.css';
 
 export function SettingsScreen() {
@@ -20,6 +22,8 @@ export function SettingsScreen() {
     stats,
     aiSettings,
     configureAI,
+    configureProviderKey,
+    setGlobalModel,
     disableAI,
   } = useGameStore();
 
@@ -28,6 +32,7 @@ export function SettingsScreen() {
   const [mastraConnected, setMastraConnected] = useState(false);
   const [checkingMastra, setCheckingMastra] = useState(false);
   const [hasPersistedKey, setHasPersistedKey] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openai');
 
   // Check Mastra server connection and persisted key
   useEffect(() => {
@@ -56,8 +61,9 @@ export function SettingsScreen() {
   const handleConfigureAI = () => {
     if (apiKeyInput.trim()) {
       const key = apiKeyInput.trim();
-      configureAI(key);
-      saveApiKey('openai', key); // Persist the key
+      configureAI(key, selectedProvider);
+      configureProviderKey(selectedProvider, key);
+      saveApiKey('openai', key); // Persist the key (using openai key for backward compat)
       setHasPersistedKey(true);
       setApiKeyInput('');
       setShowApiKeyInput(false);
@@ -139,27 +145,66 @@ export function SettingsScreen() {
 
             {aiSettings.enabled ? (
               <div className="ai-enabled-info">
-                <p>✅ Your team is powered by <strong>{aiSettings.model}</strong></p>
+                <p>✅ AI is enabled using <strong>{aiSettings.provider.toUpperCase()}</strong></p>
                 <p className="api-key-hint">
                   API Key: {aiService.getMaskedApiKey() || '****'}
                   {hasPersistedKey && <span className="persisted-badge"> 💾 Saved</span>}
                 </p>
+                
+                {/* Global Model Selection */}
+                <div className="model-config">
+                  <h4>🧠 Default Model</h4>
+                  <p className="config-desc">This model will be used for all employees unless overridden.</p>
+                  <ModelSelector
+                    value={aiSettings.model}
+                    onChange={(modelId) => {
+                      if (modelId) setGlobalModel(modelId);
+                    }}
+                    label="Global Default Model"
+                  />
+                  {(() => {
+                    const model = AI_MODELS.find(m => m.id === aiSettings.model);
+                    return model ? (
+                      <div className="selected-model-info">
+                        <span className="model-name">{model.name}</span>
+                        <span className="model-cost">
+                          {model.costPer1kTokens === 0 ? '🆓 Free' : `$${model.costPer1kTokens}/1K tokens`}
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+                
                 <button className="disable-ai-btn" onClick={handleDisableAI}>
                   Disable AI & Clear Saved Key
                 </button>
               </div>
             ) : showApiKeyInput ? (
               <div className="api-key-form">
+                <div className="provider-tabs">
+                  {(['openai', 'anthropic', 'google', 'groq'] as AIProvider[]).map(p => (
+                    <button
+                      key={p}
+                      className={`provider-tab ${selectedProvider === p ? 'active' : ''}`}
+                      onClick={() => setSelectedProvider(p)}
+                    >
+                      {p === 'openai' ? '🤖' : p === 'anthropic' ? '🧠' : p === 'google' ? '🔮' : '⚡'} {p}
+                    </button>
+                  ))}
+                </div>
+                
                 <Input
                   value={apiKeyInput}
                   onChange={setApiKeyInput}
                   onSubmit={handleConfigureAI}
-                  placeholder="sk-..."
-                  prompt="OpenAI API Key:"
+                  placeholder={selectedProvider === 'openai' ? 'sk-...' : 
+                               selectedProvider === 'anthropic' ? 'sk-ant-...' : 
+                               selectedProvider === 'google' ? 'AIza...' : 'gsk_...'}
+                  prompt={`${selectedProvider.toUpperCase()} API Key:`}
                 />
                 <div className="form-actions">
                   <button className="save-btn" onClick={handleConfigureAI}>
-                    Connect AI
+                    Connect {selectedProvider.toUpperCase()}
                   </button>
                   <button className="cancel-btn" onClick={() => setShowApiKeyInput(false)}>
                     Cancel
@@ -167,12 +212,19 @@ export function SettingsScreen() {
                 </div>
                 <p className="api-key-note">
                   Your API key is stored locally and never sent to our servers.
-                  Get a key at <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>
+                  {selectedProvider === 'openai' && ' Get a key at '}
+                  {selectedProvider === 'openai' && <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>}
+                  {selectedProvider === 'anthropic' && ' Get a key at '}
+                  {selectedProvider === 'anthropic' && <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer">console.anthropic.com</a>}
+                  {selectedProvider === 'google' && ' Get a key at '}
+                  {selectedProvider === 'google' && <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>}
+                  {selectedProvider === 'groq' && ' Get a key at '}
+                  {selectedProvider === 'groq' && <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer">console.groq.com</a>}
                 </p>
               </div>
             ) : (
               <button className="enable-ai-btn" onClick={() => setShowApiKeyInput(true)}>
-                🔑 Connect OpenAI API Key
+                🔑 Connect AI Provider
               </button>
             )}
 
