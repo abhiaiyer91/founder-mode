@@ -1,5 +1,6 @@
 import { mastraClient } from './mastra-client';
-import type { Task, TaskType, TaskPriority } from '../../types';
+import type { Task, TaskType, TaskPriority, Employee } from '../../types';
+import { getEmployeeSystemPrompt } from './agents';
 
 /**
  * AI Service - Unified AI integration for Founder Mode
@@ -23,7 +24,7 @@ export class AIService {
     
     if (mastraConnected) {
       this.enabled = true;
-      console.log('🤖 Connected to Mastra server');
+      console.log('Connected to Mastra server');
       return { mode: 'mastra' };
     }
     
@@ -77,8 +78,11 @@ export class AIService {
 
   /**
    * Have an engineer work on a coding task
+   * @param task - The task to work on
+   * @param projectContext - Context about the project
+   * @param employee - Optional employee for custom prompts
    */
-  async engineerWorkOnTask(task: Task, projectContext: string): Promise<{
+  async engineerWorkOnTask(task: Task, projectContext: string, employee?: Employee): Promise<{
     code: string;
     files: { path: string; content: string }[];
     explanation: string;
@@ -86,7 +90,7 @@ export class AIService {
     // Use Mastra server
     if (this.isMastraMode()) {
       try {
-        const result = await mastraClient.engineerWork(task, projectContext);
+        const result = await mastraClient.engineerWork(task, projectContext, employee);
         
         // Extract code from tool calls if available
         const toolResult = result.toolCalls?.[0]?.result;
@@ -109,11 +113,16 @@ export class AIService {
 
   /**
    * Have a PM break down the project into tasks
+   * @param projectIdea - The project idea to break down
+   * @param existingTasks - Already created tasks
+   * @param teamSize - Current team composition
+   * @param employee - Optional employee for custom prompts
    */
   async pmGenerateTasks(
     projectIdea: string,
     existingTasks: string[],
-    teamSize: { engineers: number; designers: number; marketers: number }
+    teamSize: { engineers: number; designers: number; marketers: number },
+    employee?: Employee
   ): Promise<{
     title: string;
     description: string;
@@ -124,7 +133,7 @@ export class AIService {
     // Use Mastra server
     if (this.isMastraMode()) {
       try {
-        const result = await mastraClient.pmBreakdown(projectIdea, existingTasks, teamSize);
+        const result = await mastraClient.pmBreakdown(projectIdea, existingTasks, teamSize, employee);
         
         // Extract tasks from tool calls
         const toolResult = result.toolCalls?.[0]?.result;

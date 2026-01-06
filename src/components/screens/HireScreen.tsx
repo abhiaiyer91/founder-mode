@@ -1,5 +1,6 @@
 /**
  * Hire Screen - Simplified hiring interface with 3 core roles
+ * Includes system prompt preview and customization
  */
 
 import { useState, useEffect } from 'react';
@@ -20,9 +21,9 @@ function formatMoney(amount: number): string {
 }
 
 const roleIcons: Record<string, string> = {
-  pm: '◈',
-  designer: '◇',
-  engineer: '◆',
+  pm: '\u25C8',
+  designer: '\u25C7',
+  engineer: '\u25C6',
 };
 
 // Provider metadata (key URLs and placeholders - fallback if API doesn't provide)
@@ -117,14 +118,14 @@ function RoleCard({
   );
 }
 
-/** Modal for selecting AI model when hiring */
+/** Modal for selecting AI model and customizing prompts when hiring */
 function HireModal({ 
   template, 
   onConfirm, 
   onCancel 
 }: { 
   template: EmployeeTemplate;
-  onConfirm: (provider: AIProvider, model: string) => void;
+  onConfirm: (provider: AIProvider, model: string, customPrompt: string) => void;
   onCancel: () => void;
 }) {
   const [providers, setProviders] = useState<ProviderConfig[]>(FALLBACK_PROVIDERS);
@@ -134,6 +135,8 @@ function HireModal({
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState('');
+  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState('');
   
   // Fetch providers on mount
   useEffect(() => {
@@ -173,8 +176,8 @@ function HireModal({
       // Save the API key
       saveApiKey(selectedProvider, apiKey.trim());
     }
-    // Call the confirm callback
-    onConfirm(selectedProvider as AIProvider, selectedModel);
+    // Call the confirm callback with custom prompt
+    onConfirm(selectedProvider as AIProvider, selectedModel, customPrompt.trim());
   };
   
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -192,9 +195,9 @@ function HireModal({
           <div className="header-icon">{roleIcons[template.role]}</div>
           <div className="header-text">
             <h2>Hire {template.title}</h2>
-            <p>Choose the AI model that will power this team member.</p>
+            <p>Choose the AI model and customize behavior.</p>
           </div>
-          <button className="close-btn" onClick={onCancel}>×</button>
+          <button className="close-btn" onClick={onCancel}>x</button>
         </div>
         
         {/* Content */}
@@ -217,7 +220,7 @@ function HireModal({
                         onClick={() => handleProviderChange(provider.id as AIProviderKey)}
                       >
                         <span className="provider-name">{provider.name}</span>
-                        {hasProviderKey && <span className="provider-check">✓</span>}
+                        {hasProviderKey && <span className="provider-check">OK</span>}
                       </button>
                     );
                   })}
@@ -251,7 +254,6 @@ function HireModal({
                       onChange={(e) => setApiKey(e.target.value)}
                       placeholder={providerMeta.keyPlaceholder}
                       onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
-                      autoFocus
                     />
                     <button 
                       type="button" 
@@ -267,17 +269,60 @@ function HireModal({
                     rel="noopener noreferrer"
                     className="get-key-link"
                   >
-                    Get {currentProvider?.name} API key →
+                    Get {currentProvider?.name} API key
                   </a>
                 </div>
               )}
               
               {hasKey && (
                 <div className="key-configured">
-                  <span className="check-icon">✓</span>
+                  <span className="check-icon">OK</span>
                   <span>{currentProvider?.name} API key configured</span>
                 </div>
               )}
+
+              {/* System Prompt Preview */}
+              <div className="field">
+                <div className="prompt-header">
+                  <label>System Prompt (Archetype)</label>
+                  <button 
+                    type="button"
+                    className="toggle-prompt-btn"
+                    onClick={() => setShowSystemPrompt(!showSystemPrompt)}
+                  >
+                    {showSystemPrompt ? '[ Hide ]' : '[ Show ]'}
+                  </button>
+                </div>
+                {showSystemPrompt && (
+                  <div className="system-prompt-preview">
+                    <pre>{template.systemPrompt}</pre>
+                  </div>
+                )}
+                <p className="field-hint">
+                  This defines how the AI will behave for this role.
+                </p>
+              </div>
+
+              {/* Custom Instructions */}
+              <div className="field">
+                <label>Custom Instructions (Optional)</label>
+                <textarea
+                  className="custom-prompt-input"
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  placeholder="Add specific instructions for this employee...
+
+Examples:
+- Focus on accessibility best practices
+- Write verbose comments in code
+- Prefer functional components
+- Always consider mobile-first design"
+                  rows={4}
+                />
+                <p className="field-hint">
+                  These will be appended to the system prompt to customize behavior.
+                </p>
+              </div>
               
               {error && <div className="error-message">{error}</div>}
             </>
@@ -307,6 +352,7 @@ export function HireScreen() {
   const money = useGameStore(state => state.money);
   const employees = useGameStore(state => state.employees);
   const hireEmployee = useGameStore(state => state.hireEmployee);
+  const updateEmployeePrompt = useGameStore(state => state.updateEmployeePrompt);
   
   const [pendingHire, setPendingHire] = useState<EmployeeTemplate | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -316,9 +362,26 @@ export function HireScreen() {
     setModalOpen(true);
   };
   
-  const handleConfirmHire = (provider: AIProvider, model: string) => {
+  const handleConfirmHire = (provider: AIProvider, model: string, customPrompt: string) => {
     if (pendingHire) {
+      // Track employee count before hiring to verify success
+      const employeeCountBefore = useGameStore.getState().employees.length;
+      
+      // Hire the employee
       hireEmployee(pendingHire.role, provider, model);
+      
+      // Verify hire succeeded by checking if a new employee was added
+      const state = useGameStore.getState();
+      const employeeCountAfter = state.employees.length;
+      
+      // Only apply custom prompt if hire actually succeeded
+      if (customPrompt && employeeCountAfter > employeeCountBefore) {
+        const newEmployee = state.employees[state.employees.length - 1];
+        if (newEmployee) {
+          updateEmployeePrompt(newEmployee.id, undefined, customPrompt);
+        }
+      }
+      
       setModalOpen(false);
       setPendingHire(null);
     }

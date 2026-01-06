@@ -5,7 +5,8 @@
  * AI agents running on the server.
  */
 
-import type { Task, TaskType, TaskPriority } from '../../types';
+import type { Task, TaskType, TaskPriority, Employee } from '../../types';
+import { getEmployeeSystemPrompt } from './agents';
 
 const DEFAULT_SERVER_URL = 'http://localhost:3001';
 
@@ -150,12 +151,23 @@ export class MastraClient {
 
   /**
    * Have an engineer work on a task
+   * @param task - The task to work on
+   * @param projectContext - Context about the project
+   * @param employee - Optional employee for custom prompts
    */
-  async engineerWork(task: Task, projectContext: string): Promise<EngineerWorkResult> {
+  async engineerWork(task: Task, projectContext: string, employee?: Employee): Promise<EngineerWorkResult> {
+    // Build request body with optional custom system prompt
+    const body: Record<string, unknown> = { task, projectContext };
+    
+    if (employee) {
+      body.systemPrompt = getEmployeeSystemPrompt(employee);
+      body.employeeName = employee.name;
+    }
+    
     const response = await fetch(`${this.serverUrl}/api/engineer/work`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task, projectContext }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -167,16 +179,29 @@ export class MastraClient {
 
   /**
    * Have a PM break down a project into tasks
+   * @param projectIdea - The project idea to break down
+   * @param existingTasks - Already created tasks
+   * @param teamSize - Current team composition
+   * @param employee - Optional employee for custom prompts
    */
   async pmBreakdown(
     projectIdea: string,
     existingTasks: string[] = [],
-    teamSize: { engineers: number; designers: number; marketers: number } = { engineers: 1, designers: 0, marketers: 0 }
+    teamSize: { engineers: number; designers: number; marketers: number } = { engineers: 1, designers: 0, marketers: 0 },
+    employee?: Employee
   ): Promise<PMBreakdownResult> {
+    // Build request body with optional custom system prompt
+    const body: Record<string, unknown> = { projectIdea, existingTasks, teamSize };
+    
+    if (employee) {
+      body.systemPrompt = getEmployeeSystemPrompt(employee);
+      body.employeeName = employee.name;
+    }
+    
     const response = await fetch(`${this.serverUrl}/api/pm/breakdown`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectIdea, existingTasks, teamSize }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
